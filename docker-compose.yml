@@ -1,0 +1,43 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: samparis12-backend
+    restart: always
+    environment:
+      DB_HOST: bdd-mysql
+      DB_PORT: 3306
+      DB_NAME: ${SAMPARIS12_DB_NAME}
+      DB_USER: ${SAMPARIS12_DB_USER}
+      DB_PASSWORD: ${SAMPARIS12_DB_PASSWORD}
+      APP_PORT: 8080
+      FRONTEND_URL: ${FRONTEND_URL}
+    # Accès direct optionnel (debug/API) — à retirer si un reverse-proxy
+    # externe se charge de tout exposer.
+    ports:
+      - "8093:8080"
+    networks:
+      - disques-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: samparis12-frontend
+    restart: always
+    ports:
+      - "8094:80"
+    depends_on:
+      - backend
+    networks:
+      disques-network:
+        aliases:
+          - samparis12-frontend
+
+networks:
+  disques-network:
+    external: true
+    name: disques-manager_disques-network
