@@ -8,6 +8,24 @@ const TABS = [
   { id: 'resultats', label: 'Résultats & Records' },
   { id: 'reseaute', label: 'SAM Réseaute' },
   { id: 'documents', label: 'Plans & Documents' },
+  { id: 'vieduclub', label: 'Vie du Club' },
+  { id: 'admin', label: 'Admin Club', badge: 'Bureau' },
+]
+
+// Reprend les rubriques réelles de "Le Club > Vie du Club" et "Préparation"
+const VIE_DU_CLUB_CARDS = [
+  { kind: 'Gouvernance', titre: 'Conseil d’Administration', texte: 'Composition du Conseil d’Administration de la SAM Paris 12.' },
+  { kind: 'Histoire', titre: 'Histoire du Club', texte: 'Résumé de l’histoire de la SAM, de 1887 à nos jours.' },
+  { kind: 'Équipement', titre: 'Maillots du Club', texte: 'Comment se procurer les maillots et accessoires aux couleurs du club.' },
+  { kind: 'Règlement', titre: 'Respectons les règles', texte: 'Règles de vie sociale et d’équité sportive au sein du club.' },
+  { kind: 'Entraînement', titre: 'Notre terrain de jeu', texte: 'Stades, points de RDV et parcours d’entraînement (Bois de Vincennes et Île-de-France).' },
+  { kind: 'Discipline', titre: 'La Marche (Nordique Sportive & Loisir)', texte: 'Horaires, encadrement et informations pratiques pour les deux sections marche.' },
+  { kind: 'Pratique', titre: 'Ressources', texte: 'Liens et outils utiles pour les adhérents (FFA, plateformes d’inscription, etc.).' },
+]
+
+const ADMIN_CARDS = [
+  { titre: 'Gérer les événements', texte: 'Créer, modifier ou clôturer les événements de l’agenda du club (compétitions, séances spéciales, vie associative).' },
+  { titre: 'Inscriptions aux événements', texte: 'Suivre et gérer les inscriptions des adhérents aux événements créés.' },
 ]
 
 // Noms et rôles déjà publics sur samparis12.org (page "Qui sommes-nous") —
@@ -50,6 +68,7 @@ export default function Dashboard() {
   const [activity, setActivity] = useState('Toutes les activités')
   const [status, setStatus] = useState(null)
   const [nature, setNature] = useState('Toutes')
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
   const filteredReseau = useMemo(() => {
     return RESEAU_POSTS.filter((p) => nature === 'Toutes' || p.nature === nature)
@@ -87,11 +106,35 @@ export default function Dashboard() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
-            <div style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
-              <b style={{ display: 'block' }}>Laurent D.</b>
-              <span style={{ color: 'var(--stone)', fontSize: '0.66rem' }}>
-                FFA N° 1894023 · <span style={{ color: '#059669', fontWeight: 600 }}>Licence Valide</span>
-              </span>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setProfileMenuOpen((v) => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <span>
+                  <b style={{ display: 'block' }}>Laurent D.</b>
+                  <span style={{ color: 'var(--stone)', fontSize: '0.66rem' }}>
+                    FFA N° 1894023 · <span style={{ color: '#059669', fontWeight: 600 }}>Licence Valide</span>
+                  </span>
+                </span>
+                <span style={{ color: 'var(--stone)' }}>{profileMenuOpen ? '▴' : '▾'}</span>
+              </button>
+              {profileMenuOpen && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.4rem', background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', minWidth: 200, zIndex: 50, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textAlign: 'left' }}>
+                  <button
+                    onClick={() => { setActiveTab('overview'); setProfileMenuOpen(false) }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '0.7rem 0.9rem', cursor: 'pointer', color: 'var(--ink)' }}
+                  >
+                    Tes informations
+                  </button>
+                  <button
+                    onClick={() => { setActiveTab('documents'); setProfileMenuOpen(false) }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '0.7rem 0.9rem', cursor: 'pointer', color: 'var(--ink)', borderTop: '1px solid var(--line)' }}
+                  >
+                    Tes documents
+                  </button>
+                </div>
+              )}
             </div>
             <button onClick={() => navigate('/espace-adherent')} className="btn btn--ghost" style={{ padding: '0.45rem 0.85rem', fontSize: '0.68rem' }}>
               Déconnexion
@@ -108,6 +151,11 @@ export default function Dashboard() {
                 onClick={() => setActiveTab(tab.id)}
               >
                 {tab.label}
+                {tab.badge && (
+                  <span style={{ marginLeft: '0.4rem', fontSize: '0.6rem', padding: '0.1rem 0.35rem', background: 'var(--vermilion)', color: '#fff', borderRadius: 2 }}>
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -454,6 +502,53 @@ export default function Dashboard() {
                   </div>
                   <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
                     <button className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Télécharger le document ↓</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'vieduclub' && (
+          <div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <span className="eyebrow">Gouvernance, histoire &amp; pratique</span>
+              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Vie du Club</h2>
+              <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Tout savoir sur l'association, son fonctionnement et ses lieux de pratique.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
+              {VIE_DU_CLUB_CARDS.map((c) => (
+                <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>{c.kind}</span>
+                    <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{c.titre}</h3>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0.5rem 0 0' }}>{c.texte}</p>
+                  </div>
+                  <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Ouvrir →</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'admin' && (
+          <div>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <span className="eyebrow">Réservé au bureau du club</span>
+              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Admin Club</h2>
+              <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Outils de gestion réservés aux membres du bureau et de l'organisation.</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
+              {ADMIN_CARDS.map((c) => (
+                <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase' }}>{c.titre}</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0.5rem 0 0' }}>{c.texte}</p>
+                  <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button className="btn btn--solid" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Ouvrir →</button>
                   </div>
                 </div>
               ))}
