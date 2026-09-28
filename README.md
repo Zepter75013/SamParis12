@@ -22,13 +22,27 @@ Espace adhérent et back-office ne sont pas inclus dans cette V1.
 
 ## Développement local
 
-Un environnement complet (MySQL + backend) est fourni via Docker :
+Comme pour Finance et Record-manager, le développement se fait **sans Docker**
+(Docker est réservé au déploiement NAS). Il faut un serveur MySQL local
+(sur `localhost:3306`), avec une base et un utilisateur dédiés :
 
-```bash
-docker compose -f docker-compose.dev.yml up --build
+```sql
+CREATE DATABASE IF NOT EXISTS samparis12db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'SamParis12Admin'@'localhost' IDENTIFIED BY '...';
+GRANT ALL PRIVILEGES ON samparis12db.* TO 'SamParis12Admin'@'localhost';
+FLUSH PRIVILEGES;
 ```
 
-Puis, dans un autre terminal, lancer le frontend :
+Renseigner ces identifiants dans `backend/.env` (non versionné, voir les variables
+utilisées dans `internal/config/config.go`), puis :
+
+```bash
+cd backend
+go run ./cmd/migrate   # crée les tables + contenu d'exemple (une seule fois)
+go run ./cmd/api        # démarre l'API sur :8080
+```
+
+Dans un autre terminal, lancer le frontend :
 
 ```bash
 cd frontend
@@ -36,7 +50,8 @@ npm install
 npm run dev
 ```
 
-Le frontend (http://localhost:5173) proxy `/api` vers le backend sur le port 8080.
+Le frontend (http://localhost:5173) appelle directement `http://localhost:8080/api`
+(voir `frontend/.env.local`, non versionné).
 
 ## Déploiement (NAS)
 
