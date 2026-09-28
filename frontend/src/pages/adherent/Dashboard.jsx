@@ -11,17 +11,28 @@ const TABS = [
 ]
 
 const TROMBI = [
-  { nom: 'Marie Frank', role: 'Présidente & Entraîneure 2e degré', groupe: 'Bureau & Hors-Stade', tag: 'Bureau & Hors-Stade' },
-  { nom: 'Jean-Pierre Schulz', role: 'Secrétaire Général', groupe: 'Bureau & Hors-Stade', tag: 'Bureau & Hors-Stade' },
-  { nom: 'Sylvain Darrasse', role: 'Entraîneur 3e degré Running', groupe: 'Entraîneurs', tag: 'Entraîneurs' },
-  { nom: 'Anne Corbel-Trinh', role: 'Entraîneure 1er degré MNS', groupe: 'Marche Nordique', tag: 'Marche Nordique' },
-  { nom: 'Jérôme Borroz', role: 'Entraîneur MNS', groupe: 'Marche Nordique', tag: 'Marche Nordique' },
-  { nom: 'Gabriel Kasmi', role: 'Entraîneur 2e degré Running', groupe: 'Entraîneurs', tag: 'Entraîneurs' },
-  { nom: 'Camille Renard', role: 'Adhérente (depuis 2022)', groupe: 'Hors-Stade', tag: 'Hors-Stade · 10km & Semi' },
-  { nom: 'Thomas Guérin', role: 'Adhérent (depuis 2024)', groupe: 'Trail', tag: 'Trail & Nature' },
+  { nom: 'Marie Frank', role: 'Présidente & Entraîneure 2e degré', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérente 2027' },
+  { nom: 'Jean-Pierre Schulz', role: 'Secrétaire Général', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'Sylvain Darrasse', role: 'Entraîneur 3e degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'Anne Corbel-Trinh', role: 'Entraîneure 1er degré MNS', groupe: 'Marche Nordique Sportive', statut: 'Adhérents 2027', tag: 'Marche Nordique Sportive · Adhérente 2027' },
+  { nom: 'Jérôme Borroz', role: 'Entraîneur MNS', groupe: 'Marche Nordique Sportive', statut: 'Adhérents 2027', tag: 'Marche Nordique Sportive · Adhérent 2027' },
+  { nom: 'Gabriel Kasmi', role: 'Entraîneur 2e degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'Camille Renard', role: 'Adhérente depuis 2022', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérente 2027' },
+  { nom: 'Thomas Guérin', role: 'Adhérent depuis 2024', groupe: 'Running', statut: 'Nouveaux adhérents', tag: 'Running · Nouvel adhérent' },
 ]
 
-const GROUP_FILTERS = ['Tous', 'Bureau', 'Entraîneurs', 'Hors-Stade', 'Marche Nordique', 'Trail']
+// Taxonomie reprise du vrai espace adhérent (trombinoscope.php)
+const ACTIVITY_FILTERS = ['Toutes les activités', 'Running', 'Marche Nordique Sportive', 'Marche Loisir']
+const STATUS_FILTERS = ['Adhérents 2027', 'Anciens adhérents', 'Nouveaux adhérents']
+
+// Taxonomie reprise du vrai espace adhérent (reseau.php)
+const NATURE_FILTERS = ['Toutes', 'Bons plans', 'Le Bon Coin', 'Rendre service', 'Vie professionnelle']
+
+const RESEAU_POSTS = [
+  { nature: 'Le Bon Coin', domaine: 'Sport', par: 'Julien M. (Adhérent Running)', date: '8 Septembre 2026', titre: 'Don / Cède chaussures Vaporfly Next% taille 43 (très peu servies)', texte: "Achetées trop petites pour mon pied, courues 30 km seulement. À donner ou troquer contre une bière après la séance du jeudi au club ! Me contacter par WhatsApp." },
+  { nature: 'Rendre service', domaine: 'Santé', par: 'Élise B. (Marche Nordique)', date: '3 Septembre 2026', titre: 'Recommandation cabinet kiné du sport spécialisé genou & foulée (Nation)', texte: "Pour ceux qui préparent le marathon ou ont des douleurs d'essuie-glace : je vous recommande le cabinet de rééducation sportive rue du Faubourg Saint-Antoine, bilans de foulée très professionnels." },
+  { nature: 'Bons plans', domaine: 'Sport', par: 'Nicolas P. (Trail)', date: '1er Septembre 2026', titre: 'Sortie off samedi matin à Bures-sur-Yvette — 2 places disponibles', texte: "Départ 8h30 Porte de Charenton en voiture. Parcours de 22 km / 500m D+ en vallée de Chevreuse. Retour vers 12h30. Me contacter au vestiaire mardi soir." },
+]
 
 function initials(nom) {
   return nom.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
@@ -31,16 +42,23 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [search, setSearch] = useState('')
-  const [group, setGroup] = useState('Tous')
+  const [activity, setActivity] = useState('Toutes les activités')
+  const [status, setStatus] = useState(null)
+  const [nature, setNature] = useState('Toutes')
+
+  const filteredReseau = useMemo(() => {
+    return RESEAU_POSTS.filter((p) => nature === 'Toutes' || p.nature === nature)
+  }, [nature])
 
   const filteredTrombi = useMemo(() => {
     const q = search.toLowerCase()
     return TROMBI.filter((m) => {
       const matchesQuery = m.nom.toLowerCase().includes(q) || m.role.toLowerCase().includes(q)
-      const matchesGroup = group === 'Tous' || m.groupe.toLowerCase().includes(group.toLowerCase())
-      return matchesQuery && matchesGroup
+      const matchesActivity = activity === 'Toutes les activités' || m.groupe === activity
+      const matchesStatus = !status || m.statut === status
+      return matchesQuery && matchesActivity && matchesStatus
     })
-  }, [search, group])
+  }, [search, activity, status])
 
   return (
     <div className="adherent-layout">
@@ -190,23 +208,42 @@ export default function Dashboard() {
               <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Faites connaissance avec les adhérents, le bureau et les entraîneurs bénévoles diplômés du club.</p>
             </div>
 
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1rem', marginBottom: '1.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
               <input
                 type="text"
                 placeholder="Rechercher par prénom, nom ou fonction..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ padding: '0.6rem 0.8rem', background: '#fff', border: '1px solid var(--line)', minWidth: 280, fontFamily: 'inherit', fontSize: 'inherit' }}
+                style={{ padding: '0.6rem 0.8rem', background: '#fff', border: '1px solid var(--line)', minWidth: 280, width: '100%', fontFamily: 'inherit', fontSize: 'inherit', marginBottom: '0.8rem' }}
               />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-                {GROUP_FILTERS.map((g) => (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                {ACTIVITY_FILTERS.map((a) => (
                   <button
-                    key={g}
-                    onClick={() => setGroup(g)}
-                    className={`btn ${group === g ? 'btn--solid' : 'btn--ghost'}`}
+                    key={a}
+                    onClick={() => setActivity(a)}
+                    className={`btn ${activity === a ? 'btn--solid' : 'btn--ghost'}`}
                     style={{ padding: '0.4rem 0.7rem', fontSize: '0.7rem' }}
                   >
-                    {g}
+                    {a}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <button
+                  onClick={() => setStatus(null)}
+                  className={`btn ${!status ? 'btn--solid' : 'btn--ghost'}`}
+                  style={{ padding: '0.4rem 0.7rem', fontSize: '0.7rem' }}
+                >
+                  Tous statuts
+                </button>
+                {STATUS_FILTERS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatus(s)}
+                    className={`btn ${status === s ? 'btn--solid' : 'btn--ghost'}`}
+                    style={{ padding: '0.4rem 0.7rem', fontSize: '0.7rem' }}
+                  >
+                    {s}
                   </button>
                 ))}
               </div>
@@ -241,22 +278,22 @@ export default function Dashboard() {
             <div style={{ display: 'grid', gap: '1.2rem' }}>
               {[
                 {
-                  badge: '21,1 km', date: '15 Novembre 2026', titre: 'Semi-Marathon de Boulogne-Billancourt',
+                  badge: 'Semi-marathon', date: '15 Novembre 2026', titre: 'Semi-Marathon de Boulogne-Billancourt',
                   info: <>Inscrits du club : <strong>38 coureurs</strong> · Statut : <span style={{ color: '#059669', fontWeight: 'bold' }}>Inscriptions ouvertes</span></>,
                   tag: '🚗 Covoiturage actif (6 voitures)', action: 'Rejoindre le groupe',
                 },
                 {
-                  badge: '8,5 km Cross', date: '13 Décembre 2026', titre: "Cross Régional d'Île-de-France",
+                  badge: 'Cross', date: '13 Décembre 2026', titre: "Cross Régional d'Île-de-France",
                   info: <>Inscrits du club : <strong>24 coureurs</strong> · Statut : <span style={{ color: '#059669', fontWeight: 'bold' }}>Prise en charge club</span></>,
                   tag: '🚗 Minibus club prévu', action: 'Rejoindre le groupe',
                 },
                 {
-                  badge: '10 km & 5 km', date: 'Printemps 2027', titre: 'Les Foulées du 12ème (Bois de Vincennes)',
+                  badge: '10 km route', date: 'Printemps 2027', titre: 'Les Foulées du 12ème (Bois de Vincennes)',
                   info: <>Organisation + <strong>85 coureurs</strong> du SAM · Statut : <span style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>Course du club</span></>,
                   secondaryAction: 'S’inscrire comme bénévole', action: 'Dossard club',
                 },
                 {
-                  badge: '42,195 km', date: 'Avril 2027', titre: 'Marathon de Paris',
+                  badge: 'Marathon', date: 'Avril 2027', titre: 'Marathon de Paris',
                   info: <>Inscrits du club : <strong>62 marathoniens</strong> · Statut : <span style={{ color: '#059669', fontWeight: 'bold' }}>Plans prépa en cours</span></>,
                   secondaryAction: 'Télécharger le plan marathon', action: 'Groupe WhatsApp Dédié',
                   onSecondary: () => setActiveTab('documents'),
@@ -354,21 +391,37 @@ export default function Dashboard() {
               <button className="btn btn--solid" style={{ padding: '0.6rem 1.2rem', fontSize: '0.72rem' }}>+ Déposer une annonce</button>
             </div>
 
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.2rem' }}>
+              {NATURE_FILTERS.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setNature(n)}
+                  className={`btn ${nature === n ? 'btn--solid' : 'btn--ghost'}`}
+                  style={{ padding: '0.4rem 0.7rem', fontSize: '0.7rem' }}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+
             <div style={{ display: 'grid', gap: '1.2rem' }}>
-              {[
-                { tag: 'MATÉRIEL', par: 'Julien M. (Adhérent Running)', date: '8 Septembre 2026', titre: 'Don / Cède chaussures Vaporfly Next% taille 43 (très peu servies)', texte: "Achetées trop petites pour mon pied, courues 30 km seulement. À donner ou troquer contre une bière après la séance du jeudi au club ! Me contacter par WhatsApp." },
-                { tag: 'ENTRAIDE SANTÉ', par: 'Élise B. (Marche Nordique)', date: '3 Septembre 2026', titre: 'Recommandation cabinet kiné du sport spécialisé genou & foulée (Nation)', texte: "Pour ceux qui préparent le marathon ou ont des douleurs d'essuie-glace : je vous recommande le cabinet de rééducation sportive rue du Faubourg Saint-Antoine, bilans de foulée très professionnels." },
-                { tag: 'COVOITURAGE TRAIL', par: 'Nicolas P. (Trail)', date: '1er Septembre 2026', titre: 'Sortie off samedi matin à Bures-sur-Yvette — 2 places disponibles', texte: "Départ 8h30 Porte de Charenton en voiture. Parcours de 22 km / 500m D+ en vallée de Chevreuse. Retour vers 12h30. Me contacter au vestiaire mardi soir." },
-              ].map((post) => (
+              {filteredReseau.map((post) => (
                 <div key={post.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    <span style={{ padding: '0.15rem 0.5rem', background: 'var(--surface-2)', color: 'var(--vermilion)', fontWeight: 'bold', textTransform: 'uppercase' }}>[{post.tag}]</span>
+                    <span>
+                      <span style={{ padding: '0.15rem 0.5rem', background: 'var(--surface-2)', color: 'var(--vermilion)', fontWeight: 'bold', textTransform: 'uppercase' }}>{post.nature}</span>
+                      {' '}
+                      <span style={{ padding: '0.15rem 0.5rem', color: 'var(--stone)', textTransform: 'uppercase' }}>{post.domaine}</span>
+                    </span>
                     <span style={{ color: 'var(--stone)' }}>Publié par <strong>{post.par}</strong> le {post.date}</span>
                   </div>
                   <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>{post.titre}</h3>
                   <p style={{ fontSize: '0.92rem', color: 'var(--ink-soft)', margin: '0.4rem 0 0', lineHeight: 1.6 }}>{post.texte}</p>
                 </div>
               ))}
+              {filteredReseau.length === 0 && (
+                <p style={{ color: 'var(--stone)' }}>Aucune contribution dans cette catégorie.</p>
+              )}
             </div>
           </div>
         )}
@@ -405,7 +458,13 @@ export default function Dashboard() {
       </main>
 
       <footer style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)' }}>
-        SAM Paris 12 · Espace réservé aux adhérents (démonstration) · Licence FFA N° 075043 · Contact technique : <a href="mailto:contact@samparis12.org" style={{ textDecoration: 'underline' }}>contact@samparis12.org</a>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.6rem 1.2rem', marginBottom: '0.6rem' }}>
+          <button className="link-button" style={{ textTransform: 'none' }}>Plan du site</button>
+          <button className="link-button" style={{ textTransform: 'none' }}>Paiements Club</button>
+        </div>
+        SAM Paris 12 · Espace réservé aux adhérents (démonstration) · Licence FFA N° 075043<br />
+        Contact : <a href="mailto:contact@samparis12.org" style={{ textDecoration: 'underline' }}>contact@samparis12.org</a>
+        {' '}· Objets perdus : <a href="mailto:objetsperdus@samparis12.org" style={{ textDecoration: 'underline' }}>objetsperdus@samparis12.org</a>
       </footer>
     </div>
   )
