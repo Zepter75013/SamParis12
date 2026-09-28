@@ -10,13 +10,18 @@ const TABS = [
   { id: 'documents', label: 'Plans & Documents' },
 ]
 
+// Noms et rôles déjà publics sur samparis12.org (page "Qui sommes-nous") —
+// aucune coordonnée personnelle (adresse, tél., email, naissance) reprise.
 const TROMBI = [
-  { nom: 'Marie Frank', role: 'Présidente & Entraîneure 2e degré', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérente 2027' },
+  { nom: 'Marie Frank', role: 'Présidente & Entraîneure 2e degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérente 2027' },
   { nom: 'Jean-Pierre Schulz', role: 'Secrétaire Général', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
-  { nom: 'Sylvain Darrasse', role: 'Entraîneur 3e degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'David Madelaine', role: 'Trésorier', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'Claude Mercier', role: 'Vice-Président & Entraîneur 1er degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'Sylvain Darrasse', role: 'Entraîneur 3e degré Running Hors-Stade', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
   { nom: 'Anne Corbel-Trinh', role: 'Entraîneure 1er degré MNS', groupe: 'Marche Nordique Sportive', statut: 'Adhérents 2027', tag: 'Marche Nordique Sportive · Adhérente 2027' },
   { nom: 'Jérôme Borroz', role: 'Entraîneur MNS', groupe: 'Marche Nordique Sportive', statut: 'Adhérents 2027', tag: 'Marche Nordique Sportive · Adhérent 2027' },
-  { nom: 'Gabriel Kasmi', role: 'Entraîneur 2e degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'Gabriel Kasmi', role: 'Entraîneur 2e degré Running Hors-Stade', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
+  { nom: 'Daniel Lichtenauer', role: 'Entraîneur Hors-Stade 1er niveau', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
   { nom: 'Camille Renard', role: 'Adhérente depuis 2022', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérente 2027' },
   { nom: 'Thomas Guérin', role: 'Adhérent depuis 2024', groupe: 'Running', statut: 'Nouveaux adhérents', tag: 'Running · Nouvel adhérent' },
 ]
@@ -436,10 +441,10 @@ export default function Dashboard() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem' }}>
               {[
-                { kind: 'PDF · Document technique', titre: 'Plan Marathon de Paris 2027 (12 semaines - Objectifs 3h00 à 4h15)', auteur: 'Sylvain Darrasse & Gabriel Kasmi' },
-                { kind: 'PDF · Grille d’allures piste', titre: 'Programme VMA & Allures de rentrée (Trimestre Automne 2026)', auteur: 'Commission des entraîneurs FFA' },
-                { kind: 'PDF · Vie associative', titre: "Procès-verbal de l'Assemblée Générale 2026", auteur: 'Bureau SAM Paris 12' },
-                { kind: 'PDF · Récits de courses & photos', titre: 'Journal du Club — Le Courrier du SAM N° 48', auteur: 'Comité de rédaction des adhérents' },
+                { kind: 'PDF · Programme trimestriel', titre: 'Plans d’entraînement running', auteur: 'Encadrement SAM Paris 12' },
+                { kind: 'PDF · Résultats', titre: 'Résultat du test VMA', auteur: 'Encadrement SAM Paris 12' },
+                { kind: 'PDF · Grille d’allures piste', titre: 'Allure fractionné / VMA par niveau', auteur: 'Commission des entraîneurs FFA' },
+                { kind: 'PDF · Plan des lieux', titre: 'Plan du stade', auteur: 'SAM Paris 12' },
               ].map((doc) => (
                 <div key={doc.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                   <div>
