@@ -1,13 +1,11 @@
-import { Link } from 'react-router-dom'
-
 export default function NotFound() {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-24 text-center">
-      <p className="font-display text-6xl text-club-red">404</p>
-      <h1 className="mt-4 text-2xl font-bold">Page introuvable</h1>
-      <Link to="/" className="mt-6 inline-block text-club-red font-semibold hover:underline">
-        ← Retour à l'accueil
-      </Link>
-    </div>
+    <main className="shell" style={{ padding: '6rem 0', textAlign: 'center' }}>
+      <p className="eyebrow">Erreur</p>
+      <h1 style={{ fontSize: '4rem', textTransform: 'uppercase', marginTop: '0.5rem' }}>Page introuvable</h1>
+      <p style={{ marginTop: '1.5rem' }}>
+        <a href="/" style={{ color: 'var(--vermilion)' }}>← Retour à l'accueil</a>
+      </p>
+    </main>
   )
 }

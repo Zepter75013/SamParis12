@@ -1,24 +1,31 @@
 # SAM Paris 12 — nouveau site
 
-Refonte du site du club d'athlétisme SAM Paris 12 : interface moderne, responsive
-mobile-first, base de données MySQL. Une PWA (installable, hors-ligne) est prévue
-pour une phase ultérieure.
+Refonte du site du club SAM Paris 12 (course à pied hors stade, fondé en 1887,
+Porte de Charenton) : page unique façon "carnet de course" (design et contenu
+alignés sur la maquette fournie), responsive mobile-first, base de données
+MySQL. Une PWA (installable, hors-ligne) est prévue pour une phase ultérieure.
 
 ## Stack
 
 - **Backend** : Go (stdlib `net/http`), MySQL (`go-sql-driver/mysql`)
-- **Frontend** : React + Vite, Tailwind CSS v4, React Router
+- **Frontend** : React + Vite, React Router, CSS bespoke (pas de framework
+  utilitaire — voir `frontend/src/index.css`)
 - **Déploiement** : Docker Compose, sur le même NAS que les autres apps
   (conteneur MySQL partagé `bdd-mysql`)
 
 ## Contenu actuel (V1)
 
-Site vitrine public uniquement : accueil, présentation du club, sections
-d'entraînement, actualités, calendrier, partenaires, contact. Le contenu en base
-(`backend/migrations/0002_seed.sql`) est un **exemple à remplacer** par le contenu
-réel du club (textes, encadrants, horaires, logo).
+Page unique (`/`) : hero, chiffres clés, puis six sections façon "kilomètres"
+(le club, disciplines, terrain de jeu, Les Foulées du 12ème, adhésion, contact).
+La majorité du contenu est statique dans `frontend/src/pages/Home.jsx` (texte,
+disciplines, adresse) ; seul le partenaire affiché en pied de page vient de la
+base MySQL (`backend/migrations/0002_seed.sql` — contenu d'exemple à ajuster).
 
-Espace adhérent et back-office ne sont pas inclus dans cette V1.
+Espace adhérent et back-office ne sont pas inclus dans cette V1. Les anciennes
+pages actualités/calendrier/sections (V1 initiale) ont été retirées au profit
+de cette page unique ; le backend garde leurs endpoints (`/api/news`,
+`/api/events`, `/api/groups`, `/api/contact`) au cas où elles seraient
+réintroduites plus tard.
 
 ## Développement local
 
@@ -66,7 +73,7 @@ docker compose up --build -d
 
 - Remplacer le logo placeholder (`frontend/src/components/Logo.jsx` et
   `frontend/public/favicon.svg`) par le logo officiel du club.
-- Remplacer le contenu d'exemple en base par le contenu réel (histoire du club,
-  bureau, sections, actualités, partenaires).
+- Vérifier/ajuster le contenu statique de la page (adresse, tarifs, réseaux
+  sociaux, lien de paiement) et le partenaire en base.
 - Basculer le DNS de samparis12.org vers le nouveau site une fois validé.
 - Phase 2 : PWA (manifest, service worker, installabilité, mode hors-ligne).

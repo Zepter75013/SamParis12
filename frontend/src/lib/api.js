@@ -14,11 +14,5 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  getNews: () => request('/news'),
-  getArticle: (slug) => request(`/news/${slug}`),
-  getEvents: () => request('/events'),
-  getGroups: () => request('/groups'),
   getPartners: () => request('/partners'),
-  sendContact: (payload) =>
-    request('/contact', { method: 'POST', body: JSON.stringify(payload) }),
 }
