@@ -13,7 +13,7 @@
 
   --font-display: "Barlow Condensed", "Oswald", "Arial Narrow", sans-serif;
   --font-body: "Spectral", Georgia, "Times New Roman", serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --font-mono: "Barlow Condensed", "Oswald", "Arial Narrow", sans-serif;
 
   --rail: 76px;
   --measure: 64ch;
@@ -106,7 +106,7 @@ header {
 }
 
 .brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
-.brand svg, .brand img { width: 34px; height: 38px; display: block; flex: none; object-fit: contain; }
+.brand svg, .brand img { width: 42px; height: 38px; display: block; flex: none; object-fit: contain; }
 .brand b {
   font-family: var(--font-display);
   font-weight: 700;

@@ -80,9 +80,9 @@ export default function Home() {
           <p className="eyebrow">Club d'athlétisme affilié FFA · Porte de Charenton · Fondé en 1887</p>
           <h1>On court le 12<sup>e</sup> depuis <em>1887</em></h1>
           <p className="lead">
-            Premier club d'athlétisme hors stade de Paris, avec plus de 680 adhérents de 16 à 84
-            ans. Running du 5 km à l'ultra-trail, marche nordique sportive : un encadrement
-            diplômé FFA, pour tous les niveaux.
+            Premier club d'athlétisme hors stade de Paris, avec plus de 680 adhérents majeurs.
+            Running du 5 km à l'ultra-trail, marche nordique sportive : un encadrement diplômé
+            FFA, pour tous les niveaux.
           </p>
           <div className="hero-actions">
             <a className="btn btn--solid" href="#adhesion">Rejoindre le club →</a>
@@ -94,7 +94,7 @@ export default function Home() {
               Mardi &amp; jeudi · 18h30 et 19h30 <span className="dot">·</span> Stade Léo Lagrange
             </span>
             <br />
-            Samedi &amp; dimanche · 9h30 <span className="dot">·</span> Bois de Vincennes{' '}
+            Dimanche · 9h30 <span className="dot">·</span> Bois de Vincennes{' '}
             <span className="dot">·</span> programme du trimestre selon le groupe
           </div>
         </div>
@@ -111,11 +111,11 @@ export default function Home() {
         </div>
         <div>
           <dt>Catégories accueillies</dt>
-          <dd>Cadets → Vétérans</dd>
+          <dd>Séniors → Vétérans</dd>
         </div>
         <div>
           <dt>Créneaux hebdo</dt>
-          <dd>Mar · Jeu · Sam · Dim</dd>
+          <dd>Mar · Jeu · Dim</dd>
         </div>
       </dl>
 
@@ -129,8 +129,8 @@ export default function Home() {
             <h2>Un club centenaire, la première référence hors stade à Paris</h2>
             <p className="lead-note">
               Fondé en 1887 et affilié à la Fédération Française d'Athlétisme, le SAM Paris 12
-              rassemble plus de 680 adhérents (44&nbsp;% de femmes), de 16 à 84 ans. C'est
-              aujourd'hui le premier club d'athlétisme hors stade de Paris.
+              rassemble plus de 680 adhérents majeurs (44&nbsp;% de femmes). C'est aujourd'hui le
+              premier club d'athlétisme hors stade de Paris.
             </p>
             <p>
               En 2026, la FFA lui a décerné le Label Or pour le secteur Running et le Label Bronze
@@ -157,7 +157,7 @@ export default function Home() {
               </article>
               <article>
                 <h3>Programme Trail <span>XXS → XL</span></h3>
-                <p>Groupes classés par km-effort (distance + dénivelé). Sorties nature le samedi matin en forêt et en Île-de-France.</p>
+                <p>Groupes classés par km-effort (distance + dénivelé). Sorties nature en forêt et en Île-de-France.</p>
               </article>
               <article>
                 <h3>Programme Marathon <span>SUB 2H45 → 3H45+</span></h3>
@@ -165,7 +165,7 @@ export default function Home() {
               </article>
               <article>
                 <h3>Marche nordique sportive <span>DEPUIS 2015</span></h3>
-                <p>Mardi, jeudi, samedi et dimanche. Technique, allure et convivialité, encadrées par des entraîneurs diplômés MNS.</p>
+                <p>Mardi, jeudi et dimanche. Technique, allure et convivialité, encadrées par des entraîneurs diplômés MNS.</p>
               </article>
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function Home() {
             <figure className="profile">
               <figcaption>Circuit Michel Jazy — Bois de Vincennes · 2,3 km</figcaption>
               <svg viewBox="0 0 620 170" role="img" aria-label="Illustration du profil du circuit Michel Jazy, terrain boisé au relief modéré.">
-                <g fontFamily="IBM Plex Mono, monospace" fontSize="10" fill="var(--stone)">
+                <g fontFamily="Barlow Condensed, sans-serif" fontSize="11" fill="var(--stone)">
                   <text x="44" y="163">Départ</text>
                   <text x="540" y="163">Arrivée</text>
                 </g>

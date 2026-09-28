@@ -15,7 +15,7 @@ export default function Header() {
     <header>
       <div className="shell nav">
         <a className="brand" href="#top">
-          <img src="/logo.jpg" alt="SAM Paris 12" width="38" height="34" />
+          <img src="/logo.png" alt="SAM Paris 12" width="42" height="38" />
           <span>
             <b>SAM Paris 12</b>
             <span className="tagline">Club d'athlétisme · 1887</span>
