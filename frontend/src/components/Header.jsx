@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const LINKS = [
   { href: '#club', label: 'Le club' },
@@ -26,7 +27,12 @@ export default function Header() {
             <a key={link.href} href={link.href}>{link.label}</a>
           ))}
         </nav>
-        <a className="btn btn--ghost" href="#adhesion">Espace adhérent</a>
+        <div className="nav-actions">
+          <Link to="/espace-adherent" className="btn-adherent-nav">
+            <span className="dot-status" />
+            Espace adhérent →
+          </Link>
+        </div>
         <button
           type="button"
           className="nav-toggle"
@@ -42,6 +48,7 @@ export default function Header() {
           <a key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}</a>
         ))}
         <a href="#contact" onClick={() => setOpen(false)}>Contact</a>
+        <Link to="/espace-adherent" onClick={() => setOpen(false)} style={{ color: 'var(--vermilion)' }}>Espace adhérent</Link>
       </nav>
     </header>
   )

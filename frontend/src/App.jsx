@@ -3,16 +3,26 @@ import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
 import Home from './pages/Home.jsx'
 import NotFound from './pages/NotFound.jsx'
+import Login from './pages/adherent/Login.jsx'
+import Dashboard from './pages/adherent/Dashboard.jsx'
 
-export default function App() {
+function PublicLayout({ children }) {
   return (
     <>
       <Header />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      {children}
       <Footer />
     </>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
+      <Route path="/espace-adherent" element={<Login />} />
+      <Route path="/espace-adherent/tableau-de-bord" element={<Dashboard />} />
+      <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
+    </Routes>
   )
 }

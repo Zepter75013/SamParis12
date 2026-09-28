@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { useFetch } from '../lib/useFetch.js'
 
@@ -8,7 +9,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="shell foot">
-        <a href="#adhesion">Espace adhérent</a>
+        <Link to="/espace-adherent">Espace adhérent</Link>
         <a href="#foulees">Les Foulées du 12ème</a>
         <a href="#contact">Mentions légales</a>
         <span className="sep" />

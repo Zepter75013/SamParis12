@@ -159,6 +159,138 @@ header {
 
 .nav .btn { margin-left: 0.25rem; }
 .nav-toggle { display: none; }
+.nav-drawer { display: none; }
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: 0.5rem;
+  padding-left: 1.25rem;
+  border-left: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.btn-adherent-nav {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-adherent-nav:hover { background: var(--vermilion); border-color: var(--vermilion); color: #fff; }
+.dot-status {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  flex: none;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--stone);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.link-button:hover { color: var(--vermilion); }
+
+/* ---------- Espace adhérent (login) ---------- */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+  background: var(--paper);
+}
+.login-box { max-width: 440px; width: 100%; margin: auto; padding-block: 2rem; }
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 2rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+.login-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink);
+  box-sizing: border-box;
+  margin-top: 0.35rem;
+}
+.login-input:focus { outline: none; border-color: var(--vermilion); }
+
+/* ---------- Espace adhérent (tableau de bord) ---------- */
+.adherent-layout { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
+.adherent-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.adherent-top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.75rem;
+}
+.adherent-tabs-nav {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+  padding-block: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+.adh-tab-btn {
+  background: none;
+  border: none;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s ease;
+}
+.adh-tab-btn:hover { color: var(--ink); }
+.adh-tab-btn.active {
+  color: var(--vermilion);
+  border-bottom-color: var(--vermilion);
+  font-weight: 700;
+  background: var(--surface-2);
+}
 
 /* ---------- Hero ---------- */
 .hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
@@ -408,7 +540,7 @@ footer {
 .foot .partner { display: flex; align-items: center; gap: 0.6rem; }
 
 @media (max-width: 860px) {
-  .nav-links, .nav .btn { display: none; }
+  .nav-links, .nav-actions { display: none; }
   .nav-toggle {
     display: inline-flex;
     margin-left: auto;
