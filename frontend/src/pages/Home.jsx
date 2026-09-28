@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 
 export default function Home() {
   const lineRef = useRef(null)
@@ -257,9 +258,9 @@ export default function Home() {
                 <li>Tarif préférentiel chez notre partenaire Team Outdoor</li>
               </ul>
               <div className="join-foot">
-                <a className="btn btn--solid" href="https://samparis12.org/public/paiement/index.php">
+                <Link className="btn btn--solid" to="/adhesion/paiement">
                   Payer ma cotisation en ligne →
-                </a>
+                </Link>
                 <a className="btn btn--ghost" href="#contact">Poser une question</a>
               </div>
             </div>

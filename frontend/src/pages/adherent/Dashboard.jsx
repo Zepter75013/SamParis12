@@ -789,7 +789,7 @@ export default function Dashboard() {
       <footer style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.6rem 1.2rem', marginBottom: '0.6rem' }}>
           <button className="link-button" style={{ textTransform: 'none' }}>Plan du site</button>
-          <button className="link-button" style={{ textTransform: 'none' }}>Paiements Club</button>
+          <button onClick={() => navigate('/adhesion/paiement')} className="link-button" style={{ textTransform: 'none' }}>Paiements Club</button>
         </div>
         SAM Paris 12 · Espace réservé aux adhérents (démonstration) · Licence FFA N° 075043<br />
         Contact : <a href="mailto:contact@samparis12.org" style={{ textDecoration: 'underline' }}>contact@samparis12.org</a>

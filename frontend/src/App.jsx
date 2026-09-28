@@ -5,6 +5,7 @@ import Home from './pages/Home.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Login from './pages/adherent/Login.jsx'
 import Dashboard from './pages/adherent/Dashboard.jsx'
+import Paiement from './pages/Paiement.jsx'
 
 function PublicLayout({ children }) {
   return (
@@ -22,6 +23,7 @@ export default function App() {
       <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
       <Route path="/espace-adherent" element={<Login />} />
       <Route path="/espace-adherent/tableau-de-bord" element={<Dashboard />} />
+      <Route path="/adhesion/paiement" element={<Paiement />} />
       <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
     </Routes>
   )
