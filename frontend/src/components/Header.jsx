@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Logo from './Logo.jsx'
 
 const LINKS = [
   { href: '#club', label: 'Le club' },
@@ -16,10 +15,10 @@ export default function Header() {
     <header>
       <div className="shell nav">
         <a className="brand" href="#top">
-          <Logo />
+          <img src="/logo.jpg" alt="SAM Paris 12" width="38" height="34" />
           <span>
             <b>SAM Paris 12</b>
-            <span className="tagline">Club de course à pied · 1887</span>
+            <span className="tagline">Club d'athlétisme · 1887</span>
           </span>
         </a>
         <nav className="nav-links" aria-label="Principale">

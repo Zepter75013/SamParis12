@@ -17,9 +17,12 @@ MySQL. Une PWA (installable, hors-ligne) est prévue pour une phase ultérieure.
 
 Page unique (`/`) : hero, chiffres clés, puis six sections façon "kilomètres"
 (le club, disciplines, terrain de jeu, Les Foulées du 12ème, adhésion, contact).
-La majorité du contenu est statique dans `frontend/src/pages/Home.jsx` (texte,
-disciplines, adresse) ; seul le partenaire affiché en pied de page vient de la
-base MySQL (`backend/migrations/0002_seed.sql` — contenu d'exemple à ajuster).
+Le contenu (histoire, effectifs, tarifs, adresse, disciplines) reprend les
+informations publiques du site actuel samparis12.org et du planning
+d'entraînement du club, et est statique dans `frontend/src/pages/Home.jsx` ;
+seul le partenaire affiché en pied de page vient de la base MySQL
+(`backend/migrations/0002_seed.sql` — contenu d'exemple à ajuster). Le logo
+(`frontend/public/logo.jpg`) est le logo officiel du club.
 
 Espace adhérent et back-office ne sont pas inclus dans cette V1. Les anciennes
 pages actualités/calendrier/sections (V1 initiale) ont été retirées au profit
@@ -71,9 +74,7 @@ docker compose up --build -d
 
 ## À faire avant mise en production
 
-- Remplacer le logo placeholder (`frontend/src/components/Logo.jsx` et
-  `frontend/public/favicon.svg`) par le logo officiel du club.
-- Vérifier/ajuster le contenu statique de la page (adresse, tarifs, réseaux
-  sociaux, lien de paiement) et le partenaire en base.
+- Revalider le contenu statique auprès du club (effectifs, tarifs, contact)
+  au moment de la mise en prod, ces chiffres évoluant chaque saison.
 - Basculer le DNS de samparis12.org vers le nouveau site une fois validé.
 - Phase 2 : PWA (manifest, service worker, installabilité, mode hors-ligne).

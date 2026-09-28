@@ -106,7 +106,7 @@ header {
 }
 
 .brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
-.brand svg { width: 34px; height: 38px; display: block; flex: none; }
+.brand svg, .brand img { width: 34px; height: 38px; display: block; flex: none; object-fit: contain; }
 .brand b {
   font-family: var(--font-display);
   font-weight: 700;
