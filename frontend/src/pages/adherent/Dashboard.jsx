@@ -12,20 +12,136 @@ const TABS = [
   { id: 'admin', label: 'Admin Club', badge: 'Bureau' },
 ]
 
-// Reprend les rubriques réelles de "Le Club > Vie du Club" et "Préparation"
+// Reprend les rubriques réelles de "Le Club > Vie du Club" et "Préparation".
+// Contenu détaillé : histoire/terrain/marche repris du vrai site (public,
+// pages "Qui sommes-nous"/"Histoire"/"Terrain de jeu"/"Marche nordique") ;
+// conseil d'administration = noms et rôles déjà publics, sans coordonnées ;
+// maillots/règles/ressources = contenu générique, non scrapé du vrai site.
 const VIE_DU_CLUB_CARDS = [
-  { kind: 'Gouvernance', titre: 'Conseil d’Administration', texte: 'Composition du Conseil d’Administration de la SAM Paris 12.' },
-  { kind: 'Histoire', titre: 'Histoire du Club', texte: 'Résumé de l’histoire de la SAM, de 1887 à nos jours.' },
-  { kind: 'Équipement', titre: 'Maillots du Club', texte: 'Comment se procurer les maillots et accessoires aux couleurs du club.' },
-  { kind: 'Règlement', titre: 'Respectons les règles', texte: 'Règles de vie sociale et d’équité sportive au sein du club.' },
-  { kind: 'Entraînement', titre: 'Notre terrain de jeu', texte: 'Stades, points de RDV et parcours d’entraînement (Bois de Vincennes et Île-de-France).' },
-  { kind: 'Discipline', titre: 'La Marche (Nordique Sportive & Loisir)', texte: 'Horaires, encadrement et informations pratiques pour les deux sections marche.' },
-  { kind: 'Pratique', titre: 'Ressources', texte: 'Liens et outils utiles pour les adhérents (FFA, plateformes d’inscription, etc.).' },
+  {
+    kind: 'Gouvernance', titre: 'Conseil d’Administration',
+    texte: 'Composition du Conseil d’Administration de la SAM Paris 12.',
+    detail: {
+      intro: 'Le club est administré par un bureau bénévole, élu en Assemblée Générale.',
+      liste: [
+        ['Marie Frank', 'Présidente'],
+        ['Jean-Pierre Schulz', 'Secrétaire Général'],
+        ['David Madelaine', 'Trésorier'],
+        ['Germaine Jallas', 'Présidente d’honneur'],
+        ['Claude Mercier', 'Vice-Président'],
+        ['Alain Temin', 'Vice-Président'],
+        ['Diana Temin', 'Secrétaire générale adjointe'],
+        ['Anne Corbel-Trinh', 'Référente discrimination sexuelle et sexiste'],
+        ['Frédéric Magne', 'SAM Réseaute'],
+        ['Laurent Attal', 'Gentil Organisateur'],
+        ['Philippe Durand', 'Site internet'],
+      ],
+    },
+  },
+  {
+    kind: 'Histoire', titre: 'Histoire du Club',
+    texte: 'Résumé de l’histoire de la SAM, de 1887 à nos jours.',
+    detail: {
+      paragraphes: [
+        "Le club trouve son origine en 1887, autour d'un groupe de joueurs de tambourin constitué à Montrouge, place Denfert-Rochereau (sur le territoire des anciennes fortifications). Le 1er juin 1890, ce groupe se structure en société sportive parrainée par le Comité de Propagation des Exercices Physiques : la Société Athlétique de Montrouge (SAM) était née.",
+        "Les décennies suivantes voient le club devenir l'un des plus importants clubs multisports de Paris, avec des sections tambourin, athlétisme, pelote basque, cyclisme, football, rugby et natation, jusqu'à dépasser 1500 adhérents au début du XXe siècle.",
+        "Après une interruption liée à la Première Guerre mondiale, le club est reconstitué en 1920, puis retrouve une nouvelle vie en 1946 au Stade Léo Lagrange, se recentrant progressivement sur la course à pied.",
+        "En 1998, la Société Athlétique de Montrouge devient la SA Montrouge Paris 12, ancrée dans le 12e arrondissement. En 2005, le club reprend l'organisation des Foulées d'Aligre, qui deviennent Les Foulées du 12ème. En 2019, le nom d'usage devient le nom officiel : SAM Paris 12.",
+        "Aujourd'hui, la SAM Paris 12 est le premier club d'athlétisme hors stade de Paris, avec plus de 680 adhérents.",
+      ],
+    },
+  },
+  {
+    kind: 'Équipement', titre: 'Maillots du Club',
+    texte: 'Comment se procurer les maillots et accessoires aux couleurs du club.',
+    detail: {
+      paragraphes: [
+        "Le maillot officiel du club (rouge, hexagone SAM Paris 12) est disponible auprès du bureau lors des permanences d'inscription, ou sur commande groupée organisée en début de saison.",
+        "Notre partenaire Team Outdoor propose un tarif préférentiel aux adhérents sur une sélection d'équipements running et trail — présentez votre licence en boutique ou en ligne.",
+        "Pour une commande groupée (sacs, vestes, accessoires), une annonce est publiée dans l'agenda du club avec les tailles et délais.",
+      ],
+    },
+  },
+  {
+    kind: 'Règlement', titre: 'Respectons les règles',
+    texte: 'Règles de vie sociale et d’équité sportive au sein du club.',
+    detail: {
+      paragraphes: [
+        "Le club s'engage à accueillir tous les publics sans discrimination et à promouvoir une pratique inclusive de l'athlétisme.",
+        "Les valeurs partagées par les adhérents : respect des règles sportives, esprit d'équipe et solidarité, éthique et fair-play — sur le terrain comme dans les échanges au sein du club.",
+        "Toute question ou signalement peut être adressé au bureau ou, pour les questions de discrimination, à la référente dédiée du Conseil d'Administration.",
+      ],
+    },
+  },
+  {
+    kind: 'Entraînement', titre: 'Notre terrain de jeu',
+    texte: 'Stades, points de RDV et parcours d’entraînement (Bois de Vincennes et Île-de-France).',
+    detail: {
+      paragraphes: [
+        "Le Bois de Vincennes est le terrain d'entraînement principal du club : boisé, plat pour l'essentiel, il permet de varier les parcours toute l'année.",
+      ],
+      liste: [
+        ['Stade Léo Lagrange', 'Point de RDV de toutes les séances, et lieu du fractionné sur piste (400 m).'],
+        ['Circuit Michel Jazy', "2,3 km sur terrain souple et entièrement boisé, tracé par le champion du même nom."],
+        ['Butte aux Canons', "Ancien terrain d'entraînement militaire, aujourd'hui utilisé pour le renforcement musculaire des trailers."],
+        ['Circuit Kiosque', "860 m, utilisé pour enchaîner les tours sans récupération."],
+        ['Circuit Cross', "2 700 m, 80 m de dénivelé par tour."],
+        ['Sorties du samedi (Trail)', "Bures-sur-Yvette, 25 bosses de Fontainebleau, parc de Saint-Cloud, Buttes Chaumont, 100 marches de Champigny."],
+      ],
+    },
+  },
+  {
+    kind: 'Discipline', titre: 'La Marche (Nordique Sportive & Loisir)',
+    texte: 'Horaires, encadrement et informations pratiques pour les deux sections marche.',
+    detail: {
+      paragraphes: [
+        "La Marche Nordique Sportive est une discipline athlétique à part entière (FFA), dérivée du ski de fond, qui mobilise environ 80 % des chaînes musculaires tout en réduisant l'impact sur les articulations.",
+        "Séances encadrées : mardi 19h30–21h00 et jeudi 19h30–21h30 (départ Carrefour de la Conservation), dimanche 9h30–11h30 (départ Stade Léo Lagrange).",
+        "La Marche Loisir, section créée en 2012, propose une pratique plus détendue, sans objectif de compétition.",
+        "Contact section marche : entraineurmns@samparis12.org",
+      ],
+    },
+  },
+  {
+    kind: 'Pratique', titre: 'Ressources',
+    texte: 'Liens et outils utiles pour les adhérents (FFA, plateformes d’inscription, etc.).',
+    detail: {
+      liste: [
+        ['Portail FFA (licence & PPS)', 'Gestion de votre licence et de votre Parcours de Prévention Santé.'],
+        ['Plans d’entraînement', 'Disponibles dans l’onglet Plans & Documents.'],
+        ['Calendrier des compétitions FFA', 'Recherche de courses officielles par région et distance.'],
+        ['Objets perdus', 'objetsperdus@samparis12.org'],
+      ],
+    },
+  },
 ]
 
 const ADMIN_CARDS = [
-  { titre: 'Gérer les événements', texte: 'Créer, modifier ou clôturer les événements de l’agenda du club (compétitions, séances spéciales, vie associative).' },
-  { titre: 'Inscriptions aux événements', texte: 'Suivre et gérer les inscriptions des adhérents aux événements créés.' },
+  {
+    titre: 'Gérer les événements',
+    texte: 'Créer, modifier ou clôturer les événements de l’agenda du club (compétitions, séances spéciales, vie associative).',
+    detail: {
+      type: 'events',
+      liste: [
+        ['Test VMA 2026', 'Mardi 29 septembre 2026', 'Publié'],
+        ['Commande de sac d’hydratation KINETIK', 'Dimanche 18 octobre 2026', 'Publié'],
+        ['Ekiden de Paris', 'Dimanche 1 novembre 2026', 'Inscriptions closes'],
+      ],
+    },
+  },
+  {
+    titre: 'Inscriptions aux événements',
+    texte: 'Suivre et gérer les inscriptions des adhérents aux événements créés.',
+    detail: {
+      type: 'inscriptions',
+      liste: [
+        ['Semi-Marathon de Boulogne-Billancourt', 38],
+        ['Cross Régional d’Île-de-France', 24],
+        ['Les Foulées du 12ème', 85],
+        ['Marathon de Paris', 62],
+      ],
+    },
+  },
 ]
 
 // Noms et rôles déjà publics sur samparis12.org (page "Qui sommes-nous") —
@@ -69,6 +185,14 @@ export default function Dashboard() {
   const [status, setStatus] = useState(null)
   const [nature, setNature] = useState('Toutes')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [openVieCard, setOpenVieCard] = useState(null)
+  const [openAdminCard, setOpenAdminCard] = useState(null)
+
+  function switchTab(id) {
+    setActiveTab(id)
+    setOpenVieCard(null)
+    setOpenAdminCard(null)
+  }
 
   const filteredReseau = useMemo(() => {
     return RESEAU_POSTS.filter((p) => nature === 'Toutes' || p.nature === nature)
@@ -148,7 +272,7 @@ export default function Dashboard() {
               <button
                 key={tab.id}
                 className={`adh-tab-btn${activeTab === tab.id ? ' active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => switchTab(tab.id)}
               >
                 {tab.label}
                 {tab.badge && (
@@ -511,48 +635,153 @@ export default function Dashboard() {
 
         {activeTab === 'vieduclub' && (
           <div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <span className="eyebrow">Gouvernance, histoire &amp; pratique</span>
-              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Vie du Club</h2>
-              <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Tout savoir sur l'association, son fonctionnement et ses lieux de pratique.</p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
-              {VIE_DU_CLUB_CARDS.map((c) => (
-                <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>{c.kind}</span>
-                    <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{c.titre}</h3>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0.5rem 0 0' }}>{c.texte}</p>
-                  </div>
-                  <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Ouvrir →</button>
-                  </div>
+            {!openVieCard ? (
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <span className="eyebrow">Gouvernance, histoire &amp; pratique</span>
+                  <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Vie du Club</h2>
+                  <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Tout savoir sur l'association, son fonctionnement et ses lieux de pratique.</p>
                 </div>
-              ))}
-            </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
+                  {VIE_DU_CLUB_CARDS.map((c) => (
+                    <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>{c.kind}</span>
+                        <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{c.titre}</h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0.5rem 0 0' }}>{c.texte}</p>
+                      </div>
+                      <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button onClick={() => setOpenVieCard(c.titre)} className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Ouvrir →</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              (() => {
+                const card = VIE_DU_CLUB_CARDS.find((c) => c.titre === openVieCard)
+                return (
+                  <div>
+                    <button onClick={() => setOpenVieCard(null)} className="link-button" style={{ marginBottom: '1.2rem' }}>← Retour à Vie du Club</button>
+                    <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>{card.kind}</span>
+                    <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem', marginBottom: '1.2rem' }}>{card.titre}</h2>
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', maxWidth: '68ch' }}>
+                      {card.detail.intro && (
+                        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', margin: '0 0 1.2rem', lineHeight: 1.6 }}>{card.detail.intro}</p>
+                      )}
+                      {card.detail.paragraphes && card.detail.paragraphes.map((p, i) => (
+                        <p key={i} style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', margin: i === 0 ? 0 : '1rem 0 0', lineHeight: 1.6 }}>{p}</p>
+                      ))}
+                      {card.detail.liste && (
+                        <ul style={{ listStyle: 'none', padding: 0, margin: card.detail.paragraphes || card.detail.intro ? '1.2rem 0 0' : 0, display: 'grid', gap: '0.8rem' }}>
+                          {card.detail.liste.map(([a, b]) => (
+                            <li key={a} style={{ borderLeft: '2px solid var(--vermilion)', paddingLeft: '0.9rem' }}>
+                              <b style={{ display: 'block', fontSize: '0.95rem' }}>{a}</b>
+                              <span style={{ fontSize: '0.88rem', color: 'var(--ink-soft)' }}>{b}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()
+            )}
           </div>
         )}
 
         {activeTab === 'admin' && (
           <div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <span className="eyebrow">Réservé au bureau du club</span>
-              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Admin Club</h2>
-              <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Outils de gestion réservés aux membres du bureau et de l'organisation.</p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
-              {ADMIN_CARDS.map((c) => (
-                <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase' }}>{c.titre}</h3>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0.5rem 0 0' }}>{c.texte}</p>
-                  <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button className="btn btn--solid" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Ouvrir →</button>
-                  </div>
+            {!openAdminCard ? (
+              <>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <span className="eyebrow">Réservé au bureau du club</span>
+                  <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Admin Club</h2>
+                  <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Outils de gestion réservés aux membres du bureau et de l'organisation.</p>
                 </div>
-              ))}
-            </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
+                  {ADMIN_CARDS.map((c) => (
+                    <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
+                      <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase' }}>{c.titre}</h3>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', margin: '0.5rem 0 0' }}>{c.texte}</p>
+                      <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button onClick={() => setOpenAdminCard(c.titre)} className="btn btn--solid" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Ouvrir →</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              (() => {
+                const card = ADMIN_CARDS.find((c) => c.titre === openAdminCard)
+                return (
+                  <div>
+                    <button onClick={() => setOpenAdminCard(null)} className="link-button" style={{ marginBottom: '1.2rem' }}>← Retour à Admin Club</button>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.2rem' }}>
+                      <h2 style={{ fontSize: '2rem', textTransform: 'uppercase' }}>{card.titre}</h2>
+                      {card.detail.type === 'events' && (
+                        <button className="btn btn--solid" style={{ padding: '0.6rem 1.1rem', fontSize: '0.72rem' }}>+ Créer un événement</button>
+                      )}
+                    </div>
+
+                    {card.detail.type === 'events' && (
+                      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.68rem' }}>
+                              <th style={{ padding: '0.8rem 1rem' }}>Événement</th>
+                              <th style={{ padding: '0.8rem 1rem' }}>Date</th>
+                              <th style={{ padding: '0.8rem 1rem' }}>Statut</th>
+                              <th style={{ padding: '0.8rem 1rem' }} />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {card.detail.liste.map(([nom, date, statut]) => (
+                              <tr key={nom} style={{ borderBottom: '1px solid var(--line)' }}>
+                                <td style={{ padding: '0.8rem 1rem' }}><b>{nom}</b></td>
+                                <td style={{ padding: '0.8rem 1rem', color: 'var(--ink-soft)' }}>{date}</td>
+                                <td style={{ padding: '0.8rem 1rem' }}>{statut}</td>
+                                <td style={{ padding: '0.8rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                  <button className="link-button" style={{ marginRight: '0.8rem' }}>Modifier</button>
+                                  <button className="link-button" style={{ color: 'var(--vermilion)' }}>Supprimer</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {card.detail.type === 'inscriptions' && (
+                      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.68rem' }}>
+                              <th style={{ padding: '0.8rem 1rem' }}>Événement</th>
+                              <th style={{ padding: '0.8rem 1rem' }}>Inscrits</th>
+                              <th style={{ padding: '0.8rem 1rem' }} />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {card.detail.liste.map(([nom, count]) => (
+                              <tr key={nom} style={{ borderBottom: '1px solid var(--line)' }}>
+                                <td style={{ padding: '0.8rem 1rem' }}><b>{nom}</b></td>
+                                <td style={{ padding: '0.8rem 1rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{count}</td>
+                                <td style={{ padding: '0.8rem 1rem', textAlign: 'right' }}>
+                                  <button className="link-button">Exporter la liste</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()
+            )}
           </div>
         )}
       </main>
