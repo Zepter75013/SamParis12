@@ -286,8 +286,8 @@ export default function Dashboard() {
               >
                 <span>
                   <b style={{ display: 'block' }}>{me ? `${me.prenom} ${me.nom[0]}.` : '…'}</b>
-                  <span style={{ color: 'var(--stone)', fontSize: '0.66rem' }}>
-                    {me?.numeroLicence ? `FFA N° ${me.numeroLicence}` : 'Chargement…'}
+                  <span style={{ color: 'var(--ink-soft)', fontSize: '0.66rem' }}>
+                    {!me ? 'Chargement…' : (me.numeroLicence ? `FFA N° ${me.numeroLicence}` : 'Licence non renseignée')}
                   </span>
                 </span>
                 <span style={{ color: 'var(--stone)' }}>{profileMenuOpen ? '▴' : '▾'}</span>
