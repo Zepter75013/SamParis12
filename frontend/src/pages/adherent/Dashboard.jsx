@@ -222,6 +222,21 @@ export default function Dashboard() {
     setAuthToken(newToken)
   }
 
+  function handleMeUpdate(updated) {
+    setMe(updated)
+    setMembers((prev) => prev.map((m) => (
+      m.id === updated.id
+        ? {
+          ...m,
+          prenom: updated.prenom, nom: updated.nom, role: updated.role, groupe: updated.groupe, statut: updated.statut, photoUrl: updated.photoUrl,
+          trombiHabite: updated.trombiHabite, trombiNaissance: updated.trombiNaissance, trombiOrigine: updated.trombiOrigine,
+          trombiEmail: updated.trombiEmail, trombiTelephone: updated.trombiTelephone, trombiProfession: updated.trombiProfession,
+          trombiEmployeur: updated.trombiEmployeur, trombiDistanceFavorite: updated.trombiDistanceFavorite, trombiBio: updated.trombiBio,
+        }
+        : m
+    )))
+  }
+
   function switchTab(id) {
     setActiveTab(id)
     setOpenVieCard(null)
@@ -514,9 +529,23 @@ export default function Dashboard() {
                   <div style={{ textAlign: 'left', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--line)' }}>
                     <span className="eyebrow">Je me présente</span>
                     <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>
-                      Membre du groupe {openMember.groupe}.
+                      {openMember.trombiBio || `Membre du groupe ${openMember.groupe}.`}
                     </p>
                   </div>
+
+                  {(openMember.trombiHabite || openMember.trombiNaissance || openMember.trombiOrigine || openMember.trombiProfession || openMember.trombiEmployeur || openMember.trombiDistanceFavorite || openMember.trombiEmail || openMember.trombiTelephone) && (
+                    <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)', display: 'grid', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
+                      {openMember.trombiHabite && <p>🏠 J'habite {openMember.trombiHabite}</p>}
+                      {openMember.trombiNaissance && <p>🎂 Né le {openMember.trombiNaissance}</p>}
+                      {openMember.trombiOrigine && <p>📍 Originaire de {openMember.trombiOrigine}</p>}
+                      {(openMember.trombiProfession || openMember.trombiEmployeur) && (
+                        <p>💼 {[openMember.trombiProfession, openMember.trombiEmployeur].filter(Boolean).join(' — ')}</p>
+                      )}
+                      {openMember.trombiDistanceFavorite && <p>🏃 Distance favorite : {openMember.trombiDistanceFavorite}</p>}
+                      {openMember.trombiEmail && <p>✉️ <a href={`mailto:${openMember.trombiEmail}`} style={{ color: 'var(--vermilion)' }}>{openMember.trombiEmail}</a></p>}
+                      {openMember.trombiTelephone && <p>📞 {openMember.trombiTelephone}</p>}
+                    </div>
+                  )}
 
                   <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
                     <span className="eyebrow">Agenda</span>
@@ -877,7 +906,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'profil' && (
-          <ProfilPanel token={token} me={me} onMeUpdate={setMe} onPasswordChanged={handlePasswordChanged} />
+          <ProfilPanel token={token} me={me} onMeUpdate={handleMeUpdate} onPasswordChanged={handlePasswordChanged} />
         )}
       </main>
 
@@ -930,6 +959,10 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoMessage, setPhotoMessage] = useState('')
 
+  const [trombiForm, setTrombiForm] = useState(null)
+  const [savingTrombi, setSavingTrombi] = useState(false)
+  const [trombiMessage, setTrombiMessage] = useState('')
+
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -964,14 +997,44 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
       vma: me.vma ?? '',
       vmaDate: me.vmaDate || '',
     })
+    setTrombiForm({
+      trombiHabite: me.trombiHabite || '',
+      trombiNaissance: me.trombiNaissance || '',
+      trombiOrigine: me.trombiOrigine || '',
+      trombiEmail: me.trombiEmail || '',
+      trombiTelephone: me.trombiTelephone || '',
+      trombiProfession: me.trombiProfession || '',
+      trombiEmployeur: me.trombiEmployeur || '',
+      trombiDistanceFavorite: me.trombiDistanceFavorite || '',
+      trombiBio: me.trombiBio || '',
+    })
   }, [me])
 
-  if (!me || !form) {
+  if (!me || !form || !trombiForm) {
     return <p style={{ color: 'var(--stone)' }}>Chargement de votre profil…</p>
   }
 
   function updateField(key, value) {
     setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  function updateTrombiField(key, value) {
+    setTrombiForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function handleSaveTrombi(e) {
+    e.preventDefault()
+    setSavingTrombi(true)
+    setTrombiMessage('')
+    try {
+      const updated = await api.updateTrombi(token, trombiForm)
+      onMeUpdate(updated)
+      setTrombiMessage('Informations enregistrées.')
+    } catch (err) {
+      setTrombiMessage(err.message)
+    } finally {
+      setSavingTrombi(false)
+    }
   }
 
   async function handleSaveConfidential(e) {
@@ -1143,6 +1206,58 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
             {saveMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{saveMessage}</p>}
             <button type="submit" disabled={saving} className="btn btn--solid" style={{ justifyContent: 'center' }}>
               {saving ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          </form>
+        </div>
+
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
+          <span className="eyebrow" style={{ fontWeight: 'bold' }}>Tes informations visibles des autres adhérents</span>
+          <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1.2rem' }}>
+            Affichées dans le trombinoscope du club, invisibles en dehors de l'espace adhérent.
+          </p>
+          <form onSubmit={handleSaveTrombi} style={{ display: 'grid', gap: '0.9rem' }}>
+            <div>
+              {fieldLabel("J'habite")}
+              <input type="text" style={inputStyle} value={trombiForm.trombiHabite} onChange={(e) => updateTrombiField('trombiHabite', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Je suis né')}
+              <input type="text" style={inputStyle} placeholder="Ex : 23 Juillet 1967" value={trombiForm.trombiNaissance} onChange={(e) => updateTrombiField('trombiNaissance', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Originaire de')}
+              <input type="text" style={inputStyle} value={trombiForm.trombiOrigine} onChange={(e) => updateTrombiField('trombiOrigine', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('E-mail (affiché aux autres adhérents)')}
+              <input type="email" style={inputStyle} value={trombiForm.trombiEmail} onChange={(e) => updateTrombiField('trombiEmail', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Téléphone (affiché aux autres adhérents)')}
+              <input type="tel" style={inputStyle} value={trombiForm.trombiTelephone} onChange={(e) => updateTrombiField('trombiTelephone', e.target.value)} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+              <div>
+                {fieldLabel('Profession')}
+                <input type="text" style={inputStyle} value={trombiForm.trombiProfession} onChange={(e) => updateTrombiField('trombiProfession', e.target.value)} />
+              </div>
+              <div>
+                {fieldLabel('Employeur')}
+                <input type="text" style={inputStyle} value={trombiForm.trombiEmployeur} onChange={(e) => updateTrombiField('trombiEmployeur', e.target.value)} />
+              </div>
+            </div>
+            <div>
+              {fieldLabel('Distance favorite')}
+              <input type="text" style={inputStyle} value={trombiForm.trombiDistanceFavorite} onChange={(e) => updateTrombiField('trombiDistanceFavorite', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Je me présente')}
+              <textarea rows={4} style={{ ...inputStyle, resize: 'vertical' }} value={trombiForm.trombiBio} onChange={(e) => updateTrombiField('trombiBio', e.target.value)} />
+            </div>
+
+            {trombiMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{trombiMessage}</p>}
+            <button type="submit" disabled={savingTrombi} className="btn btn--solid" style={{ justifyContent: 'center' }}>
+              {savingTrombi ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </form>
         </div>

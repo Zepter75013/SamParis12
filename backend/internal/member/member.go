@@ -31,6 +31,19 @@ type Member struct {
 	PhotoURL string `json:"photoUrl"`
 	IsBureau bool   `json:"isBureau"`
 
+	// Informations visibles des autres adhérents (trombinoscope) — distinctes
+	// des informations confidentielles ci-dessous, choisies et éditées par
+	// l'adhérent lui-même pour se présenter au reste du club.
+	TrombiHabite           string `json:"trombiHabite"`
+	TrombiNaissance        string `json:"trombiNaissance"`
+	TrombiOrigine          string `json:"trombiOrigine"`
+	TrombiEmail            string `json:"trombiEmail"`
+	TrombiTelephone        string `json:"trombiTelephone"`
+	TrombiProfession       string `json:"trombiProfession"`
+	TrombiEmployeur        string `json:"trombiEmployeur"`
+	TrombiDistanceFavorite string `json:"trombiDistanceFavorite"`
+	TrombiBio              string `json:"trombiBio"`
+
 	DateNaissance     *string  `json:"dateNaissance"`
 	LieuNaissance     string   `json:"lieuNaissance"`
 	Adresse           string   `json:"adresse"`
@@ -61,15 +74,40 @@ type Member struct {
 	ModePaiement          string  `json:"modePaiement"`
 }
 
-// PublicMember est la vue trombinoscope : aucune donnée confidentielle ni administrative.
+// PublicMember est la vue trombinoscope : les informations que l'adhérent a
+// choisi de partager avec les autres membres — jamais les informations
+// confidentielles ni administratives.
 type PublicMember struct {
-	ID       int64  `json:"id"`
-	Prenom   string `json:"prenom"`
-	Nom      string `json:"nom"`
-	Role     string `json:"role"`
-	Groupe   string `json:"groupe"`
-	Statut   string `json:"statut"`
-	PhotoURL string `json:"photoUrl"`
+	ID                     int64  `json:"id"`
+	Prenom                 string `json:"prenom"`
+	Nom                    string `json:"nom"`
+	Role                   string `json:"role"`
+	Groupe                 string `json:"groupe"`
+	Statut                 string `json:"statut"`
+	PhotoURL               string `json:"photoUrl"`
+	TrombiHabite           string `json:"trombiHabite"`
+	TrombiNaissance        string `json:"trombiNaissance"`
+	TrombiOrigine          string `json:"trombiOrigine"`
+	TrombiEmail            string `json:"trombiEmail"`
+	TrombiTelephone        string `json:"trombiTelephone"`
+	TrombiProfession       string `json:"trombiProfession"`
+	TrombiEmployeur        string `json:"trombiEmployeur"`
+	TrombiDistanceFavorite string `json:"trombiDistanceFavorite"`
+	TrombiBio              string `json:"trombiBio"`
+}
+
+// TrombiUpdate est le sous-ensemble de champs "visibles des autres
+// adhérents" que l'adhérent peut modifier lui-même.
+type TrombiUpdate struct {
+	TrombiHabite           string `json:"trombiHabite"`
+	TrombiNaissance        string `json:"trombiNaissance"`
+	TrombiOrigine          string `json:"trombiOrigine"`
+	TrombiEmail            string `json:"trombiEmail"`
+	TrombiTelephone        string `json:"trombiTelephone"`
+	TrombiProfession       string `json:"trombiProfession"`
+	TrombiEmployeur        string `json:"trombiEmployeur"`
+	TrombiDistanceFavorite string `json:"trombiDistanceFavorite"`
+	TrombiBio              string `json:"trombiBio"`
 }
 
 // ConfidentialUpdate est le sous-ensemble de champs que l'adhérent peut modifier lui-même.
@@ -103,6 +141,8 @@ func NewRepository(db *sql.DB) *Repository {
 // scannable dans un **string).
 const memberColumns = `
 	id, email, prenom, nom, role, groupe, statut, photo_path, is_bureau,
+	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
+	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio,
 	DATE_FORMAT(date_naissance, '%Y-%m-%d'), lieu_naissance, adresse, code_postal, ville,
 	telephone_domicile, telephone_portable, nationalite, urgence_nom, urgence_telephone,
 	taille_maillot, vma, DATE_FORMAT(vma_date, '%Y-%m-%d'),
@@ -121,6 +161,8 @@ func scanMember(row *sql.Row) (*Member, error) {
 	)
 	err := row.Scan(
 		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL, &m.IsBureau,
+		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
+		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
 		&dateNaissance, &m.LieuNaissance, &m.Adresse, &m.CodePostal, &m.Ville,
 		&m.TelephoneDomicile, &m.TelephonePortable, &m.Nationalite, &m.UrgenceNom, &m.UrgenceTelephone,
 		&m.TailleMaillot, &vma, &vmaDate,
@@ -183,8 +225,27 @@ func (r *Repository) getAuth(email string) (id int64, passwordHash string, mustC
 	return
 }
 
+const publicMemberColumns = `
+	id, prenom, nom, role, groupe, statut, photo_path,
+	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
+	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio
+`
+
+func scanPublicMember(scan func(...any) error) (*PublicMember, error) {
+	var m PublicMember
+	err := scan(
+		&m.ID, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL,
+		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
+		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
 func (r *Repository) ListPublic() ([]PublicMember, error) {
-	rows, err := r.db.Query(`SELECT id, prenom, nom, role, groupe, statut, photo_path FROM members ORDER BY nom, prenom`)
+	rows, err := r.db.Query(`SELECT ` + publicMemberColumns + ` FROM members ORDER BY nom, prenom`)
 	if err != nil {
 		return nil, err
 	}
@@ -192,27 +253,37 @@ func (r *Repository) ListPublic() ([]PublicMember, error) {
 
 	members := []PublicMember{}
 	for rows.Next() {
-		var m PublicMember
-		if err := rows.Scan(&m.ID, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL); err != nil {
+		m, err := scanPublicMember(rows.Scan)
+		if err != nil {
 			return nil, err
 		}
-		members = append(members, m)
+		members = append(members, *m)
 	}
 	return members, rows.Err()
 }
 
 func (r *Repository) GetPublicByID(id int64) (*PublicMember, error) {
-	var m PublicMember
-	err := r.db.QueryRow(`SELECT id, prenom, nom, role, groupe, statut, photo_path FROM members WHERE id = ?`, id).
-		Scan(&m.ID, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL)
-	if err != nil {
-		return nil, err
-	}
-	return &m, nil
+	row := r.db.QueryRow(`SELECT `+publicMemberColumns+` FROM members WHERE id = ?`, id)
+	return scanPublicMember(row.Scan)
 }
 
 func (r *Repository) UpdatePhotoPath(id int64, photoPath string) error {
 	_, err := r.db.Exec(`UPDATE members SET photo_path = ? WHERE id = ?`, photoPath, id)
+	return err
+}
+
+func (r *Repository) UpdateTrombi(id int64, t TrombiUpdate) error {
+	_, err := r.db.Exec(`
+		UPDATE members SET
+			trombi_habite = ?, trombi_naissance = ?, trombi_origine = ?, trombi_email = ?,
+			trombi_telephone = ?, trombi_profession = ?, trombi_employeur = ?,
+			trombi_distance_favorite = ?, trombi_bio = ?
+		WHERE id = ?`,
+		t.TrombiHabite, t.TrombiNaissance, t.TrombiOrigine, t.TrombiEmail,
+		t.TrombiTelephone, t.TrombiProfession, t.TrombiEmployeur,
+		t.TrombiDistanceFavorite, t.TrombiBio,
+		id,
+	)
 	return err
 }
 
@@ -439,6 +510,29 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.repo.UpdateConfidential(memberID, u); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer vos informations")
+		return
+	}
+	m, err := h.repo.GetByID(memberID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, m)
+}
+
+func (h *Handler) UpdateTrombi(w http.ResponseWriter, r *http.Request) {
+	memberID, ok := MemberIDFromContext(r.Context())
+	if !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	var t TrombiUpdate
+	if err := decodeJSON(r, &t); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	if err := h.repo.UpdateTrombi(memberID, t); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer vos informations")
 		return
 	}
