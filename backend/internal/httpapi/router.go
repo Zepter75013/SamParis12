@@ -12,6 +12,7 @@ import (
 	"samparis12/backend/internal/member"
 	"samparis12/backend/internal/news"
 	"samparis12/backend/internal/partner"
+	"samparis12/backend/internal/race"
 
 	"samparis12/backend/internal/httpx"
 )
@@ -28,6 +29,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	authService := member.NewAuthService(cfg.JWTSecret)
 	memberMailer := mailer.New(cfg)
 	memberHandler := member.NewHandler(member.NewRepository(db), memberMailer, authService)
+	raceHandler := race.NewHandler(race.NewRepository(db))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -56,6 +58,12 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminGetMember))
 	mux.HandleFunc("PUT /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminUpdateMember))
 	mux.HandleFunc("DELETE /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminDeleteMember))
+
+	mux.HandleFunc("GET /api/races", authService.RequireAuth(raceHandler.List))
+	mux.HandleFunc("POST /api/races", authService.RequireAuth(raceHandler.Create))
+	mux.HandleFunc("GET /api/races/{id}", authService.RequireAuth(raceHandler.GetDetail))
+	mux.HandleFunc("POST /api/races/{id}/register", authService.RequireAuth(raceHandler.Register))
+	mux.HandleFunc("DELETE /api/races/{id}/register", authService.RequireAuth(raceHandler.Unregister))
 
 	// Photos de trombinoscope, servies telles quelles (pas de donnée sensible).
 	mux.Handle("GET /uploads/photos/", http.StripPrefix("/uploads/photos/", http.FileServer(http.Dir("uploads/photos"))))

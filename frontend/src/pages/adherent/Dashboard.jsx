@@ -624,57 +624,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'courses' && (
-          <div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <span className="eyebrow">Compétitions cibles &amp; Déplacements</span>
-              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Nos Courses &amp; Covoiturage</h2>
-              <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Chaque trimestre, le SAM Paris 12 sélectionne des courses pour courir sous les couleurs du club et s'organiser ensemble.</p>
-            </div>
-
-            <div style={{ display: 'grid', gap: '1.2rem' }}>
-              {[
-                {
-                  badge: 'Semi-marathon', date: '15 Novembre 2026', titre: 'Semi-Marathon de Boulogne-Billancourt',
-                  info: <>Inscrits du club : <strong>38 coureurs</strong> · Statut : <span style={{ color: '#059669', fontWeight: 'bold' }}>Inscriptions ouvertes</span></>,
-                  tag: '🚗 Covoiturage actif (6 voitures)', action: 'Rejoindre le groupe',
-                },
-                {
-                  badge: 'Cross', date: '13 Décembre 2026', titre: "Cross Régional d'Île-de-France",
-                  info: <>Inscrits du club : <strong>24 coureurs</strong> · Statut : <span style={{ color: '#059669', fontWeight: 'bold' }}>Prise en charge club</span></>,
-                  tag: '🚗 Minibus club prévu', action: 'Rejoindre le groupe',
-                },
-                {
-                  badge: '10 km route', date: 'Printemps 2027', titre: 'Les Foulées du 12ème (Bois de Vincennes)',
-                  info: <>Organisation + <strong>85 coureurs</strong> du SAM · Statut : <span style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>Course du club</span></>,
-                  secondaryAction: 'S’inscrire comme bénévole', action: 'Dossard club',
-                },
-                {
-                  badge: 'Marathon', date: 'Avril 2027', titre: 'Marathon de Paris',
-                  info: <>Inscrits du club : <strong>62 marathoniens</strong> · Statut : <span style={{ color: '#059669', fontWeight: 'bold' }}>Plans prépa en cours</span></>,
-                  secondaryAction: 'Télécharger le plan marathon', action: 'Groupe WhatsApp Dédié',
-                  onSecondary: () => setActiveTab('documents'),
-                },
-              ].map((c) => (
-                <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1.2rem' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
-                      <span style={{ background: 'var(--vermilion)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.7rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', textTransform: 'uppercase' }}>{c.badge}</span>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)' }}>{c.date}</span>
-                    </div>
-                    <h3 style={{ fontSize: '1.4rem', textTransform: 'uppercase' }}>{c.titre}</h3>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', margin: '0.4rem 0 0' }}>{c.info}</p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
-                    {c.tag && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '0.35rem 0.7rem', background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0' }}>{c.tag}</span>}
-                    {c.secondaryAction && (
-                      <button onClick={c.onSecondary} className="btn btn--ghost" style={{ padding: '0.6rem 1.1rem', fontSize: '0.72rem' }}>{c.secondaryAction}</button>
-                    )}
-                    <button className="btn btn--solid" style={{ padding: '0.6rem 1.1rem', fontSize: '0.72rem' }}>{c.action}</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <CoursesPanel token={token} me={me} />
         )}
 
         {activeTab === 'resultats' && (
@@ -1397,6 +1347,236 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+const NEW_RACE_FORM = { titre: '', date: '', lieu: '', type: '', description: '', siteInternet: '' }
+
+function formatRaceDate(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+}
+
+function CoursesPanel({ token, me }) {
+  const [races, setRaces] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+
+  const [creating, setCreating] = useState(false)
+  const [newForm, setNewForm] = useState(NEW_RACE_FORM)
+  const [createSaving, setCreateSaving] = useState(false)
+  const [createMessage, setCreateMessage] = useState('')
+
+  const [openRaceId, setOpenRaceId] = useState(null)
+  const [detail, setDetail] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState('')
+  const [registering, setRegistering] = useState(false)
+
+  function loadRaces() {
+    return api.listRaces(token)
+      .then((data) => setRaces(data))
+      .catch((err) => setLoadError(err.message))
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    loadRaces().finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
+
+  function openRace(id) {
+    setOpenRaceId(id)
+    setDetail(null)
+    setDetailError('')
+    setDetailLoading(true)
+    api.getRace(token, id)
+      .then((data) => setDetail(data))
+      .catch((err) => setDetailError(err.message))
+      .finally(() => setDetailLoading(false))
+  }
+
+  function closeRace() {
+    setOpenRaceId(null)
+    setDetail(null)
+  }
+
+  function updateNewField(key, value) {
+    setNewForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function handleCreate(e) {
+    e.preventDefault()
+    setCreateSaving(true)
+    setCreateMessage('')
+    try {
+      await api.createRace(token, newForm)
+      setCreating(false)
+      setNewForm(NEW_RACE_FORM)
+      await loadRaces()
+    } catch (err) {
+      setCreateMessage(err.message)
+    } finally {
+      setCreateSaving(false)
+    }
+  }
+
+  async function handleToggleRegister() {
+    if (!detail) return
+    setRegistering(true)
+    try {
+      if (detail.race.isRegisteredByMe) {
+        await api.unregisterRace(token, detail.race.id)
+      } else {
+        await api.registerRace(token, detail.race.id)
+      }
+      const [freshDetail] = await Promise.all([api.getRace(token, detail.race.id), loadRaces()])
+      setDetail(freshDetail)
+    } catch (err) {
+      setDetailError(err.message)
+    } finally {
+      setRegistering(false)
+    }
+  }
+
+  const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
+
+  return (
+    <div>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem' }}>
+        <div>
+          <span className="eyebrow">Compétitions cibles &amp; Déplacements</span>
+          <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Nos Courses</h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Proposez une course et voyez qui du club y participe. N'importe quel adhérent peut créer une course ou s'y inscrire.</p>
+        </div>
+        <button type="button" onClick={() => { setCreating(true); setCreateMessage('') }} className="btn btn--solid" style={{ padding: '0.65rem 1.2rem', fontSize: '0.75rem' }}>
+          + Créer une course
+        </button>
+      </div>
+
+      {loading && <p style={{ color: 'var(--stone)' }}>Chargement des courses…</p>}
+      {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+
+      {!loading && !loadError && (
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {races.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => openRace(r.id)}
+              style={{
+                background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.3rem 1.5rem', textAlign: 'left',
+                display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem',
+                cursor: 'pointer', fontFamily: 'inherit', width: '100%',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                  {r.type && (
+                    <span style={{ background: 'var(--vermilion)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', textTransform: 'uppercase' }}>{r.type}</span>
+                  )}
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)' }}>{formatRaceDate(r.date)}</span>
+                  {r.isRegisteredByMe && (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: '#065f46', fontWeight: 'bold' }}>✓ Tu participes</span>
+                  )}
+                </div>
+                <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>{r.titre}</h3>
+                {r.lieu && <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', margin: '0.3rem 0 0' }}>{r.lieu}</p>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--vermilion)' }}>
+                  {r.inscritsCount} inscrit{r.inscritsCount > 1 ? 's' : ''}
+                </span>
+                <span className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.7rem' }}>Voir →</span>
+              </div>
+            </button>
+          ))}
+          {races.length === 0 && (
+            <p style={{ color: 'var(--stone)' }}>Aucune course proposée pour le moment. Soyez le premier à en créer une !</p>
+          )}
+        </div>
+      )}
+
+      {creating && (
+        <AdminModal onClose={() => setCreating(false)} maxWidth={560}>
+          <form onSubmit={handleCreate} style={{ display: 'grid', gap: '0.9rem' }}>
+            <b style={{ fontSize: '1.05rem' }}>Créer une course</b>
+            <div>{fieldLabel('Titre')}<input type="text" required style={inputStyle} value={newForm.titre} onChange={(e) => updateNewField('titre', e.target.value)} /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+              <div>{fieldLabel('Date')}<input type="date" required style={inputStyle} value={newForm.date} onChange={(e) => updateNewField('date', e.target.value)} /></div>
+              <div>{fieldLabel('Type (ex : Semi-marathon, Trail…)')}<input type="text" style={inputStyle} value={newForm.type} onChange={(e) => updateNewField('type', e.target.value)} /></div>
+            </div>
+            <div>{fieldLabel('Lieu')}<input type="text" style={inputStyle} value={newForm.lieu} onChange={(e) => updateNewField('lieu', e.target.value)} /></div>
+            <div>{fieldLabel('Site internet')}<input type="url" placeholder="https://…" style={inputStyle} value={newForm.siteInternet} onChange={(e) => updateNewField('siteInternet', e.target.value)} /></div>
+            <div>{fieldLabel('Description')}<textarea rows={4} style={{ ...inputStyle, resize: 'vertical' }} value={newForm.description} onChange={(e) => updateNewField('description', e.target.value)} /></div>
+
+            {createMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{createMessage}</p>}
+            <div style={{ display: 'flex', gap: '0.8rem' }}>
+              <button type="submit" disabled={createSaving} className="btn btn--solid" style={{ justifyContent: 'center', flex: 1 }}>
+                {createSaving ? 'Création…' : 'Créer la course'}
+              </button>
+              <button type="button" onClick={() => setCreating(false)} className="btn btn--ghost" style={{ justifyContent: 'center' }}>Annuler</button>
+            </div>
+          </form>
+        </AdminModal>
+      )}
+
+      {openRaceId && (
+        <AdminModal onClose={closeRace} maxWidth={640}>
+          {detailLoading && <p style={{ color: 'var(--stone)' }}>Chargement…</p>}
+          {detailError && <p style={{ color: 'var(--vermilion)' }}>{detailError}</p>}
+          {detail && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '0.8rem', borderBottom: '1px solid var(--line)', marginBottom: '1rem' }}>
+                <div>
+                  {detail.race.type && (
+                    <span style={{ background: 'var(--vermilion)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', textTransform: 'uppercase' }}>{detail.race.type}</span>
+                  )}
+                  <h3 style={{ fontSize: '1.5rem', textTransform: 'uppercase', marginTop: '0.4rem' }}>{detail.race.titre}</h3>
+                </div>
+                <button type="button" onClick={closeRace} className="link-button" style={{ fontSize: '0.8rem' }}>Fermer ✕</button>
+              </div>
+
+              <div style={{ display: 'grid', gap: '0.55rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', marginBottom: '1.2rem' }}>
+                {infoRow('Date', formatRaceDate(detail.race.date))}
+                {detail.race.lieu && infoRow('Lieu', detail.race.lieu)}
+                {detail.race.description && infoRow('Description', detail.race.description)}
+                {detail.race.siteInternet && infoRow('Site internet', <a href={detail.race.siteInternet} target="_blank" rel="noreferrer" style={{ color: 'var(--vermilion)' }}>{detail.race.siteInternet}</a>)}
+                {infoRow('Créée par', `${detail.race.createdByPrenom} ${detail.race.createdByNom}`)}
+                {infoRow('Inscrits', detail.race.inscritsCount)}
+              </div>
+
+              <button
+                type="button"
+                onClick={handleToggleRegister}
+                disabled={registering}
+                className={`btn ${detail.race.isRegisteredByMe ? 'btn--ghost' : 'btn--solid'}`}
+                style={{ justifyContent: 'center', width: '100%', marginBottom: '1.5rem' }}
+              >
+                {registering ? 'Enregistrement…' : detail.race.isRegisteredByMe ? "Je ne participe plus" : "J'y participe"}
+              </button>
+
+              <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
+                Adhérents inscrits ({detail.participants.length})
+              </b>
+              {detail.participants.length === 0 ? (
+                <p style={{ color: 'var(--stone)', fontSize: '0.85rem' }}>Personne ne s'est encore inscrit à cette course.</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                  {detail.participants.map((p) => (
+                    <div key={p.memberId} style={{ textAlign: 'center' }}>
+                      <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={56} />
+                      <div style={{ fontSize: '0.78rem', marginTop: '0.4rem' }}>{p.prenom} {p.nom}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </AdminModal>
+      )}
     </div>
   )
 }

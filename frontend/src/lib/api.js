@@ -49,4 +49,10 @@ export const api = {
     request(`/admin/members/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   adminDeleteMember: (token, id) =>
     request(`/admin/members/${id}`, { method: 'DELETE', token }),
+
+  listRaces: (token) => request('/races', { token }),
+  createRace: (token, data) => request('/races', { method: 'POST', token, body: JSON.stringify(data) }),
+  getRace: (token, id) => request(`/races/${id}`, { token }),
+  registerRace: (token, id) => request(`/races/${id}/register`, { method: 'POST', token }),
+  unregisterRace: (token, id) => request(`/races/${id}/register`, { method: 'DELETE', token }),
 }
