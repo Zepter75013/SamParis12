@@ -12,12 +12,31 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/mailer"
 )
+
+// formatNom applique la convention administrative : NOM DE FAMILLE toujours
+// en majuscules.
+func formatNom(s string) string {
+	return strings.ToUpper(strings.TrimSpace(s))
+}
+
+// formatPrenom applique la convention administrative : prénom en
+// minuscules, seule la première lettre en majuscule.
+func formatPrenom(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
+}
 
 // Member reprend la fiche adhérent : identité publique (trombinoscope),
 // informations confidentielles (éditables par l'adhérent) et informations
@@ -858,8 +877,8 @@ func (h *Handler) AdminCreateMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	email := strings.ToLower(strings.TrimSpace(req.Email))
-	prenom := strings.TrimSpace(req.Prenom)
-	nom := strings.TrimSpace(req.Nom)
+	prenom := formatPrenom(req.Prenom)
+	nom := formatNom(req.Nom)
 	if !strings.Contains(email, "@") || prenom == "" || nom == "" {
 		httpx.Error(w, http.StatusBadRequest, "email, prénom et nom sont obligatoires")
 		return
@@ -946,6 +965,8 @@ func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "requête invalide")
 		return
 	}
+	u.Prenom = formatPrenom(u.Prenom)
+	u.Nom = formatNom(u.Nom)
 	if err := h.repo.UpdateAdmin(id, u); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer les modifications")
 		return
