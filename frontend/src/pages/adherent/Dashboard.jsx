@@ -947,7 +947,12 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
     setSaving(true)
     setSaveMessage('')
     try {
-      const payload = { ...form, vma: form.vma === '' ? null : Number(form.vma) }
+      const payload = {
+        ...form,
+        dateNaissance: form.dateNaissance === '' ? null : form.dateNaissance,
+        vmaDate: form.vmaDate === '' ? null : form.vmaDate,
+        vma: form.vma === '' ? null : Number(form.vma),
+      }
       const updated = await api.updateMe(token, payload)
       onMeUpdate(updated)
       setSaveMessage('Informations enregistrées.')
