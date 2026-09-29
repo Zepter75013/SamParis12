@@ -52,6 +52,14 @@
 
 * { box-sizing: border-box; }
 
+/* Sans ce reset, les <button>/<select> gardent la couleur de texte par
+   défaut du navigateur (souvent noir) au lieu d'hériter du thème — invisible
+   en mode sombre pour tout bouton qui ne fixe pas sa propre couleur. */
+button, select {
+  font: inherit;
+  color: inherit;
+}
+
 html { scroll-behavior: smooth; }
 
 body {
