@@ -335,6 +335,13 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {profileMenuOpen && (
+        // z-index sous le header (40) pour que le menu déroulant, imbriqué
+        // dans le header, reste cliquable ; au-dessus de <main> (statique)
+        // pour que cliquer n'importe où en dehors ferme bien le menu.
+        <div onClick={() => setProfileMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />
+      )}
+
       <main className="shell" style={{ paddingBlock: '2rem', flex: 1 }}>
         {activeTab === 'overview' && (
           <div>
