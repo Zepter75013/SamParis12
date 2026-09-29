@@ -160,6 +160,12 @@ const RESEAU_POSTS = [
   { nature: 'Bons plans', domaine: 'Sport', par: 'Nicolas P. (Trail)', date: '1er Septembre 2026', titre: 'Sortie off samedi matin à Bures-sur-Yvette — 2 places disponibles', texte: "Départ 8h30 Porte de Charenton en voiture. Parcours de 22 km / 500m D+ en vallée de Chevreuse. Retour vers 12h30. Me contacter au vestiaire mardi soir." },
 ]
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+
+function firstLetter(nom) {
+  return (nom || '').normalize('NFD').replace(/[̀-ͯ]/g, '').charAt(0).toUpperCase()
+}
+
 function initials(nom) {
   return nom.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 }
@@ -182,6 +188,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('')
   const [activity, setActivity] = useState('Toutes les activités')
   const [status, setStatus] = useState(null)
+  const [letter, setLetter] = useState(null)
   const [nature, setNature] = useState('Toutes')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [openVieCard, setOpenVieCard] = useState(null)
@@ -247,7 +254,7 @@ export default function Dashboard() {
     return RESEAU_POSTS.filter((p) => nature === 'Toutes' || p.nature === nature)
   }, [nature])
 
-  const filteredTrombi = useMemo(() => {
+  const trombiBeforeLetter = useMemo(() => {
     const q = search.toLowerCase()
     return members.filter((m) => {
       const matchesQuery = `${m.prenom} ${m.nom}`.toLowerCase().includes(q) || m.role.toLowerCase().includes(q)
@@ -256,6 +263,16 @@ export default function Dashboard() {
       return matchesQuery && matchesActivity && matchesStatus
     })
   }, [members, search, activity, status])
+
+  const availableLetters = useMemo(
+    () => new Set(trombiBeforeLetter.map((m) => firstLetter(m.nom))),
+    [trombiBeforeLetter]
+  )
+
+  const filteredTrombi = useMemo(() => {
+    if (!letter) return trombiBeforeLetter
+    return trombiBeforeLetter.filter((m) => firstLetter(m.nom) === letter)
+  }, [trombiBeforeLetter, letter])
 
   return (
     <div className="adherent-layout">
@@ -448,6 +465,32 @@ export default function Dashboard() {
               <span className="eyebrow">Annuaire des membres &amp; Encadrement</span>
               <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Trombinoscope</h2>
               <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Faites connaissance avec les adhérents, le bureau et les entraîneurs bénévoles diplômés du club.</p>
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '1.2rem' }}>
+              <button
+                type="button"
+                onClick={() => setLetter(null)}
+                className={`btn ${!letter ? 'btn--solid' : 'btn--ghost'}`}
+                style={{ padding: '0.35rem 0.65rem', fontSize: '0.7rem' }}
+              >
+                Tous
+              </button>
+              {ALPHABET.map((l) => {
+                const has = availableLetters.has(l)
+                return (
+                  <button
+                    key={l}
+                    type="button"
+                    disabled={!has}
+                    onClick={() => setLetter(letter === l ? null : l)}
+                    className={`btn ${letter === l ? 'btn--solid' : 'btn--ghost'}`}
+                    style={{ padding: '0.35rem 0.55rem', minWidth: 30, fontSize: '0.72rem', fontWeight: 'bold', opacity: has ? 1 : 0.3, cursor: has ? 'pointer' : 'default' }}
+                  >
+                    {l}
+                  </button>
+                )
+              })}
             </div>
 
             <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1rem', marginBottom: '1.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
