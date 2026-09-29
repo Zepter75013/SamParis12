@@ -1,6 +1,7 @@
 package member
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -168,6 +169,21 @@ type AdminMemberUpdate struct {
 	MontantCotisation      *float64 `json:"montantCotisation"`
 	DatePaiementCotisation *string  `json:"datePaiementCotisation"`
 	ModePaiement           string   `json:"modePaiement"`
+}
+
+// AdminMemberCreate est le sous-ensemble de champs qu'un membre du bureau
+// renseigne à la création d'un nouvel adhérent — uniquement l'identité de
+// base. Un mot de passe aléatoire et inutilisable est généré côté serveur ;
+// le nouvel adhérent définit son propre mot de passe via "Mot de passe
+// oublié ?" (code envoyé par email), jamais choisi ou saisi par le bureau.
+type AdminMemberCreate struct {
+	Email    string `json:"email"`
+	Prenom   string `json:"prenom"`
+	Nom      string `json:"nom"`
+	Role     string `json:"role"`
+	Groupe   string `json:"groupe"`
+	Statut   string `json:"statut"`
+	IsBureau bool   `json:"isBureau"`
 }
 
 type Repository struct {
@@ -370,6 +386,27 @@ func (r *Repository) ListFull() ([]Member, error) {
 		members = append(members, *m)
 	}
 	return members, rows.Err()
+}
+
+// Create insère un nouvel adhérent avec les seules informations d'identité ;
+// les champs confidentiels/administratifs restent à leurs valeurs par
+// défaut et pourront être complétés ensuite via UpdateAdmin. trombi_bio est
+// une colonne TEXT NOT NULL sans DEFAULT : elle doit être fournie explicitement.
+func (r *Repository) Create(m AdminMemberCreate, passwordHash string) (int64, error) {
+	res, err := r.db.Exec(`
+		INSERT INTO members (email, password_hash, must_change_password, prenom, nom, role, groupe, statut, is_bureau, trombi_bio)
+		VALUES (?, ?, TRUE, ?, ?, ?, ?, ?, ?, '')`,
+		m.Email, passwordHash, m.Prenom, m.Nom, m.Role, m.Groupe, m.Statut, m.IsBureau,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
+}
+
+func (r *Repository) Delete(id int64) error {
+	_, err := r.db.Exec(`DELETE FROM members WHERE id = ?`, id)
+	return err
 }
 
 func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
@@ -767,6 +804,82 @@ func (h *Handler) AdminListMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.JSON(w, http.StatusOK, members)
+}
+
+type createMemberRequest struct {
+	Email    string `json:"email"`
+	Prenom   string `json:"prenom"`
+	Nom      string `json:"nom"`
+	Role     string `json:"role"`
+	Groupe   string `json:"groupe"`
+	Statut   string `json:"statut"`
+	IsBureau bool   `json:"isBureau"`
+}
+
+func (h *Handler) AdminCreateMember(w http.ResponseWriter, r *http.Request) {
+	var req createMemberRequest
+	if err := decodeJSON(r, &req); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	prenom := strings.TrimSpace(req.Prenom)
+	nom := strings.TrimSpace(req.Nom)
+	if !strings.Contains(email, "@") || prenom == "" || nom == "" {
+		httpx.Error(w, http.StatusBadRequest, "email, prénom et nom sont obligatoires")
+		return
+	}
+	if _, err := h.repo.GetByEmail(email); err == nil {
+		httpx.Error(w, http.StatusConflict, "un compte existe déjà avec cette adresse email")
+		return
+	}
+
+	// Mot de passe aléatoire et inutilisable : le nouvel adhérent définit le
+	// sien via "Mot de passe oublié ?" (code reçu par email), jamais choisi
+	// par le bureau.
+	randomPassword := make([]byte, 32)
+	if _, err := rand.Read(randomPassword); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	passwordHash, err := bcrypt.GenerateFromPassword(randomPassword, bcrypt.DefaultCost)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
+	id, err := h.repo.Create(AdminMemberCreate{
+		Email: email, Prenom: prenom, Nom: nom,
+		Role: req.Role, Groupe: req.Groupe, Statut: req.Statut, IsBureau: req.IsBureau,
+	}, string(passwordHash))
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible de créer l'adhérent")
+		return
+	}
+
+	m, err := h.repo.GetByID(id)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusCreated, m)
+}
+
+func (h *Handler) AdminDeleteMember(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	if callerID, ok := MemberIDFromContext(r.Context()); ok && callerID == id {
+		httpx.Error(w, http.StatusBadRequest, "impossible de supprimer votre propre compte")
+		return
+	}
+	if err := h.repo.Delete(id); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible de supprimer l'adhérent")
+		return
+	}
+	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
 func (h *Handler) AdminGetMember(w http.ResponseWriter, r *http.Request) {

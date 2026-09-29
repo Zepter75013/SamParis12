@@ -43,6 +43,10 @@ export const api = {
 
   adminListMembers: (token) => request('/admin/members', { token }),
   adminGetMember: (token, id) => request(`/admin/members/${id}`, { token }),
+  adminCreateMember: (token, data) =>
+    request('/admin/members', { method: 'POST', token, body: JSON.stringify(data) }),
   adminUpdateMember: (token, id, data) =>
     request(`/admin/members/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  adminDeleteMember: (token, id) =>
+    request(`/admin/members/${id}`, { method: 'DELETE', token }),
 }

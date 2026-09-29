@@ -840,7 +840,7 @@ export default function Dashboard() {
                   <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Outils de gestion réservés aux membres du bureau et de l'organisation.</p>
                 </div>
 
-                <AdminMembersPanel token={token} />
+                <AdminMembersPanel token={token} me={me} />
 
                 <div style={{ marginTop: '2.2rem', marginBottom: '1rem' }}>
                   <b style={{ fontSize: '0.95rem', textTransform: 'uppercase' }}>Autres outils</b>
@@ -1380,7 +1380,9 @@ function adminFormFromMember(m) {
   }
 }
 
-function AdminMembersPanel({ token }) {
+const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', isBureau: false }
+
+function AdminMembersPanel({ token, me }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -1389,6 +1391,12 @@ function AdminMembersPanel({ token }) {
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  const [creating, setCreating] = useState(false)
+  const [newForm, setNewForm] = useState(NEW_MEMBER_FORM)
+  const [createSaving, setCreateSaving] = useState(false)
+  const [createMessage, setCreateMessage] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -1410,6 +1418,55 @@ function AdminMembersPanel({ token }) {
     setSelectedId(m.id)
     setForm(adminFormFromMember(m))
     setSaveMessage('')
+    setCreating(false)
+  }
+
+  function openCreateForm() {
+    setCreating(true)
+    setSelectedId(null)
+    setForm(null)
+    setNewForm(NEW_MEMBER_FORM)
+    setCreateMessage('')
+  }
+
+  function updateNewField(key, value) {
+    setNewForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function handleCreate(e) {
+    e.preventDefault()
+    setCreateSaving(true)
+    setCreateMessage('')
+    try {
+      const created = await api.adminCreateMember(token, newForm)
+      setMembers((prev) => [...prev, created])
+      setCreating(false)
+      selectMember(created)
+      setSaveMessage("Compte créé. L'adhérent doit utiliser « Mot de passe oublié ? » sur l'écran de connexion pour définir son mot de passe.")
+    } catch (err) {
+      setCreateMessage(err.message)
+    } finally {
+      setCreateSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!selected) return
+    if (!window.confirm(`Supprimer définitivement le compte de ${selected.prenom} ${selected.nom} ? Cette action est irréversible.`)) {
+      return
+    }
+    setDeleting(true)
+    setSaveMessage('')
+    try {
+      await api.adminDeleteMember(token, selected.id)
+      setMembers((prev) => prev.filter((m) => m.id !== selected.id))
+      setSelectedId(null)
+      setForm(null)
+    } catch (err) {
+      setSaveMessage(err.message)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   function updateField(key, value) {
@@ -1458,7 +1515,10 @@ function AdminMembersPanel({ token }) {
       {!loading && !loadError && (
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 320px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
-            <div style={{ padding: '0.8rem' }}>
+            <div style={{ padding: '0.8rem', display: 'grid', gap: '0.6rem' }}>
+              <button type="button" onClick={openCreateForm} className="btn btn--solid" style={{ justifyContent: 'center', padding: '0.5rem', fontSize: '0.72rem' }}>
+                + Nouvel adhérent
+              </button>
               <input type="text" placeholder="Rechercher un adhérent…" style={inputStyle} value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <div style={{ maxHeight: 480, overflowY: 'auto', borderTop: '1px solid var(--line)' }}>
@@ -1483,8 +1543,49 @@ function AdminMembersPanel({ token }) {
             </div>
           </div>
 
-          {!selected || !form ? (
-            <p style={{ color: 'var(--stone)' }}>Sélectionnez un adhérent pour modifier ses informations.</p>
+          {creating ? (
+            <form onSubmit={handleCreate} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'grid', gap: '0.9rem' }}>
+              <b style={{ fontSize: '1.05rem' }}>Nouvel adhérent</b>
+              <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+                Seule l'identité de base est nécessaire ici. L'adhérent complétera ses informations confidentielles et définira son mot de passe lui-même via « Mot de passe oublié ? ».
+              </p>
+              <div>{fieldLabel('Email')}<input type="email" required style={inputStyle} value={newForm.email} onChange={(e) => updateNewField('email', e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Prénom')}<input type="text" required style={inputStyle} value={newForm.prenom} onChange={(e) => updateNewField('prenom', e.target.value)} /></div>
+                <div>{fieldLabel('Nom')}<input type="text" required style={inputStyle} value={newForm.nom} onChange={(e) => updateNewField('nom', e.target.value)} /></div>
+              </div>
+              <div>{fieldLabel('Rôle')}<input type="text" style={inputStyle} value={newForm.role} onChange={(e) => updateNewField('role', e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>
+                  {fieldLabel('Groupe')}
+                  <select style={inputStyle} value={newForm.groupe} onChange={(e) => updateNewField('groupe', e.target.value)}>
+                    <option value="">—</option>
+                    {GROUPES_ADHERENT.map((g) => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  {fieldLabel('Statut')}
+                  <select style={inputStyle} value={newForm.statut} onChange={(e) => updateNewField('statut', e.target.value)}>
+                    <option value="">—</option>
+                    {STATUTS_ADHERENT.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <input type="checkbox" checked={newForm.isBureau} onChange={(e) => updateNewField('isBureau', e.target.checked)} />
+                Membre du bureau (accès à cette page d'administration)
+              </label>
+
+              {createMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{createMessage}</p>}
+              <div style={{ display: 'flex', gap: '0.8rem' }}>
+                <button type="submit" disabled={createSaving} className="btn btn--solid" style={{ justifyContent: 'center', flex: 1 }}>
+                  {createSaving ? 'Création…' : "Créer l'adhérent"}
+                </button>
+                <button type="button" onClick={() => setCreating(false)} className="btn btn--ghost" style={{ justifyContent: 'center' }}>Annuler</button>
+              </div>
+            </form>
+          ) : !selected || !form ? (
+            <p style={{ color: 'var(--stone)' }}>Sélectionnez un adhérent pour modifier ses informations, ou créez-en un nouveau.</p>
           ) : (
             <form onSubmit={handleSave} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'grid', gap: '0.9rem' }}>
               <div style={{ paddingBottom: '0.8rem', borderBottom: '1px solid var(--line)' }}>
@@ -1580,9 +1681,22 @@ function AdminMembersPanel({ token }) {
               </div>
 
               {saveMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{saveMessage}</p>}
-              <button type="submit" disabled={saving} className="btn btn--solid" style={{ justifyContent: 'center' }}>
-                {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
-              </button>
+              <div style={{ display: 'flex', gap: '0.8rem' }}>
+                <button type="submit" disabled={saving} className="btn btn--solid" style={{ justifyContent: 'center', flex: 1 }}>
+                  {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+                </button>
+                {me && selected.id !== me.id && (
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="btn btn--ghost"
+                    style={{ justifyContent: 'center', color: 'var(--vermilion)', borderColor: 'var(--vermilion)' }}
+                  >
+                    {deleting ? 'Suppression…' : "Supprimer l'adhérent"}
+                  </button>
+                )}
+              </div>
             </form>
           )}
         </div>
