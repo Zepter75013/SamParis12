@@ -237,7 +237,9 @@ header {
   border: 1px solid var(--line);
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  color: var(--ink);
+  /* Fond forcé en blanc quel que soit le thème : le texte doit donc rester
+     sombre fixe, pas var(--ink) qui devient clair en mode sombre (invisible). */
+  color: #1C1917;
   box-sizing: border-box;
   margin-top: 0.35rem;
 }

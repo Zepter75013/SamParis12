@@ -412,7 +412,7 @@ export default function Dashboard() {
                 placeholder="Rechercher par prénom, nom ou fonction..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ padding: '0.6rem 0.8rem', background: '#fff', border: '1px solid var(--line)', minWidth: 280, width: '100%', fontFamily: 'inherit', fontSize: 'inherit', marginBottom: '0.8rem' }}
+                style={{ padding: '0.6rem 0.8rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', minWidth: 280, width: '100%', fontFamily: 'inherit', fontSize: 'inherit', marginBottom: '0.8rem' }}
               />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
                 {ACTIVITY_FILTERS.map((a) => (
@@ -1006,7 +1006,7 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
     }
   }
 
-  const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
+  const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
 
   return (
     <div>
@@ -1121,7 +1121,7 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
             <form onSubmit={handleChangeEmail} style={{ display: 'grid', gap: '0.7rem', marginTop: '0.8rem' }}>
               <div>
                 {fieldLabel('Adresse actuelle')}
-                <input type="text" style={{ ...inputStyle, background: 'var(--surface-2)' }} value={me.email} disabled />
+                <input type="text" style={{ ...inputStyle, background: 'var(--surface-2)', color: 'var(--ink)' }} value={me.email} disabled />
               </div>
               <div>
                 {fieldLabel('Nouvelle adresse')}
