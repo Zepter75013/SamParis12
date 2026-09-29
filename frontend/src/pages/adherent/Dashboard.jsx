@@ -343,31 +343,40 @@ export default function Dashboard() {
       )}
 
       <main className="shell" style={{ paddingBlock: '2rem', flex: 1 }}>
-        {activeTab === 'overview' && (
+        {activeTab === 'overview' && !me && (
+          <p style={{ color: 'var(--stone)' }}>Chargement de votre profil…</p>
+        )}
+        {activeTab === 'overview' && me && (
           <div>
             <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderLeft: '4px solid var(--vermilion)', padding: '1.5rem', marginBottom: '1.8rem' }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--line)', marginBottom: '1.2rem' }}>
                 <div>
                   <span className="eyebrow">Profil Membre Actif</span>
-                  <h2 style={{ fontSize: '1.8rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Laurent D.</h2>
+                  <h2 style={{ fontSize: '1.8rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{me.prenom} {me.nom}</h2>
                 </div>
-                <div style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '0.4rem 0.8rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                  ✓ Licence Valide (Saison 2026-2027)
-                </div>
+                {me.numeroLicence ? (
+                  <div style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: '0.4rem 0.8rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                    ✓ Licence N° {me.numeroLicence}
+                  </div>
+                ) : (
+                  <div style={{ background: 'var(--surface-2)', color: 'var(--ink-soft)', border: '1px solid var(--line)', padding: '0.4rem 0.8rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                    Licence non renseignée
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.2rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
                 <div>
                   <span style={{ color: 'var(--stone)', display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>Numéro Licence</span>
-                  <b style={{ fontSize: '0.95rem' }}>FFA N° 1894023</b>
+                  <b style={{ fontSize: '0.95rem' }}>{me.numeroLicence || 'Non renseigné'}</b>
                 </div>
                 <div>
                   <span style={{ color: 'var(--stone)', display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>Groupe d'entraînement</span>
-                  <b style={{ fontSize: '0.95rem' }}>Hors-Stade · Préparation Marathon</b>
+                  <b style={{ fontSize: '0.95rem' }}>{me.groupe || '—'}</b>
                 </div>
                 <div>
-                  <span style={{ color: 'var(--stone)', display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>Coach Référent</span>
-                  <b style={{ fontSize: '0.95rem' }}>Sylvain Darrasse</b>
+                  <span style={{ color: 'var(--stone)', display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>Statut</span>
+                  <b style={{ fontSize: '0.95rem' }}>{me.statut || '—'}</b>
                 </div>
               </div>
             </div>
