@@ -214,7 +214,7 @@ export default function Dashboard() {
 
   function handleLogout() {
     clearToken()
-    navigate('/espace-adherent')
+    navigate('/')
   }
 
   function handlePasswordChanged(newToken) {
@@ -840,7 +840,7 @@ export default function Dashboard() {
                   <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Outils de gestion réservés aux membres du bureau et de l'organisation.</p>
                 </div>
 
-                <AdminMembersPanel token={token} me={me} />
+                <AdminMembersPanel token={token} me={me} onMembersChanged={() => api.listMembers(token).then(setMembers).catch(() => {})} />
 
                 <div style={{ marginTop: '2.2rem', marginBottom: '1rem' }}>
                   <b style={{ fontSize: '0.95rem', textTransform: 'uppercase' }}>Autres outils</b>
@@ -1382,7 +1382,7 @@ function adminFormFromMember(m) {
 
 const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', isBureau: false }
 
-function AdminMembersPanel({ token, me }) {
+function AdminMembersPanel({ token, me, onMembersChanged }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -1392,6 +1392,7 @@ function AdminMembersPanel({ token, me }) {
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
 
   const [creating, setCreating] = useState(false)
   const [newForm, setNewForm] = useState(NEW_MEMBER_FORM)
@@ -1443,6 +1444,7 @@ function AdminMembersPanel({ token, me }) {
       setCreating(false)
       selectMember(created)
       setSaveMessage("Compte créé. L'adhérent doit utiliser « Mot de passe oublié ? » sur l'écran de connexion pour définir son mot de passe.")
+      onMembersChanged?.()
     } catch (err) {
       setCreateMessage(err.message)
     } finally {
@@ -1452,9 +1454,6 @@ function AdminMembersPanel({ token, me }) {
 
   async function handleDelete() {
     if (!selected) return
-    if (!window.confirm(`Supprimer définitivement le compte de ${selected.prenom} ${selected.nom} ? Cette action est irréversible.`)) {
-      return
-    }
     setDeleting(true)
     setSaveMessage('')
     try {
@@ -1462,10 +1461,12 @@ function AdminMembersPanel({ token, me }) {
       setMembers((prev) => prev.filter((m) => m.id !== selected.id))
       setSelectedId(null)
       setForm(null)
+      onMembersChanged?.()
     } catch (err) {
       setSaveMessage(err.message)
     } finally {
       setDeleting(false)
+      setConfirmingDelete(false)
     }
   }
 
@@ -1493,6 +1494,7 @@ function AdminMembersPanel({ token, me }) {
       const updated = await api.adminUpdateMember(token, selectedId, payload)
       setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
       setSaveMessage('Modifications enregistrées.')
+      onMembersChanged?.()
     } catch (err) {
       setSaveMessage(err.message)
     } finally {
@@ -1688,7 +1690,7 @@ function AdminMembersPanel({ token, me }) {
                 {me && selected.id !== me.id && (
                   <button
                     type="button"
-                    onClick={handleDelete}
+                    onClick={() => setConfirmingDelete(true)}
                     disabled={deleting}
                     className="btn btn--ghost"
                     style={{ justifyContent: 'center', color: 'var(--vermilion)', borderColor: 'var(--vermilion)' }}
@@ -1699,6 +1701,37 @@ function AdminMembersPanel({ token, me }) {
               </div>
             </form>
           )}
+        </div>
+      )}
+
+      {confirmingDelete && selected && (
+        <div
+          onClick={() => !deleting && setConfirmingDelete(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(28,25,23,0.5)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: 'var(--surface)', border: '1px solid var(--line)', maxWidth: 420, width: '100%', padding: '1.6rem' }}
+          >
+            <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginBottom: '0.8rem' }}>Supprimer cet adhérent ?</h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--ink-soft)', marginBottom: '1.4rem' }}>
+              Le compte de <b>{selected.prenom} {selected.nom}</b> ({selected.email}) sera définitivement supprimé. Cette action est irréversible.
+            </p>
+            <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
+              <button type="button" onClick={() => setConfirmingDelete(false)} disabled={deleting} className="btn btn--ghost" style={{ justifyContent: 'center' }}>
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="btn btn--solid"
+                style={{ justifyContent: 'center', background: 'var(--vermilion)', borderColor: 'var(--vermilion)' }}
+              >
+                {deleting ? 'Suppression…' : 'Supprimer définitivement'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
