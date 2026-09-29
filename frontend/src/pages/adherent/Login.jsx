@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
-import { setToken } from '../../lib/session.js'
+import { getToken, setToken, clearToken } from '../../lib/session.js'
 import PasswordField from '../../components/PasswordField.jsx'
 
 export default function Login() {
@@ -15,6 +15,16 @@ export default function Login() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Un jeton local valide existe déjà (session précédente) : on saute
+  // directement au tableau de bord plutôt que de forcer une reconnexion.
+  useEffect(() => {
+    const token = getToken()
+    if (!token) return
+    api.getMe(token)
+      .then(() => navigate('/espace-adherent/tableau-de-bord'))
+      .catch(() => clearToken())
+  }, [navigate])
 
   async function handleLogin(e) {
     e.preventDefault()
