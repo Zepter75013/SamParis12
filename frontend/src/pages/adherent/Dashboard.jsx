@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
+import PasswordField from '../../components/PasswordField.jsx'
 
 const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
@@ -1150,11 +1151,11 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
                 </div>
                 <div>
                   {fieldLabel('Nouveau mot de passe')}
-                  <input type="password" style={inputStyle} value={pwdNew} onChange={(e) => setPwdNew(e.target.value)} required />
+                  <PasswordField inputStyle={inputStyle} value={pwdNew} onChange={(e) => setPwdNew(e.target.value)} required />
                 </div>
                 <div>
                   {fieldLabel('Confirmer le mot de passe')}
-                  <input type="password" style={inputStyle} value={pwdNew2} onChange={(e) => setPwdNew2(e.target.value)} required />
+                  <PasswordField inputStyle={inputStyle} value={pwdNew2} onChange={(e) => setPwdNew2(e.target.value)} required />
                 </div>
                 <button type="submit" className="btn btn--solid" style={{ justifyContent: 'center' }}>Valider</button>
               </form>

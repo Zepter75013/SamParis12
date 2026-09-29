@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { setToken } from '../../lib/session.js'
+import PasswordField from '../../components/PasswordField.jsx'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -117,7 +118,7 @@ export default function Login() {
                 <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
                   Mot de passe
                 </label>
-                <input type="password" className="login-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <PasswordField className="login-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
 
               <div style={{ paddingTop: '0.5rem' }}>
@@ -145,14 +146,14 @@ export default function Login() {
                 <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
                   Nouveau mot de passe
                 </label>
-                <input type="password" className="login-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                <PasswordField className="login-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
               </div>
 
               <div>
                 <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
                   Confirmer le mot de passe
                 </label>
-                <input type="password" className="login-input" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} required />
+                <PasswordField className="login-input" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} required />
               </div>
 
               <div style={{ paddingTop: '0.5rem' }}>
