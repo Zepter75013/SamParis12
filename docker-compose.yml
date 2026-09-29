@@ -25,6 +25,7 @@ services:
       - "8093:8080"
     volumes:
       - ./member-photos:/app/uploads/photos
+      - ./club-documents:/app/uploads/documents
     networks:
       - disques-network
 

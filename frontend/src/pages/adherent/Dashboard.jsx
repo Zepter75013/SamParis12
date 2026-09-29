@@ -7,7 +7,7 @@ import PasswordField from '../../components/PasswordField.jsx'
 const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
   { id: 'trombi', label: 'Trombinoscope' },
-  { id: 'courses', label: 'Nos Courses & Covoiturage' },
+  { id: 'courses', label: 'Nos Courses' },
   { id: 'resultats', label: 'Résultats & Records' },
   { id: 'reseaute', label: 'SAM Réseaute' },
   { id: 'documents', label: 'Plans & Documents' },
@@ -733,33 +733,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'documents' && (
-          <div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <span className="eyebrow">Programmes &amp; Vie du club</span>
-              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Plans d'Entraînement &amp; Documents</h2>
-              <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Téléchargez les plans préparés par nos entraîneurs diplômés FFA et les documents officiels de l'association.</p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem' }}>
-              {[
-                { kind: 'PDF · Programme trimestriel', titre: 'Plans d’entraînement running', auteur: 'Encadrement SAM Paris 12' },
-                { kind: 'PDF · Résultats', titre: 'Résultat du test VMA', auteur: 'Encadrement SAM Paris 12' },
-                { kind: 'PDF · Grille d’allures piste', titre: 'Allure fractionné / VMA par niveau', auteur: 'Commission des entraîneurs FFA' },
-                { kind: 'PDF · Plan des lieux', titre: 'Plan du stade', auteur: 'SAM Paris 12' },
-              ].map((doc) => (
-                <div key={doc.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>{doc.kind}</span>
-                    <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{doc.titre}</h3>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)', margin: '0.4rem 0 0' }}>Auteur{doc.auteur.includes('&') ? 's' : ''} : {doc.auteur}</p>
-                  </div>
-                  <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
-                    <button className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>Télécharger le document ↓</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <DocumentsPanel token={token} me={me} />
         )}
 
         {activeTab === 'vieduclub' && (
@@ -1289,6 +1263,7 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
             {infoRow('Licencié(e) par', me.licenciePar)}
             {infoRow('Fonction au bureau', me.fonctionBureau)}
             {infoRow("Droit d'administrer les événements", me.droitAdminEvenements ? 'Oui' : 'Non')}
+            {infoRow("Droit d'ajouter des documents", me.droitUploadDocuments ? 'Oui' : 'Non')}
             {infoRow('Origine du contact', me.origineContact)}
             {infoRow('Année de première adhésion', me.anneePremiereAdhesion)}
             {infoRow('Date de première adhésion', me.datePremiereAdhesion)}
@@ -1581,6 +1556,139 @@ function CoursesPanel({ token, me }) {
   )
 }
 
+const NEW_DOCUMENT_FORM = { titre: '', categorie: '', auteur: '' }
+
+function formatDocDate(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function DocumentsPanel({ token, me }) {
+  const [docs, setDocs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+
+  const [creating, setCreating] = useState(false)
+  const [newForm, setNewForm] = useState(NEW_DOCUMENT_FORM)
+  const [file, setFile] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadMessage, setUploadMessage] = useState('')
+
+  const canUpload = !!(me?.isBureau || me?.droitUploadDocuments)
+
+  function loadDocs() {
+    return api.listDocuments(token)
+      .then((data) => setDocs(data))
+      .catch((err) => setLoadError(err.message))
+  }
+
+  useEffect(() => {
+    setLoading(true)
+    loadDocs().finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
+
+  function updateNewField(key, value) {
+    setNewForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function handleUpload(e) {
+    e.preventDefault()
+    if (!file) {
+      setUploadMessage('Choisissez un fichier PDF.')
+      return
+    }
+    setUploading(true)
+    setUploadMessage('')
+    try {
+      const form = new FormData()
+      form.append('titre', newForm.titre)
+      form.append('categorie', newForm.categorie)
+      form.append('auteur', newForm.auteur)
+      form.append('document', file)
+      await api.uploadDocument(token, form)
+      setCreating(false)
+      setNewForm(NEW_DOCUMENT_FORM)
+      setFile(null)
+      await loadDocs()
+    } catch (err) {
+      setUploadMessage(err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
+
+  return (
+    <div>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem' }}>
+        <div>
+          <span className="eyebrow">Programmes &amp; Vie du club</span>
+          <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Plans d'Entraînement &amp; Documents</h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Téléchargez les plans préparés par nos entraîneurs diplômés FFA et les documents officiels de l'association.</p>
+        </div>
+        {canUpload && (
+          <button type="button" onClick={() => { setCreating(true); setUploadMessage('') }} className="btn btn--solid" style={{ padding: '0.65rem 1.2rem', fontSize: '0.75rem' }}>
+            + Ajouter un document
+          </button>
+        )}
+      </div>
+
+      {loading && <p style={{ color: 'var(--stone)' }}>Chargement des documents…</p>}
+      {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+
+      {!loading && !loadError && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem' }}>
+          {docs.map((doc) => (
+            <div key={doc.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                {doc.categorie && <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>PDF · {doc.categorie}</span>}
+                <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{doc.titre}</h3>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)', margin: '0.4rem 0 0' }}>
+                  {doc.auteur && <>Auteur : {doc.auteur} · </>}
+                  Ajouté par {doc.uploadedByPrenom} {doc.uploadedByNom} le {formatDocDate(doc.createdAt)}
+                </p>
+              </div>
+              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
+                <a href={doc.fileUrl} download target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
+                  Télécharger le document ↓
+                </a>
+              </div>
+            </div>
+          ))}
+          {docs.length === 0 && (
+            <p style={{ color: 'var(--stone)' }}>Aucun document disponible pour le moment.</p>
+          )}
+        </div>
+      )}
+
+      {creating && (
+        <AdminModal onClose={() => setCreating(false)} maxWidth={520}>
+          <form onSubmit={handleUpload} style={{ display: 'grid', gap: '0.9rem' }}>
+            <b style={{ fontSize: '1.05rem' }}>Ajouter un document</b>
+            <div>{fieldLabel('Titre')}<input type="text" required style={inputStyle} value={newForm.titre} onChange={(e) => updateNewField('titre', e.target.value)} /></div>
+            <div>{fieldLabel('Catégorie (ex : Programme trimestriel, Résultats…)')}<input type="text" style={inputStyle} value={newForm.categorie} onChange={(e) => updateNewField('categorie', e.target.value)} /></div>
+            <div>{fieldLabel('Auteur')}<input type="text" style={inputStyle} value={newForm.auteur} onChange={(e) => updateNewField('auteur', e.target.value)} /></div>
+            <div>
+              {fieldLabel('Fichier PDF (20 Mo maximum)')}
+              <input type="file" accept="application/pdf" required onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            </div>
+
+            {uploadMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{uploadMessage}</p>}
+            <div style={{ display: 'flex', gap: '0.8rem' }}>
+              <button type="submit" disabled={uploading} className="btn btn--solid" style={{ justifyContent: 'center', flex: 1 }}>
+                {uploading ? 'Envoi…' : 'Ajouter le document'}
+              </button>
+              <button type="button" onClick={() => setCreating(false)} className="btn btn--ghost" style={{ justifyContent: 'center' }}>Annuler</button>
+            </div>
+          </form>
+        </AdminModal>
+      )}
+    </div>
+  )
+}
+
 const GROUPES_ADHERENT = ['Running', 'Marche Nordique Sportive', 'Marche Loisir']
 const STATUTS_ADHERENT = ['Adhérents 2027', 'Anciens adhérents', 'Nouveaux adhérents']
 
@@ -1595,7 +1703,7 @@ function adminFormFromMember(m) {
     urgenceTelephone: m.urgenceTelephone || '', tailleMaillot: m.tailleMaillot || '', vma: m.vma ?? '', vmaDate: m.vmaDate || '',
 
     numeroLicence: m.numeroLicence || '', licenciePar: m.licenciePar || '', fonctionBureau: m.fonctionBureau || '',
-    droitAdminEvenements: !!m.droitAdminEvenements, origineContact: m.origineContact || '',
+    droitAdminEvenements: !!m.droitAdminEvenements, droitUploadDocuments: !!m.droitUploadDocuments, origineContact: m.origineContact || '',
     anneePremiereAdhesion: m.anneePremiereAdhesion ?? '', datePremiereAdhesion: m.datePremiereAdhesion || '',
     dateDernierCertificat: m.dateDernierCertificat || '', anneeDerniereAdhesion: m.anneeDerniereAdhesion ?? '',
     activiteSaison: m.activiteSaison || '', licenceFfaType: m.licenceFfaType || '',
@@ -2011,6 +2119,10 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
                 <input type="checkbox" checked={form.droitAdminEvenements} onChange={(e) => updateField('droitAdminEvenements', e.target.checked)} />
                 Droit d'administrer les événements
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <input type="checkbox" checked={form.droitUploadDocuments} onChange={(e) => updateField('droitUploadDocuments', e.target.checked)} />
+                Droit d'ajouter des documents (Plans &amp; Documents)
               </label>
               <div>{fieldLabel('Origine du contact')}<input type="text" style={inputStyle} value={form.origineContact} onChange={(e) => updateField('origineContact', e.target.value)} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>

@@ -6,6 +6,7 @@ import (
 
 	"samparis12/backend/internal/config"
 	"samparis12/backend/internal/contact"
+	"samparis12/backend/internal/document"
 	"samparis12/backend/internal/event"
 	"samparis12/backend/internal/group"
 	"samparis12/backend/internal/mailer"
@@ -30,6 +31,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	memberMailer := mailer.New(cfg)
 	memberHandler := member.NewHandler(member.NewRepository(db), memberMailer, authService)
 	raceHandler := race.NewHandler(race.NewRepository(db))
+	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -66,8 +68,13 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("POST /api/races/{id}/register", authService.RequireAuth(raceHandler.Register))
 	mux.HandleFunc("DELETE /api/races/{id}/register", authService.RequireAuth(raceHandler.Unregister))
 
-	// Photos de trombinoscope, servies telles quelles (pas de donnée sensible).
+	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
+	mux.HandleFunc("POST /api/documents", authService.RequireAuth(documentHandler.Upload))
+
+	// Photos de trombinoscope et documents du club, servis tels quels (pas
+	// de donnée sensible).
 	mux.Handle("GET /uploads/photos/", http.StripPrefix("/uploads/photos/", http.FileServer(http.Dir("uploads/photos"))))
+	mux.Handle("GET /uploads/documents/", http.StripPrefix("/uploads/documents/", http.FileServer(http.Dir("uploads/documents"))))
 
 	return httpx.CORS(cfg.FrontendURL, mux)
 }

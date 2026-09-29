@@ -57,4 +57,7 @@ export const api = {
   getRace: (token, id) => request(`/races/${id}`, { token }),
   registerRace: (token, id) => request(`/races/${id}/register`, { method: 'POST', token }),
   unregisterRace: (token, id) => request(`/races/${id}/register`, { method: 'DELETE', token }),
+
+  listDocuments: (token) => request('/documents', { token }),
+  uploadDocument: (token, formData) => request('/documents', { method: 'POST', token, body: formData }),
 }
