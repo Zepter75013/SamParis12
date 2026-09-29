@@ -707,6 +707,41 @@ func (h *Handler) UpdateEmail(w http.ResponseWriter, r *http.Request) {
 	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
+// AdminUpdateEmail permet à un membre du bureau de modifier l'adresse email
+// d'un autre adhérent (par ex. en cas d'erreur de saisie ou de changement
+// d'adresse que l'adhérent ne peut pas faire lui-même).
+func (h *Handler) AdminUpdateEmail(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	var req updateEmailRequest
+	if err := decodeJSON(r, &req); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	newEmail := strings.ToLower(strings.TrimSpace(req.NewEmail))
+	if !strings.Contains(newEmail, "@") {
+		httpx.Error(w, http.StatusBadRequest, "adresse email invalide")
+		return
+	}
+	if existing, err := h.repo.GetByEmail(newEmail); err == nil && existing.ID != id {
+		httpx.Error(w, http.StatusConflict, "cette adresse email est déjà utilisée")
+		return
+	}
+	if err := h.repo.UpdateEmail(id, newEmail); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible de mettre à jour l'adresse email")
+		return
+	}
+	m, err := h.repo.GetByID(id)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, m)
+}
+
 func (h *Handler) ListPublic(w http.ResponseWriter, r *http.Request) {
 	members, err := h.repo.ListPublic()
 	if err != nil {

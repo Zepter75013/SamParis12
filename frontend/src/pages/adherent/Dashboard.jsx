@@ -1645,6 +1645,10 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
   const [createSaving, setCreateSaving] = useState(false)
   const [createMessage, setCreateMessage] = useState('')
 
+  const [emailValue, setEmailValue] = useState('')
+  const [emailSaving, setEmailSaving] = useState(false)
+  const [emailMessage, setEmailMessage] = useState('')
+
   useEffect(() => {
     let cancelled = false
     api.adminListMembers(token)
@@ -1692,6 +1696,23 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
     setForm(adminFormFromMember(m))
     setSaveMessage('')
     setCreating(false)
+    setEmailValue(m.email)
+    setEmailMessage('')
+  }
+
+  async function handleSaveEmail() {
+    setEmailSaving(true)
+    setEmailMessage('')
+    try {
+      const updated = await api.adminUpdateEmail(token, selectedId, emailValue)
+      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
+      setEmailMessage('Adresse email mise à jour.')
+      onMembersChanged?.()
+    } catch (err) {
+      setEmailMessage(err.message)
+    } finally {
+      setEmailSaving(false)
+    }
   }
 
   function openCreateForm() {
@@ -1897,10 +1918,7 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
         <AdminModal onClose={() => { setSelectedId(null); setForm(null); setSaveMessage('') }} maxWidth={760}>
             <form onSubmit={handleSave} style={{ display: 'grid', gap: '0.9rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '0.8rem', borderBottom: '1px solid var(--line)' }}>
-                <div>
-                  <b style={{ fontSize: '1.05rem' }}>{selected.prenom} {selected.nom}</b>
-                  <div style={{ color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>{selected.email}</div>
-                </div>
+                <b style={{ fontSize: '1.05rem' }}>{selected.prenom} {selected.nom}</b>
                 <button
                   type="button"
                   onClick={() => { setSelectedId(null); setForm(null); setSaveMessage('') }}
@@ -1910,6 +1928,21 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                   Fermer ✕
                 </button>
               </div>
+
+              <b style={{ fontSize: '0.85rem' }}>Adresse email</b>
+              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                <input type="email" style={inputStyle} value={emailValue} onChange={(e) => setEmailValue(e.target.value)} />
+                <button
+                  type="button"
+                  onClick={handleSaveEmail}
+                  disabled={emailSaving || emailValue === selected.email}
+                  className="btn btn--ghost"
+                  style={{ padding: '0.6rem 1rem', fontSize: '0.72rem', whiteSpace: 'nowrap' }}
+                >
+                  {emailSaving ? 'Enregistrement…' : 'Enregistrer'}
+                </button>
+              </div>
+              {emailMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)', marginTop: '-0.3rem' }}>{emailMessage}</p>}
 
               <b style={{ fontSize: '0.85rem' }}>Identité & adhésion</b>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
