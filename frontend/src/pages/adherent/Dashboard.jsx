@@ -310,7 +310,7 @@ export default function Dashboard() {
                 <span style={{ color: 'var(--stone)' }}>{profileMenuOpen ? '▴' : '▾'}</span>
               </button>
               {profileMenuOpen && (
-                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.4rem', background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', minWidth: 200, zIndex: 50, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textAlign: 'left' }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '0.4rem', background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', minWidth: 200, zIndex: 50, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textAlign: 'left' }}>
                   <button
                     onClick={() => { setActiveTab('profil'); setProfileMenuOpen(false) }}
                     style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '0.7rem 0.9rem', cursor: 'pointer', color: 'var(--ink)' }}
