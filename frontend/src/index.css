@@ -62,6 +62,15 @@ button, select {
 
 html { scroll-behavior: smooth; }
 
+/* Toutes les tailles de police du site sont en rem, donc relatives à la
+   taille de police de <html> : l'augmenter ici agrandit uniformément tout
+   le texte (site public + espace adhérent, CSS et styles inline React)
+   sur grand écran, sans toucher à la mise en page mobile (cf. le
+   breakpoint @media (max-width: 860px) plus bas). */
+@media (min-width: 861px) {
+  html { font-size: 112.5%; }
+}
+
 body {
   margin: 0;
   background: var(--paper);
