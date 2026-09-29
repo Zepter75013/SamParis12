@@ -1607,34 +1607,36 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
       {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
 
       {!loading && !loadError && (
-        <div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1rem', alignItems: 'center' }}>
-            <button type="button" onClick={openCreateForm} className="btn btn--solid" style={{ padding: '0.55rem 1rem', fontSize: '0.72rem' }}>
+        // Sort de la largeur de .shell (max-width: 1180px) pour profiter de
+        // tout l'écran disponible sur un tableau à nombreuses colonnes.
+        <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', paddingInline: 'var(--edge)', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1.2rem', alignItems: 'center' }}>
+            <button type="button" onClick={openCreateForm} className="btn btn--solid" style={{ padding: '0.65rem 1.2rem', fontSize: '0.8rem' }}>
               + Nouvel adhérent
             </button>
             <input
               type="text"
               placeholder="Rechercher un adhérent…"
-              style={{ ...inputStyle, flex: 1, minWidth: 240, width: 'auto' }}
+              style={{ ...inputStyle, flex: 1, minWidth: 240, width: 'auto', padding: '0.7rem 0.9rem', fontSize: '0.95rem' }}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--stone)' }}>
               {sorted.length} adhérent{sorted.length > 1 ? 's' : ''}
             </span>
           </div>
 
           <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.95rem' }}>
               <thead>
-                <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.66rem' }}>
-                  <th style={{ padding: '0.7rem 0.8rem', width: 44 }}></th>
-                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('nom')}>Nom{sortIndicator('nom')}</th>
-                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('prenom')}>Prénom{sortIndicator('prenom')}</th>
-                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('email')}>Email{sortIndicator('email')}</th>
-                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('groupe')}>Groupe{sortIndicator('groupe')}</th>
-                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('statut')}>Statut{sortIndicator('statut')}</th>
-                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }} onClick={() => sortBy('bureau')}>Bureau{sortIndicator('bureau')}</th>
+                <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.78rem' }}>
+                  <th style={{ padding: '1rem', width: 64 }}></th>
+                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('nom')}>Nom{sortIndicator('nom')}</th>
+                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('prenom')}>Prénom{sortIndicator('prenom')}</th>
+                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('email')}>Email{sortIndicator('email')}</th>
+                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('groupe')}>Groupe{sortIndicator('groupe')}</th>
+                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('statut')}>Statut{sortIndicator('statut')}</th>
+                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }} onClick={() => sortBy('bureau')}>Bureau{sortIndicator('bureau')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1646,19 +1648,19 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                     onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-2)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
                   >
-                    <td style={{ padding: '0.4rem 0.8rem' }}><Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={30} /></td>
-                    <td style={{ padding: '0.6rem 0.8rem' }}><b>{m.nom}</b></td>
-                    <td style={{ padding: '0.6rem 0.8rem' }}>{m.prenom}</td>
-                    <td style={{ padding: '0.6rem 0.8rem', color: 'var(--ink-soft)' }}>{m.email}</td>
-                    <td style={{ padding: '0.6rem 0.8rem' }}>{m.groupe || '—'}</td>
-                    <td style={{ padding: '0.6rem 0.8rem' }}>{m.statut || '—'}</td>
-                    <td style={{ padding: '0.6rem 0.8rem', textAlign: 'center' }}>
-                      {m.isBureau && <span style={{ fontSize: '0.6rem', padding: '0.15rem 0.4rem', background: 'var(--vermilion)', color: '#fff' }}>Bureau</span>}
+                    <td style={{ padding: '0.5rem 1rem' }}><Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={44} /></td>
+                    <td style={{ padding: '0.9rem 1rem' }}><b>{m.nom}</b></td>
+                    <td style={{ padding: '0.9rem 1rem' }}>{m.prenom}</td>
+                    <td style={{ padding: '0.9rem 1rem', color: 'var(--ink-soft)' }}>{m.email}</td>
+                    <td style={{ padding: '0.9rem 1rem' }}>{m.groupe || '—'}</td>
+                    <td style={{ padding: '0.9rem 1rem' }}>{m.statut || '—'}</td>
+                    <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
+                      {m.isBureau && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem', background: 'var(--vermilion)', color: '#fff' }}>Bureau</span>}
                     </td>
                   </tr>
                 ))}
                 {sorted.length === 0 && (
-                  <tr><td colSpan={7} style={{ padding: '1rem 0.8rem', color: 'var(--stone)' }}>Aucun adhérent trouvé.</td></tr>
+                  <tr><td colSpan={7} style={{ padding: '1.2rem 1rem', color: 'var(--stone)' }}>Aucun adhérent trouvé.</td></tr>
                 )}
               </tbody>
             </table>
