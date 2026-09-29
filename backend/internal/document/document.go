@@ -94,6 +94,26 @@ func (r *Repository) Create(titre, categorie, auteur, filePath string, uploadedB
 	return res.LastInsertId()
 }
 
+// GetByCategorie retourne le document actuellement en place pour une
+// catégorie (case) donnée — chaque catégorie n'a qu'un seul document à la fois.
+func (r *Repository) GetByCategorie(categorie string) (*Document, error) {
+	row := r.db.QueryRow(`
+		SELECT `+documentColumns+`
+		FROM documents d
+		JOIN members m ON m.id = d.uploaded_by
+		WHERE d.categorie = ?`, categorie)
+	return scanDocument(row.Scan)
+}
+
+func (r *Repository) Replace(id int64, titre, auteur, filePath string, uploadedBy int64) error {
+	_, err := r.db.Exec(`
+		UPDATE documents SET titre = ?, auteur = ?, file_path = ?, uploaded_by = ?, created_at = CURRENT_TIMESTAMP
+		WHERE id = ?`,
+		titre, auteur, filePath, uploadedBy, id,
+	)
+	return err
+}
+
 type Handler struct {
 	repo       *Repository
 	memberRepo *member.Repository
@@ -151,10 +171,16 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	titre := strings.TrimSpace(r.FormValue("titre"))
 	categorie := strings.TrimSpace(r.FormValue("categorie"))
 	auteur := strings.TrimSpace(r.FormValue("auteur"))
-	if titre == "" {
-		httpx.Error(w, http.StatusBadRequest, "le titre est obligatoire")
+	if titre == "" || categorie == "" {
+		httpx.Error(w, http.StatusBadRequest, "le titre et la catégorie sont obligatoires")
 		return
 	}
+
+	// Chaque catégorie (case) n'a qu'un seul document à la fois : un nouvel
+	// upload dans la même case remplace le document existant, et l'ancien
+	// fichier physique est supprimé pour ne pas s'accumuler sur le disque.
+	existing, err := h.repo.GetByCategorie(categorie)
+	hasExisting := err == nil
 
 	file, _, err := r.FormFile("document")
 	if err != nil {
@@ -200,10 +226,22 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileURL := "/uploads/documents/" + filename
-	id, err := h.repo.Create(titre, categorie, auteur, fileURL, memberID)
+
+	var id int64
+	if hasExisting {
+		id = existing.ID
+		err = h.repo.Replace(id, titre, auteur, fileURL, memberID)
+	} else {
+		id, err = h.repo.Create(titre, categorie, auteur, fileURL, memberID)
+	}
 	if err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer le document")
 		return
+	}
+
+	if hasExisting {
+		oldPath := filepath.Join(documentUploadDir, filepath.Base(existing.FileURL))
+		_ = os.Remove(oldPath)
 	}
 
 	d, err := h.repo.GetByID(id)

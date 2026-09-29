@@ -1556,7 +1556,14 @@ function CoursesPanel({ token, me }) {
   )
 }
 
-const NEW_DOCUMENT_FORM = { titre: '', categorie: '', auteur: '' }
+// Les 4 cases sont fixes : chacune ne contient qu'un seul document à la
+// fois (un nouvel upload dans une case remplace le précédent).
+const DOCUMENT_SLOTS = [
+  { categorie: 'Programme trimestriel', defaultTitre: 'Plans d’entraînement running', defaultAuteur: 'Encadrement SAM Paris 12' },
+  { categorie: 'Résultats', defaultTitre: 'Résultat du test VMA', defaultAuteur: 'Encadrement SAM Paris 12' },
+  { categorie: 'Grille d’allures piste', defaultTitre: 'Allure fractionné / VMA par niveau', defaultAuteur: 'Commission des entraîneurs FFA' },
+  { categorie: 'Plan des lieux', defaultTitre: 'Plan du stade', defaultAuteur: 'SAM Paris 12' },
+]
 
 function formatDocDate(iso) {
   if (!iso) return ''
@@ -1568,11 +1575,11 @@ function DocumentsPanel({ token, me }) {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
 
-  const [creating, setCreating] = useState(false)
-  const [newForm, setNewForm] = useState(NEW_DOCUMENT_FORM)
-  const [file, setFile] = useState(null)
-  const [uploading, setUploading] = useState(false)
-  const [uploadMessage, setUploadMessage] = useState('')
+  const [editingCategorie, setEditingCategorie] = useState(null)
+  const [slotForm, setSlotForm] = useState({ titre: '', auteur: '' })
+  const [slotFile, setSlotFile] = useState(null)
+  const [slotUploading, setSlotUploading] = useState(false)
+  const [slotMessage, setSlotMessage] = useState('')
 
   const canUpload = !!(me?.isBureau || me?.droitUploadDocuments)
 
@@ -1588,33 +1595,38 @@ function DocumentsPanel({ token, me }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  function updateNewField(key, value) {
-    setNewForm((f) => ({ ...f, [key]: value }))
+  function openSlotForm(slot, doc) {
+    setEditingCategorie(slot.categorie)
+    setSlotForm({ titre: doc?.titre || slot.defaultTitre, auteur: doc?.auteur || slot.defaultAuteur })
+    setSlotFile(null)
+    setSlotMessage('')
   }
 
-  async function handleUpload(e) {
+  function closeSlotForm() {
+    setEditingCategorie(null)
+  }
+
+  async function handleSlotUpload(e, categorie) {
     e.preventDefault()
-    if (!file) {
-      setUploadMessage('Choisissez un fichier PDF.')
+    if (!slotFile) {
+      setSlotMessage('Choisissez un fichier PDF.')
       return
     }
-    setUploading(true)
-    setUploadMessage('')
+    setSlotUploading(true)
+    setSlotMessage('')
     try {
       const form = new FormData()
-      form.append('titre', newForm.titre)
-      form.append('categorie', newForm.categorie)
-      form.append('auteur', newForm.auteur)
-      form.append('document', file)
+      form.append('titre', slotForm.titre)
+      form.append('categorie', categorie)
+      form.append('auteur', slotForm.auteur)
+      form.append('document', slotFile)
       await api.uploadDocument(token, form)
-      setCreating(false)
-      setNewForm(NEW_DOCUMENT_FORM)
-      setFile(null)
+      setEditingCategorie(null)
       await loadDocs()
     } catch (err) {
-      setUploadMessage(err.message)
+      setSlotMessage(err.message)
     } finally {
-      setUploading(false)
+      setSlotUploading(false)
     }
   }
 
@@ -1622,17 +1634,10 @@ function DocumentsPanel({ token, me }) {
 
   return (
     <div>
-      <div style={{ marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem' }}>
-        <div>
-          <span className="eyebrow">Programmes &amp; Vie du club</span>
-          <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Plans d'Entraînement &amp; Documents</h2>
-          <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Téléchargez les plans préparés par nos entraîneurs diplômés FFA et les documents officiels de l'association.</p>
-        </div>
-        {canUpload && (
-          <button type="button" onClick={() => { setCreating(true); setUploadMessage('') }} className="btn btn--solid" style={{ padding: '0.65rem 1.2rem', fontSize: '0.75rem' }}>
-            + Ajouter un document
-          </button>
-        )}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <span className="eyebrow">Programmes &amp; Vie du club</span>
+        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Plans d'Entraînement &amp; Documents</h2>
+        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Téléchargez les plans préparés par nos entraîneurs diplômés FFA et les documents officiels de l'association.</p>
       </div>
 
       {loading && <p style={{ color: 'var(--stone)' }}>Chargement des documents…</p>}
@@ -1640,50 +1645,60 @@ function DocumentsPanel({ token, me }) {
 
       {!loading && !loadError && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem' }}>
-          {docs.map((doc) => (
-            <div key={doc.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div>
-                {doc.categorie && <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>PDF · {doc.categorie}</span>}
-                <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{doc.titre}</h3>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)', margin: '0.4rem 0 0' }}>
-                  {doc.auteur && <>Auteur : {doc.auteur} · </>}
-                  Ajouté par {doc.uploadedByPrenom} {doc.uploadedByNom} le {formatDocDate(doc.createdAt)}
-                </p>
+          {DOCUMENT_SLOTS.map((slot) => {
+            const doc = docs.find((d) => d.categorie === slot.categorie)
+            const isEditing = editingCategorie === slot.categorie
+            return (
+              <div key={slot.categorie} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>PDF · {slot.categorie}</span>
+                  <h3 style={{ fontSize: '1.25rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{doc ? doc.titre : slot.defaultTitre}</h3>
+                  {doc ? (
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)', margin: '0.4rem 0 0' }}>
+                      {doc.auteur && <>Auteur : {doc.auteur} · </>}
+                      Ajouté par {doc.uploadedByPrenom} {doc.uploadedByNom} le {formatDocDate(doc.createdAt)}
+                    </p>
+                  ) : (
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)', margin: '0.4rem 0 0' }}>
+                      Aucun document ajouté pour le moment.
+                    </p>
+                  )}
+                </div>
+
+                {!isEditing ? (
+                  <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    {doc ? (
+                      <a href={doc.fileUrl} download target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
+                        Télécharger ↓
+                      </a>
+                    ) : <span />}
+                    {canUpload && (
+                      <button type="button" onClick={() => openSlotForm(slot, doc)} className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>
+                        {doc ? 'Remplacer' : 'Ajouter'} le document
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <form onSubmit={(e) => handleSlotUpload(e, slot.categorie)} style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'grid', gap: '0.6rem' }}>
+                    <div>{fieldLabel('Titre')}<input type="text" required style={inputStyle} value={slotForm.titre} onChange={(e) => setSlotForm((f) => ({ ...f, titre: e.target.value }))} /></div>
+                    <div>{fieldLabel('Auteur')}<input type="text" style={inputStyle} value={slotForm.auteur} onChange={(e) => setSlotForm((f) => ({ ...f, auteur: e.target.value }))} /></div>
+                    <div>
+                      {fieldLabel('Fichier PDF (20 Mo maximum)')}
+                      <input type="file" accept="application/pdf" required onChange={(e) => setSlotFile(e.target.files?.[0] || null)} />
+                    </div>
+                    {slotMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{slotMessage}</p>}
+                    <div style={{ display: 'flex', gap: '0.6rem' }}>
+                      <button type="submit" disabled={slotUploading} className="btn btn--solid" style={{ justifyContent: 'center', flex: 1, padding: '0.5rem', fontSize: '0.72rem' }}>
+                        {slotUploading ? 'Envoi…' : 'Enregistrer'}
+                      </button>
+                      <button type="button" onClick={closeSlotForm} className="btn btn--ghost" style={{ padding: '0.5rem 0.8rem', fontSize: '0.72rem' }}>Annuler</button>
+                    </div>
+                  </form>
+                )}
               </div>
-              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
-                <a href={doc.fileUrl} download target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
-                  Télécharger le document ↓
-                </a>
-              </div>
-            </div>
-          ))}
-          {docs.length === 0 && (
-            <p style={{ color: 'var(--stone)' }}>Aucun document disponible pour le moment.</p>
-          )}
+            )
+          })}
         </div>
-      )}
-
-      {creating && (
-        <AdminModal onClose={() => setCreating(false)} maxWidth={520}>
-          <form onSubmit={handleUpload} style={{ display: 'grid', gap: '0.9rem' }}>
-            <b style={{ fontSize: '1.05rem' }}>Ajouter un document</b>
-            <div>{fieldLabel('Titre')}<input type="text" required style={inputStyle} value={newForm.titre} onChange={(e) => updateNewField('titre', e.target.value)} /></div>
-            <div>{fieldLabel('Catégorie (ex : Programme trimestriel, Résultats…)')}<input type="text" style={inputStyle} value={newForm.categorie} onChange={(e) => updateNewField('categorie', e.target.value)} /></div>
-            <div>{fieldLabel('Auteur')}<input type="text" style={inputStyle} value={newForm.auteur} onChange={(e) => updateNewField('auteur', e.target.value)} /></div>
-            <div>
-              {fieldLabel('Fichier PDF (20 Mo maximum)')}
-              <input type="file" accept="application/pdf" required onChange={(e) => setFile(e.target.files?.[0] || null)} />
-            </div>
-
-            {uploadMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{uploadMessage}</p>}
-            <div style={{ display: 'flex', gap: '0.8rem' }}>
-              <button type="submit" disabled={uploading} className="btn btn--solid" style={{ justifyContent: 'center', flex: 1 }}>
-                {uploading ? 'Envoi…' : 'Ajouter le document'}
-              </button>
-              <button type="button" onClick={() => setCreating(false)} className="btn btn--ghost" style={{ justifyContent: 'center' }}>Annuler</button>
-            </div>
-          </form>
-        </AdminModal>
       )}
     </div>
   )
