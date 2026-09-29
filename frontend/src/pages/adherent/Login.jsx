@@ -1,11 +1,84 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../../lib/api.js'
+import { setToken } from '../../lib/session.js'
 
 export default function Login() {
   const navigate = useNavigate()
+  const [step, setStep] = useState('login') // 'login' | 'code'
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [newPassword2, setNewPassword2] = useState('')
+  const [error, setError] = useState('')
+  const [info, setInfo] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleLogin(e) {
     e.preventDefault()
-    navigate('/espace-adherent/tableau-de-bord')
+    setError('')
+    setLoading(true)
+    try {
+      const { token } = await api.login(email, password)
+      setToken(token)
+      navigate('/espace-adherent/tableau-de-bord')
+    } catch (err) {
+      if (err.data?.mustChangePassword) {
+        setInfo("Première connexion : un code vous a été envoyé par email pour définir votre mot de passe.")
+        setStep('code')
+        try {
+          await api.requestCode(email)
+        } catch {
+          // silencieux : on affiche quand même le formulaire de code
+        }
+      } else {
+        setError(err.message)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError('Renseignez votre adresse email ci-dessus avant de demander un code.')
+      return
+    }
+    setError('')
+    setLoading(true)
+    try {
+      await api.requestCode(email)
+      setInfo('Si un compte existe avec cette adresse, un code vient de vous être envoyé par email.')
+      setStep('code')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleConfirmCode(e) {
+    e.preventDefault()
+    setError('')
+    if (newPassword.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères.')
+      return
+    }
+    if (newPassword !== newPassword2) {
+      setError('Les deux mots de passe ne correspondent pas.')
+      return
+    }
+    setLoading(true)
+    try {
+      const { token } = await api.confirmCode(email, code, newPassword)
+      setToken(token)
+      navigate('/espace-adherent/tableau-de-bord')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -24,36 +97,75 @@ export default function Login() {
         </div>
 
         <div className="login-card">
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.2rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-            <div>
-              <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
-                Identifiant ou Email club
-              </label>
-              <input type="text" className="login-input" defaultValue="adherent.demo" required />
-            </div>
+          {info && (
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--ink-soft)', marginBottom: '1rem' }}>{info}</p>
+          )}
+          {error && (
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--vermilion)', marginBottom: '1rem' }}>{error}</p>
+          )}
 
-            <div>
-              <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
-                Mot de passe
-              </label>
-              <input type="password" className="login-input" defaultValue="demo1234" required />
-            </div>
+          {step === 'login' && (
+            <form onSubmit={handleLogin} style={{ display: 'grid', gap: '1.2rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+              <div>
+                <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
+                  Email
+                </label>
+                <input type="email" className="login-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
 
-            <div style={{ paddingTop: '0.5rem' }}>
-              <button type="submit" className="btn btn--solid" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', fontSize: '0.75rem' }}>
-                Se connecter
+              <div>
+                <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
+                  Mot de passe
+                </label>
+                <input type="password" className="login-input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
+
+              <div style={{ paddingTop: '0.5rem' }}>
+                <button type="submit" disabled={loading} className="btn btn--solid" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', fontSize: '0.75rem' }}>
+                  {loading ? 'Connexion…' : 'Se connecter'}
+                </button>
+              </div>
+
+              <button type="button" onClick={handleForgotPassword} className="link-button" style={{ justifySelf: 'center' }}>
+                Mot de passe oublié ?
               </button>
-            </div>
-          </form>
+            </form>
+          )}
 
-          <div style={{ marginTop: '1.8rem', paddingTop: '1.5rem', borderTop: '1px solid var(--line)', textAlign: 'center' }}>
-            <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)', margin: '0 0 0.8rem' }}>
-              Pour tester l'interface sans saisir d'identifiants :
-            </p>
-            <button onClick={() => navigate('/espace-adherent/tableau-de-bord')} className="btn btn--ghost" style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', fontSize: '0.72rem' }}>
-              Explorer la démo de l'espace adhérent →
-            </button>
-          </div>
+          {step === 'code' && (
+            <form onSubmit={handleConfirmCode} style={{ display: 'grid', gap: '1.2rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+              <div>
+                <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
+                  Code reçu par email
+                </label>
+                <input type="text" inputMode="numeric" className="login-input" value={code} onChange={(e) => setCode(e.target.value)} required />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
+                  Nouveau mot de passe
+                </label>
+                <input type="password" className="login-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
+                  Confirmer le mot de passe
+                </label>
+                <input type="password" className="login-input" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} required />
+              </div>
+
+              <div style={{ paddingTop: '0.5rem' }}>
+                <button type="submit" disabled={loading} className="btn btn--solid" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', fontSize: '0.75rem' }}>
+                  {loading ? 'Validation…' : 'Valider et me connecter'}
+                </button>
+              </div>
+
+              <button type="button" onClick={() => setStep('login')} className="link-button" style={{ justifySelf: 'center' }}>
+                ← Retour à la connexion
+              </button>
+            </form>
+          )}
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)' }}>

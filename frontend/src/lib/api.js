@@ -1,13 +1,16 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api'
 
-async function request(path, options = {}) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
+async function request(path, { token, headers, ...options } = {}) {
+  const finalHeaders = { 'Content-Type': 'application/json', ...headers }
+  if (token) finalHeaders.Authorization = `Bearer ${token}`
+
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers: finalHeaders })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body.error || `Erreur ${res.status}`)
+    const err = new Error(body.error || `Erreur ${res.status}`)
+    err.data = body
+    err.status = res.status
+    throw err
   }
   if (res.status === 204) return null
   return res.json()
@@ -15,4 +18,17 @@ async function request(path, options = {}) {
 
 export const api = {
   getPartners: () => request('/partners'),
+
+  login: (email, password) =>
+    request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  requestCode: (email) =>
+    request('/auth/request-code', { method: 'POST', body: JSON.stringify({ email }) }),
+  confirmCode: (email, code, newPassword) =>
+    request('/auth/confirm-code', { method: 'POST', body: JSON.stringify({ email, code, newPassword }) }),
+
+  getMe: (token) => request('/members/me', { token }),
+  updateMe: (token, data) => request('/members/me', { method: 'PUT', token, body: JSON.stringify(data) }),
+  updateEmail: (token, newEmail) =>
+    request('/members/me/email', { method: 'PUT', token, body: JSON.stringify({ newEmail }) }),
+  listMembers: (token) => request('/members', { token }),
 }

@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { api } from '../../lib/api.js'
+import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
 
 const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
@@ -144,22 +146,6 @@ const ADMIN_CARDS = [
   },
 ]
 
-// Noms et rôles déjà publics sur samparis12.org (page "Qui sommes-nous") —
-// aucune coordonnée personnelle (adresse, tél., email, naissance) reprise.
-const TROMBI = [
-  { nom: 'Marie Frank', role: 'Présidente & Entraîneure 2e degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérente 2027' },
-  { nom: 'Jean-Pierre Schulz', role: 'Secrétaire Général', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
-  { nom: 'David Madelaine', role: 'Trésorier', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
-  { nom: 'Claude Mercier', role: 'Vice-Président & Entraîneur 1er degré Running', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
-  { nom: 'Sylvain Darrasse', role: 'Entraîneur 3e degré Running Hors-Stade', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
-  { nom: 'Anne Corbel-Trinh', role: 'Entraîneure 1er degré MNS', groupe: 'Marche Nordique Sportive', statut: 'Adhérents 2027', tag: 'Marche Nordique Sportive · Adhérente 2027' },
-  { nom: 'Jérôme Borroz', role: 'Entraîneur MNS', groupe: 'Marche Nordique Sportive', statut: 'Adhérents 2027', tag: 'Marche Nordique Sportive · Adhérent 2027' },
-  { nom: 'Gabriel Kasmi', role: 'Entraîneur 2e degré Running Hors-Stade', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
-  { nom: 'Daniel Lichtenauer', role: 'Entraîneur Hors-Stade 1er niveau', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérent 2027' },
-  { nom: 'Camille Renard', role: 'Adhérente depuis 2022', groupe: 'Running', statut: 'Adhérents 2027', tag: 'Running · Adhérente 2027' },
-  { nom: 'Thomas Guérin', role: 'Adhérent depuis 2024', groupe: 'Running', statut: 'Nouveaux adhérents', tag: 'Running · Nouvel adhérent' },
-]
-
 // Taxonomie reprise du vrai espace adhérent (trombinoscope.php)
 const ACTIVITY_FILTERS = ['Toutes les activités', 'Running', 'Marche Nordique Sportive', 'Marche Loisir']
 const STATUS_FILTERS = ['Adhérents 2027', 'Anciens adhérents', 'Nouveaux adhérents']
@@ -187,6 +173,41 @@ export default function Dashboard() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const [openVieCard, setOpenVieCard] = useState(null)
   const [openAdminCard, setOpenAdminCard] = useState(null)
+  const [openMember, setOpenMember] = useState(null)
+
+  const [token, setAuthToken] = useState(() => getToken())
+  const [me, setMe] = useState(null)
+  const [members, setMembers] = useState([])
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/espace-adherent')
+      return
+    }
+    let cancelled = false
+    Promise.all([api.getMe(token), api.listMembers(token)])
+      .then(([meData, membersData]) => {
+        if (cancelled) return
+        setMe(meData)
+        setMembers(membersData)
+      })
+      .catch(() => {
+        if (cancelled) return
+        clearToken()
+        navigate('/espace-adherent')
+      })
+    return () => { cancelled = true }
+  }, [token, navigate])
+
+  function handleLogout() {
+    clearToken()
+    navigate('/espace-adherent')
+  }
+
+  function handlePasswordChanged(newToken) {
+    persistToken(newToken)
+    setAuthToken(newToken)
+  }
 
   function switchTab(id) {
     setActiveTab(id)
@@ -200,13 +221,13 @@ export default function Dashboard() {
 
   const filteredTrombi = useMemo(() => {
     const q = search.toLowerCase()
-    return TROMBI.filter((m) => {
-      const matchesQuery = m.nom.toLowerCase().includes(q) || m.role.toLowerCase().includes(q)
+    return members.filter((m) => {
+      const matchesQuery = `${m.prenom} ${m.nom}`.toLowerCase().includes(q) || m.role.toLowerCase().includes(q)
       const matchesActivity = activity === 'Toutes les activités' || m.groupe === activity
       const matchesStatus = !status || m.statut === status
       return matchesQuery && matchesActivity && matchesStatus
     })
-  }, [search, activity, status])
+  }, [members, search, activity, status])
 
   return (
     <div className="adherent-layout">
@@ -236,9 +257,9 @@ export default function Dashboard() {
                 style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               >
                 <span>
-                  <b style={{ display: 'block' }}>Laurent D.</b>
+                  <b style={{ display: 'block' }}>{me ? `${me.prenom} ${me.nom[0]}.` : '…'}</b>
                   <span style={{ color: 'var(--stone)', fontSize: '0.66rem' }}>
-                    FFA N° 1894023 · <span style={{ color: '#059669', fontWeight: 600 }}>Licence Valide</span>
+                    {me?.numeroLicence ? `FFA N° ${me.numeroLicence}` : 'Chargement…'}
                   </span>
                 </span>
                 <span style={{ color: 'var(--stone)' }}>{profileMenuOpen ? '▴' : '▾'}</span>
@@ -246,7 +267,7 @@ export default function Dashboard() {
               {profileMenuOpen && (
                 <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '0.4rem', background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', minWidth: 200, zIndex: 50, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textAlign: 'left' }}>
                   <button
-                    onClick={() => { setActiveTab('overview'); setProfileMenuOpen(false) }}
+                    onClick={() => { setActiveTab('profil'); setProfileMenuOpen(false) }}
                     style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '0.7rem 0.9rem', cursor: 'pointer', color: 'var(--ink)' }}
                   >
                     Tes informations
@@ -260,7 +281,7 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            <button onClick={() => navigate('/espace-adherent')} className="btn btn--ghost" style={{ padding: '0.45rem 0.85rem', fontSize: '0.68rem' }}>
+            <button onClick={handleLogout} className="btn btn--ghost" style={{ padding: '0.45rem 0.85rem', fontSize: '0.68rem' }}>
               Déconnexion
             </button>
           </div>
@@ -428,19 +449,76 @@ export default function Dashboard() {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '1rem' }}>
               {filteredTrombi.map((m) => (
-                <div key={m.nom} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setOpenMember(m)}
+                  style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--vermilion)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--line)' }}
+                >
                   <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--vermilion)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 'bold', fontSize: '1.3rem', color: 'var(--vermilion)', marginBottom: '0.8rem' }}>
-                    {initials(m.nom)}
+                    {initials(`${m.prenom} ${m.nom}`)}
                   </div>
-                  <h4 style={{ fontSize: '1.2rem', textTransform: 'uppercase' }}>{m.nom}</h4>
+                  <h4 style={{ fontSize: '1.2rem', textTransform: 'uppercase' }}>{m.prenom} {m.nom}</h4>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--vermilion)', fontWeight: 'bold', marginTop: '0.2rem' }}>{m.role}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--stone)', textTransform: 'uppercase', marginTop: '0.6rem', padding: '0.15rem 0.5rem', background: 'var(--surface-2)' }}>{m.tag}</span>
-                </div>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--stone)', textTransform: 'uppercase', marginTop: '0.6rem', padding: '0.15rem 0.5rem', background: 'var(--surface-2)' }}>{m.groupe} · {m.statut}</span>
+                </button>
               ))}
               {filteredTrombi.length === 0 && (
                 <p style={{ color: 'var(--stone)' }}>Aucun membre ne correspond à cette recherche.</p>
               )}
             </div>
+
+            {openMember && (
+              <div
+                role="dialog" aria-modal="true"
+                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+                onClick={() => setOpenMember(null)}
+              >
+                <div
+                  style={{ background: 'var(--surface)', border: '1px solid var(--line)', maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '2rem', position: 'relative', textAlign: 'center' }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenMember(null)}
+                    aria-label="Fermer"
+                    style={{ position: 'absolute', top: '1rem', right: '1rem', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink)' }}
+                  >
+                    ✕
+                  </button>
+
+                  <div style={{ width: 84, height: 84, borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--vermilion)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 'bold', fontSize: '1.8rem', color: 'var(--vermilion)', margin: '0 auto 1rem' }}>
+                    {initials(`${openMember.prenom} ${openMember.nom}`)}
+                  </div>
+                  <h3 style={{ fontSize: '1.5rem', textTransform: 'uppercase' }}>{openMember.prenom} {openMember.nom}</h3>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{openMember.role}</span>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--stone)', textTransform: 'uppercase', padding: '0.15rem 0.5rem', background: 'var(--surface-2)' }}>{openMember.groupe} · {openMember.statut}</span>
+                  </div>
+
+                  <div style={{ textAlign: 'left', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--line)' }}>
+                    <span className="eyebrow">Je me présente</span>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>
+                      Membre du groupe {openMember.groupe}.
+                    </p>
+                  </div>
+
+                  <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
+                    <span className="eyebrow">Agenda</span>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>Aucune course à venir renseignée pour le moment.</p>
+                  </div>
+
+                  <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
+                    <span className="eyebrow">Derniers résultats</span>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                      Fonctionnalité de démonstration — dans l'espace adhérent réel, cette section affiche l'historique des courses de l'adhérent (date, épreuve, temps, classement).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -784,6 +862,10 @@ export default function Dashboard() {
             )}
           </div>
         )}
+
+        {activeTab === 'profil' && (
+          <ProfilPanel token={token} me={me} onMeUpdate={setMe} onPasswordChanged={handlePasswordChanged} />
+        )}
       </main>
 
       <footer style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)' }}>
@@ -795,6 +877,291 @@ export default function Dashboard() {
         Contact : <a href="mailto:contact@samparis12.org" style={{ textDecoration: 'underline' }}>contact@samparis12.org</a>
         {' '}· Objets perdus : <a href="mailto:objetsperdus@samparis12.org" style={{ textDecoration: 'underline' }}>objetsperdus@samparis12.org</a>
       </footer>
+    </div>
+  )
+}
+
+const TAILLES_MAILLOT = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+
+function fieldLabel(text) {
+  return (
+    <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.08em', fontSize: '0.65rem', marginBottom: '0.25rem' }}>
+      {text}
+    </label>
+  )
+}
+
+function infoRow(label, value) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.55rem 0', borderBottom: '1px solid var(--line)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
+      <span style={{ color: 'var(--stone)' }}>{label}</span>
+      <b style={{ textAlign: 'right' }}>{value || '—'}</b>
+    </div>
+  )
+}
+
+function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
+  const [form, setForm] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+
+  const [newEmail, setNewEmail] = useState('')
+  const [emailMessage, setEmailMessage] = useState('')
+
+  const [pwdStep, setPwdStep] = useState('idle') // 'idle' | 'code'
+  const [pwdCode, setPwdCode] = useState('')
+  const [pwdNew, setPwdNew] = useState('')
+  const [pwdNew2, setPwdNew2] = useState('')
+  const [pwdMessage, setPwdMessage] = useState('')
+
+  useEffect(() => {
+    if (!me) return
+    setForm({
+      dateNaissance: me.dateNaissance || '',
+      lieuNaissance: me.lieuNaissance || '',
+      adresse: me.adresse || '',
+      codePostal: me.codePostal || '',
+      ville: me.ville || '',
+      telephoneDomicile: me.telephoneDomicile || '',
+      telephonePortable: me.telephonePortable || '',
+      nationalite: me.nationalite || '',
+      urgenceNom: me.urgenceNom || '',
+      urgenceTelephone: me.urgenceTelephone || '',
+      tailleMaillot: me.tailleMaillot || '',
+      vma: me.vma ?? '',
+      vmaDate: me.vmaDate || '',
+    })
+  }, [me])
+
+  if (!me || !form) {
+    return <p style={{ color: 'var(--stone)' }}>Chargement de votre profil…</p>
+  }
+
+  function updateField(key, value) {
+    setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function handleSaveConfidential(e) {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMessage('')
+    try {
+      const payload = { ...form, vma: form.vma === '' ? null : Number(form.vma) }
+      const updated = await api.updateMe(token, payload)
+      onMeUpdate(updated)
+      setSaveMessage('Informations enregistrées.')
+    } catch (err) {
+      setSaveMessage(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleChangeEmail(e) {
+    e.preventDefault()
+    setEmailMessage('')
+    try {
+      await api.updateEmail(token, newEmail)
+      const updated = await api.getMe(token)
+      onMeUpdate(updated)
+      setNewEmail('')
+      setEmailMessage('Adresse email mise à jour.')
+    } catch (err) {
+      setEmailMessage(err.message)
+    }
+  }
+
+  async function handleRequestPasswordCode() {
+    setPwdMessage('')
+    try {
+      await api.requestCode(me.email)
+      setPwdStep('code')
+      setPwdMessage('Un code vient de vous être envoyé par email.')
+    } catch (err) {
+      setPwdMessage(err.message)
+    }
+  }
+
+  async function handleConfirmPasswordCode(e) {
+    e.preventDefault()
+    setPwdMessage('')
+    if (pwdNew.length < 8) {
+      setPwdMessage('Le mot de passe doit contenir au moins 8 caractères.')
+      return
+    }
+    if (pwdNew !== pwdNew2) {
+      setPwdMessage('Les deux mots de passe ne correspondent pas.')
+      return
+    }
+    try {
+      const { token: newToken } = await api.confirmCode(me.email, pwdCode, pwdNew)
+      onPasswordChanged(newToken)
+      setPwdStep('idle')
+      setPwdCode('')
+      setPwdNew('')
+      setPwdNew2('')
+      setPwdMessage('Mot de passe modifié avec succès.')
+    } catch (err) {
+      setPwdMessage(err.message)
+    }
+  }
+
+  const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
+
+  return (
+    <div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <span className="eyebrow">Mon compte</span>
+        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Tes informations</h2>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
+          <span className="eyebrow" style={{ fontWeight: 'bold' }}>Informations confidentielles</span>
+          <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1.2rem' }}>
+            Visibles uniquement des responsables du club — modifiables par vous.
+          </p>
+          <form onSubmit={handleSaveConfidential} style={{ display: 'grid', gap: '0.9rem' }}>
+            <div>
+              {fieldLabel('Date de naissance')}
+              <input type="date" style={inputStyle} value={form.dateNaissance} onChange={(e) => updateField('dateNaissance', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Lieu de naissance')}
+              <input type="text" style={inputStyle} value={form.lieuNaissance} onChange={(e) => updateField('lieuNaissance', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Adresse postale')}
+              <input type="text" style={inputStyle} value={form.adresse} onChange={(e) => updateField('adresse', e.target.value)} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.8rem' }}>
+              <div>
+                {fieldLabel('Code postal')}
+                <input type="text" style={inputStyle} value={form.codePostal} onChange={(e) => updateField('codePostal', e.target.value)} />
+              </div>
+              <div>
+                {fieldLabel('Localité')}
+                <input type="text" style={inputStyle} value={form.ville} onChange={(e) => updateField('ville', e.target.value)} />
+              </div>
+            </div>
+            <div>
+              {fieldLabel('Téléphone domicile')}
+              <input type="tel" style={inputStyle} value={form.telephoneDomicile} onChange={(e) => updateField('telephoneDomicile', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Téléphone portable')}
+              <input type="tel" style={inputStyle} value={form.telephonePortable} onChange={(e) => updateField('telephonePortable', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Nationalité')}
+              <input type="text" style={inputStyle} value={form.nationalite} onChange={(e) => updateField('nationalite', e.target.value)} />
+            </div>
+
+            <div style={{ marginTop: '0.4rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)' }}>
+              <b style={{ fontSize: '0.85rem' }}>Personne à prévenir en cas d'urgence</b>
+            </div>
+            <div>
+              {fieldLabel('Prénom Nom')}
+              <input type="text" style={inputStyle} value={form.urgenceNom} onChange={(e) => updateField('urgenceNom', e.target.value)} />
+            </div>
+            <div>
+              {fieldLabel('Téléphone')}
+              <input type="tel" style={inputStyle} value={form.urgenceTelephone} onChange={(e) => updateField('urgenceTelephone', e.target.value)} />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+              <div>
+                {fieldLabel('Taille de maillot')}
+                <select style={inputStyle} value={form.tailleMaillot} onChange={(e) => updateField('tailleMaillot', e.target.value)}>
+                  <option value="">—</option>
+                  {TAILLES_MAILLOT.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                {fieldLabel('VMA')}
+                <input type="number" step="0.1" style={inputStyle} value={form.vma} onChange={(e) => updateField('vma', e.target.value)} />
+              </div>
+            </div>
+            <div>
+              {fieldLabel('Date de la VMA')}
+              <input type="date" style={inputStyle} value={form.vmaDate} onChange={(e) => updateField('vmaDate', e.target.value)} />
+            </div>
+
+            {saveMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{saveMessage}</p>}
+            <button type="submit" disabled={saving} className="btn btn--solid" style={{ justifyContent: 'center' }}>
+              {saving ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
+          </form>
+        </div>
+
+        <div style={{ display: 'grid', gap: '1.5rem', alignContent: 'start' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
+            <span className="eyebrow" style={{ fontWeight: 'bold' }}>Informations administratives</span>
+            <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1rem' }}>
+              Non modifiables par vous — gérées par le bureau du club.
+            </p>
+            {infoRow('Numéro de licence', me.numeroLicence)}
+            {infoRow('Licencié(e) par', me.licenciePar)}
+            {infoRow('Fonction au bureau', me.fonctionBureau)}
+            {infoRow("Droit d'administrer les événements", me.droitAdminEvenements ? 'Oui' : 'Non')}
+            {infoRow('Origine du contact', me.origineContact)}
+            {infoRow('Année de première adhésion', me.anneePremiereAdhesion)}
+            {infoRow('Date de première adhésion', me.datePremiereAdhesion)}
+            {infoRow('Date du dernier certificat médical', me.dateDernierCertificat)}
+            {infoRow('Année de dernière adhésion', me.anneeDerniereAdhesion)}
+            {infoRow('Activité pour la saison', me.activiteSaison)}
+            {infoRow('Licence FFA pour la saison', me.licenceFfaType)}
+            {infoRow('Montant de la cotisation', me.montantCotisation != null ? `${me.montantCotisation} €` : null)}
+            {infoRow('Date de paiement', me.datePaiementCotisation)}
+            {infoRow('Mode de paiement', me.modePaiement)}
+          </div>
+
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
+            <span className="eyebrow" style={{ fontWeight: 'bold' }}>Changer ton adresse email</span>
+            <form onSubmit={handleChangeEmail} style={{ display: 'grid', gap: '0.7rem', marginTop: '0.8rem' }}>
+              <div>
+                {fieldLabel('Adresse actuelle')}
+                <input type="text" style={{ ...inputStyle, background: 'var(--surface-2)' }} value={me.email} disabled />
+              </div>
+              <div>
+                {fieldLabel('Nouvelle adresse')}
+                <input type="email" style={inputStyle} value={newEmail} onChange={(e) => setNewEmail(e.target.value)} required />
+              </div>
+              {emailMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{emailMessage}</p>}
+              <button type="submit" className="btn btn--ghost" style={{ justifyContent: 'center' }}>Envoyer</button>
+            </form>
+          </div>
+
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
+            <span className="eyebrow" style={{ fontWeight: 'bold' }}>Changer ton mot de passe</span>
+            {pwdMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)', marginTop: '0.5rem' }}>{pwdMessage}</p>}
+
+            {pwdStep === 'idle' && (
+              <button onClick={handleRequestPasswordCode} className="btn btn--ghost" style={{ justifyContent: 'center', marginTop: '0.8rem', width: '100%' }}>
+                Recevoir un code par email
+              </button>
+            )}
+
+            {pwdStep === 'code' && (
+              <form onSubmit={handleConfirmPasswordCode} style={{ display: 'grid', gap: '0.7rem', marginTop: '0.8rem' }}>
+                <div>
+                  {fieldLabel('Code reçu par email')}
+                  <input type="text" inputMode="numeric" style={inputStyle} value={pwdCode} onChange={(e) => setPwdCode(e.target.value)} required />
+                </div>
+                <div>
+                  {fieldLabel('Nouveau mot de passe')}
+                  <input type="password" style={inputStyle} value={pwdNew} onChange={(e) => setPwdNew(e.target.value)} required />
+                </div>
+                <div>
+                  {fieldLabel('Confirmer le mot de passe')}
+                  <input type="password" style={inputStyle} value={pwdNew2} onChange={(e) => setPwdNew2(e.target.value)} required />
+                </div>
+                <button type="submit" className="btn btn--solid" style={{ justifyContent: 'center' }}>Valider</button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

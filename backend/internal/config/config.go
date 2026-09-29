@@ -13,6 +13,14 @@ type Config struct {
 	DBUser      string
 	DBPassword  string
 	FrontendURL string
+
+	JWTSecret string
+
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUsername string
+	SMTPPassword string
+	SMTPFrom     string
 }
 
 func Load() Config {
@@ -24,6 +32,14 @@ func Load() Config {
 		DBUser:      getEnv("DB_USER", "samparis12"),
 		DBPassword:  os.Getenv("DB_PASSWORD"),
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
+
+		JWTSecret: getEnv("JWT_SECRET", "dev-insecure-secret-change-me"),
+
+		SMTPHost:     getEnv("SMTP_HOST", ""),
+		SMTPPort:     getEnv("SMTP_PORT", "587"),
+		SMTPUsername: getEnv("SMTP_USERNAME", ""),
+		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
+		SMTPFrom:     getEnv("SMTP_FROM", ""),
 	}
 }
 
