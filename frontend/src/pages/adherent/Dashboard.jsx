@@ -295,7 +295,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '0.6rem 1.2rem' }}>
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setProfileMenuOpen((v) => !v)}
