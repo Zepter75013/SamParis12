@@ -48,6 +48,10 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/members/me", authService.RequireAuth(memberHandler.Me))
 	mux.HandleFunc("PUT /api/members/me", authService.RequireAuth(memberHandler.UpdateMe))
 	mux.HandleFunc("PUT /api/members/me/email", authService.RequireAuth(memberHandler.UpdateEmail))
+	mux.HandleFunc("POST /api/members/me/photo", authService.RequireAuth(memberHandler.UploadPhoto))
+
+	// Photos de trombinoscope, servies telles quelles (pas de donnée sensible).
+	mux.Handle("GET /uploads/photos/", http.StripPrefix("/uploads/photos/", http.FileServer(http.Dir("uploads/photos"))))
 
 	return httpx.CORS(cfg.FrontendURL, mux)
 }

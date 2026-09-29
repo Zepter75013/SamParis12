@@ -164,6 +164,18 @@ function initials(nom) {
   return nom.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 }
 
+function Avatar({ photoUrl, nom, size }) {
+  const base = { width: size, height: size, borderRadius: '50%', border: '2px solid var(--vermilion)', flex: 'none' }
+  if (photoUrl) {
+    return <img src={photoUrl} alt={nom} style={{ ...base, objectFit: 'cover' }} />
+  }
+  return (
+    <div style={{ ...base, background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 'bold', fontSize: size * 0.32, color: 'var(--vermilion)' }}>
+      {initials(nom)}
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
@@ -458,8 +470,8 @@ export default function Dashboard() {
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--vermilion)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--line)' }}
                 >
-                  <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--vermilion)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 'bold', fontSize: '1.3rem', color: 'var(--vermilion)', marginBottom: '0.8rem' }}>
-                    {initials(`${m.prenom} ${m.nom}`)}
+                  <div style={{ marginBottom: '0.8rem' }}>
+                    <Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={60} />
                   </div>
                   <h4 style={{ fontSize: '1.2rem', textTransform: 'uppercase' }}>{m.prenom} {m.nom}</h4>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--vermilion)', fontWeight: 'bold', marginTop: '0.2rem' }}>{m.role}</span>
@@ -490,8 +502,8 @@ export default function Dashboard() {
                     ✕
                   </button>
 
-                  <div style={{ width: 84, height: 84, borderRadius: '50%', background: 'var(--surface-2)', border: '2px solid var(--vermilion)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 'bold', fontSize: '1.8rem', color: 'var(--vermilion)', margin: '0 auto 1rem' }}>
-                    {initials(`${openMember.prenom} ${openMember.nom}`)}
+                  <div style={{ margin: '0 auto 1rem', display: 'flex', justifyContent: 'center' }}>
+                    <Avatar photoUrl={openMember.photoUrl} nom={`${openMember.prenom} ${openMember.nom}`} size={84} />
                   </div>
                   <h3 style={{ fontSize: '1.5rem', textTransform: 'uppercase' }}>{openMember.prenom} {openMember.nom}</h3>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{openMember.role}</span>
@@ -915,6 +927,26 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
   const [pwdNew2, setPwdNew2] = useState('')
   const [pwdMessage, setPwdMessage] = useState('')
 
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [photoMessage, setPhotoMessage] = useState('')
+
+  async function handlePhotoChange(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoUploading(true)
+    setPhotoMessage('')
+    try {
+      const updated = await api.uploadPhoto(token, file)
+      onMeUpdate(updated)
+      setPhotoMessage('Photo mise à jour.')
+    } catch (err) {
+      setPhotoMessage(err.message)
+    } finally {
+      setPhotoUploading(false)
+      e.target.value = ''
+    }
+  }
+
   useEffect(() => {
     if (!me) return
     setForm({
@@ -1019,6 +1051,21 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
       <div style={{ marginBottom: '1.5rem' }}>
         <span className="eyebrow">Mon compte</span>
         <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Tes informations</h2>
+      </div>
+
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <Avatar photoUrl={me.photoUrl} nom={`${me.prenom} ${me.nom}`} size={84} />
+        <div>
+          <span className="eyebrow" style={{ fontWeight: 'bold' }}>Ta photo</span>
+          <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 0.8rem' }}>
+            Affichée dans le trombinoscope du club (JPEG, PNG ou WebP, 5 Mo maximum).
+          </p>
+          <label className="btn btn--ghost" style={{ cursor: 'pointer', display: 'inline-flex' }}>
+            {photoUploading ? 'Envoi…' : 'Changer ta photo'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoChange} disabled={photoUploading} style={{ display: 'none' }} />
+          </label>
+          {photoMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)', marginTop: '0.6rem' }}>{photoMessage}</p>}
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>

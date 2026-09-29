@@ -14,4 +14,9 @@ backend/samparis12-backend
 # OS
 .DS_Store
 
+# Photos de profil uploadées par les adhérents — données personnelles réelles,
+# jamais dans le dépôt (public). Persistées sur le NAS via un volume Docker.
+/member-photos/
+backend/uploads/
+
 # Docker dev volumes are managed by Docker itself, nothing to ignore here.

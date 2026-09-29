@@ -23,6 +23,8 @@ services:
     # externe se charge de tout exposer.
     ports:
       - "8093:8080"
+    volumes:
+      - ./member-photos:/app/uploads/photos
     networks:
       - disques-network
 

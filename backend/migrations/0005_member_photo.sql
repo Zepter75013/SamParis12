@@ -1,0 +1,4 @@
+SET NAMES utf8mb4;
+
+ALTER TABLE members
+    ADD COLUMN photo_path VARCHAR(255) NOT NULL DEFAULT '' AFTER statut;
