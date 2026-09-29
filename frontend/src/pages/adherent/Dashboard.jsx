@@ -1425,11 +1425,34 @@ function adminFormFromMember(m) {
 
 const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', isBureau: false }
 
+function AdminModal({ onClose, maxWidth = 640, children }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(28,25,23,0.5)', zIndex: 55, display: 'flex', justifyContent: 'center', padding: '2rem 1rem', overflowY: 'auto' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: 'var(--surface)', border: '1px solid var(--line)', maxWidth, width: '100%', height: 'fit-content', padding: '1.6rem' }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function sortValue(m, key) {
+  if (key === 'bureau') return m.isBureau ? 1 : 0
+  return (m[key] || '').toString().toLowerCase()
+}
+
 function AdminMembersPanel({ token, me, onMembersChanged }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [search, setSearch] = useState('')
+  const [sortKey, setSortKey] = useState('nom')
+  const [sortDir, setSortDir] = useState('asc')
   const [selectedId, setSelectedId] = useState(null)
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -1455,6 +1478,32 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
     const q = search.toLowerCase()
     return members.filter((m) => `${m.prenom} ${m.nom} ${m.email}`.toLowerCase().includes(q))
   }, [members, search])
+
+  const sorted = useMemo(() => {
+    const list = [...filtered]
+    list.sort((a, b) => {
+      const va = sortValue(a, sortKey)
+      const vb = sortValue(b, sortKey)
+      if (va < vb) return sortDir === 'asc' ? -1 : 1
+      if (va > vb) return sortDir === 'asc' ? 1 : -1
+      return 0
+    })
+    return list
+  }, [filtered, sortKey, sortDir])
+
+  function sortBy(key) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  function sortIndicator(key) {
+    if (sortKey !== key) return null
+    return sortDir === 'asc' ? ' ▲' : ' ▼'
+  }
 
   const selected = members.find((m) => m.id === selectedId) || null
 
@@ -1558,38 +1607,68 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
       {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
 
       {!loading && !loadError && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 320px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
-            <div style={{ padding: '0.8rem', display: 'grid', gap: '0.6rem' }}>
-              <button type="button" onClick={openCreateForm} className="btn btn--solid" style={{ justifyContent: 'center', padding: '0.5rem', fontSize: '0.72rem' }}>
-                + Nouvel adhérent
-              </button>
-              <input type="text" placeholder="Rechercher un adhérent…" style={inputStyle} value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-            <div style={{ maxHeight: 480, overflowY: 'auto', borderTop: '1px solid var(--line)' }}>
-              {filtered.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => selectMember(m)}
-                  style={{
-                    display: 'block', width: '100%', textAlign: 'left', background: m.id === selectedId ? 'var(--surface-2)' : 'none',
-                    border: 'none', borderBottom: '1px solid var(--line)', padding: '0.7rem 0.9rem', cursor: 'pointer',
-                    fontFamily: 'var(--font-mono)', fontSize: '0.75rem',
-                  }}
-                >
-                  <b>{m.prenom} {m.nom}</b>
-                  {m.isBureau && <span style={{ marginLeft: '0.4rem', fontSize: '0.6rem', padding: '0.1rem 0.35rem', background: 'var(--vermilion)', color: '#fff' }}>Bureau</span>}
-                  <div style={{ color: 'var(--ink-soft)', marginTop: '0.2rem' }}>{m.email}</div>
-                </button>
-              ))}
-              {filtered.length === 0 && (
-                <p style={{ padding: '0.9rem', color: 'var(--stone)', fontSize: '0.8rem' }}>Aucun adhérent trouvé.</p>
-              )}
-            </div>
+        <div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1rem', alignItems: 'center' }}>
+            <button type="button" onClick={openCreateForm} className="btn btn--solid" style={{ padding: '0.55rem 1rem', fontSize: '0.72rem' }}>
+              + Nouvel adhérent
+            </button>
+            <input
+              type="text"
+              placeholder="Rechercher un adhérent…"
+              style={{ ...inputStyle, flex: 1, minWidth: 240, width: 'auto' }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)' }}>
+              {sorted.length} adhérent{sorted.length > 1 ? 's' : ''}
+            </span>
           </div>
 
-          {creating ? (
-            <form onSubmit={handleCreate} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'grid', gap: '0.9rem' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.66rem' }}>
+                  <th style={{ padding: '0.7rem 0.8rem', width: 44 }}></th>
+                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('nom')}>Nom{sortIndicator('nom')}</th>
+                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('prenom')}>Prénom{sortIndicator('prenom')}</th>
+                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('email')}>Email{sortIndicator('email')}</th>
+                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('groupe')}>Groupe{sortIndicator('groupe')}</th>
+                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('statut')}>Statut{sortIndicator('statut')}</th>
+                  <th style={{ padding: '0.7rem 0.8rem', cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }} onClick={() => sortBy('bureau')}>Bureau{sortIndicator('bureau')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((m) => (
+                  <tr
+                    key={m.id}
+                    onClick={() => selectMember(m)}
+                    style={{ borderBottom: '1px solid var(--line)', cursor: 'pointer' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-2)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+                  >
+                    <td style={{ padding: '0.4rem 0.8rem' }}><Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={30} /></td>
+                    <td style={{ padding: '0.6rem 0.8rem' }}><b>{m.nom}</b></td>
+                    <td style={{ padding: '0.6rem 0.8rem' }}>{m.prenom}</td>
+                    <td style={{ padding: '0.6rem 0.8rem', color: 'var(--ink-soft)' }}>{m.email}</td>
+                    <td style={{ padding: '0.6rem 0.8rem' }}>{m.groupe || '—'}</td>
+                    <td style={{ padding: '0.6rem 0.8rem' }}>{m.statut || '—'}</td>
+                    <td style={{ padding: '0.6rem 0.8rem', textAlign: 'center' }}>
+                      {m.isBureau && <span style={{ fontSize: '0.6rem', padding: '0.15rem 0.4rem', background: 'var(--vermilion)', color: '#fff' }}>Bureau</span>}
+                    </td>
+                  </tr>
+                ))}
+                {sorted.length === 0 && (
+                  <tr><td colSpan={7} style={{ padding: '1rem 0.8rem', color: 'var(--stone)' }}>Aucun adhérent trouvé.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {creating && (
+        <AdminModal onClose={() => setCreating(false)} maxWidth={560}>
+          <form onSubmit={handleCreate} style={{ display: 'grid', gap: '0.9rem' }}>
               <b style={{ fontSize: '1.05rem' }}>Nouvel adhérent</b>
               <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
                 Seule l'identité de base est nécessaire ici. L'adhérent complétera ses informations confidentielles et définira son mot de passe lui-même via « Mot de passe oublié ? ».
@@ -1628,14 +1707,26 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                 </button>
                 <button type="button" onClick={() => setCreating(false)} className="btn btn--ghost" style={{ justifyContent: 'center' }}>Annuler</button>
               </div>
-            </form>
-          ) : !selected || !form ? (
-            <p style={{ color: 'var(--stone)' }}>Sélectionnez un adhérent pour modifier ses informations, ou créez-en un nouveau.</p>
-          ) : (
-            <form onSubmit={handleSave} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'grid', gap: '0.9rem' }}>
-              <div style={{ paddingBottom: '0.8rem', borderBottom: '1px solid var(--line)' }}>
-                <b style={{ fontSize: '1.05rem' }}>{selected.prenom} {selected.nom}</b>
-                <div style={{ color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>{selected.email}</div>
+          </form>
+        </AdminModal>
+      )}
+
+      {selected && form && (
+        <AdminModal onClose={() => { setSelectedId(null); setForm(null); setSaveMessage('') }} maxWidth={760}>
+            <form onSubmit={handleSave} style={{ display: 'grid', gap: '0.9rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '0.8rem', borderBottom: '1px solid var(--line)' }}>
+                <div>
+                  <b style={{ fontSize: '1.05rem' }}>{selected.prenom} {selected.nom}</b>
+                  <div style={{ color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>{selected.email}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedId(null); setForm(null); setSaveMessage('') }}
+                  className="link-button"
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  Fermer ✕
+                </button>
               </div>
 
               <b style={{ fontSize: '0.85rem' }}>Identité & adhésion</b>
@@ -1743,8 +1834,7 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                 )}
               </div>
             </form>
-          )}
-        </div>
+        </AdminModal>
       )}
 
       {confirmingDelete && selected && (
