@@ -317,7 +317,7 @@ export default function Dashboard() {
 
         <div className="shell">
           <nav className="adherent-tabs-nav">
-            {TABS.map((tab) => (
+            {TABS.filter((tab) => tab.id !== 'admin' || me?.isBureau).map((tab) => (
               <button
                 key={tab.id}
                 className={`adh-tab-btn${activeTab === tab.id ? ' active' : ''}`}
@@ -827,7 +827,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {activeTab === 'admin' && (
+        {activeTab === 'admin' && !me?.isBureau && (
+          <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux membres du bureau du club.</p>
+        )}
+        {activeTab === 'admin' && me?.isBureau && (
           <div>
             {!openAdminCard ? (
               <>
@@ -837,6 +840,11 @@ export default function Dashboard() {
                   <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Outils de gestion réservés aux membres du bureau et de l'organisation.</p>
                 </div>
 
+                <AdminMembersPanel token={token} />
+
+                <div style={{ marginTop: '2.2rem', marginBottom: '1rem' }}>
+                  <b style={{ fontSize: '0.95rem', textTransform: 'uppercase' }}>Autres outils</b>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.2rem' }}>
                   {ADMIN_CARDS.map((c) => (
                     <div key={c.titre} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
@@ -1346,6 +1354,239 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+const GROUPES_ADHERENT = ['Running', 'Marche Nordique Sportive', 'Marche Loisir']
+const STATUTS_ADHERENT = ['Adhérents 2027', 'Anciens adhérents', 'Nouveaux adhérents']
+
+function adminFormFromMember(m) {
+  return {
+    prenom: m.prenom || '', nom: m.nom || '', role: m.role || '', groupe: m.groupe || '', statut: m.statut || '',
+    isBureau: !!m.isBureau,
+
+    dateNaissance: m.dateNaissance || '', lieuNaissance: m.lieuNaissance || '', adresse: m.adresse || '',
+    codePostal: m.codePostal || '', ville: m.ville || '', telephoneDomicile: m.telephoneDomicile || '',
+    telephonePortable: m.telephonePortable || '', nationalite: m.nationalite || '', urgenceNom: m.urgenceNom || '',
+    urgenceTelephone: m.urgenceTelephone || '', tailleMaillot: m.tailleMaillot || '', vma: m.vma ?? '', vmaDate: m.vmaDate || '',
+
+    numeroLicence: m.numeroLicence || '', licenciePar: m.licenciePar || '', fonctionBureau: m.fonctionBureau || '',
+    droitAdminEvenements: !!m.droitAdminEvenements, origineContact: m.origineContact || '',
+    anneePremiereAdhesion: m.anneePremiereAdhesion ?? '', datePremiereAdhesion: m.datePremiereAdhesion || '',
+    dateDernierCertificat: m.dateDernierCertificat || '', anneeDerniereAdhesion: m.anneeDerniereAdhesion ?? '',
+    activiteSaison: m.activiteSaison || '', licenceFfaType: m.licenceFfaType || '',
+    montantCotisation: m.montantCotisation ?? '', datePaiementCotisation: m.datePaiementCotisation || '', modePaiement: m.modePaiement || '',
+  }
+}
+
+function AdminMembersPanel({ token }) {
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [search, setSearch] = useState('')
+  const [selectedId, setSelectedId] = useState(null)
+  const [form, setForm] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    api.adminListMembers(token)
+      .then((data) => { if (!cancelled) setMembers(data) })
+      .catch((err) => { if (!cancelled) setLoadError(err.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [token])
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase()
+    return members.filter((m) => `${m.prenom} ${m.nom} ${m.email}`.toLowerCase().includes(q))
+  }, [members, search])
+
+  const selected = members.find((m) => m.id === selectedId) || null
+
+  function selectMember(m) {
+    setSelectedId(m.id)
+    setForm(adminFormFromMember(m))
+    setSaveMessage('')
+  }
+
+  function updateField(key, value) {
+    setForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function handleSave(e) {
+    e.preventDefault()
+    setSaving(true)
+    setSaveMessage('')
+    try {
+      const payload = {
+        ...form,
+        dateNaissance: form.dateNaissance === '' ? null : form.dateNaissance,
+        vmaDate: form.vmaDate === '' ? null : form.vmaDate,
+        vma: form.vma === '' ? null : Number(form.vma),
+        anneePremiereAdhesion: form.anneePremiereAdhesion === '' ? null : Number(form.anneePremiereAdhesion),
+        datePremiereAdhesion: form.datePremiereAdhesion === '' ? null : form.datePremiereAdhesion,
+        dateDernierCertificat: form.dateDernierCertificat === '' ? null : form.dateDernierCertificat,
+        anneeDerniereAdhesion: form.anneeDerniereAdhesion === '' ? null : Number(form.anneeDerniereAdhesion),
+        montantCotisation: form.montantCotisation === '' ? null : Number(form.montantCotisation),
+        datePaiementCotisation: form.datePaiementCotisation === '' ? null : form.datePaiementCotisation,
+      }
+      const updated = await api.adminUpdateMember(token, selectedId, payload)
+      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
+      setSaveMessage('Modifications enregistrées.')
+    } catch (err) {
+      setSaveMessage(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
+
+  return (
+    <div>
+      <span className="eyebrow" style={{ fontWeight: 'bold' }}>Gestion des adhérents</span>
+      <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1.2rem' }}>
+        Modifier les informations confidentielles et administratives de n'importe quel adhérent.
+      </p>
+
+      {loading && <p style={{ color: 'var(--stone)' }}>Chargement des adhérents…</p>}
+      {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+
+      {!loading && !loadError && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 320px) 1fr', gap: '1.5rem', alignItems: 'start' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)' }}>
+            <div style={{ padding: '0.8rem' }}>
+              <input type="text" placeholder="Rechercher un adhérent…" style={inputStyle} value={search} onChange={(e) => setSearch(e.target.value)} />
+            </div>
+            <div style={{ maxHeight: 480, overflowY: 'auto', borderTop: '1px solid var(--line)' }}>
+              {filtered.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => selectMember(m)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left', background: m.id === selectedId ? 'var(--surface-2)' : 'none',
+                    border: 'none', borderBottom: '1px solid var(--line)', padding: '0.7rem 0.9rem', cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)', fontSize: '0.75rem',
+                  }}
+                >
+                  <b>{m.prenom} {m.nom}</b>
+                  {m.isBureau && <span style={{ marginLeft: '0.4rem', fontSize: '0.6rem', padding: '0.1rem 0.35rem', background: 'var(--vermilion)', color: '#fff' }}>Bureau</span>}
+                  <div style={{ color: 'var(--ink-soft)', marginTop: '0.2rem' }}>{m.email}</div>
+                </button>
+              ))}
+              {filtered.length === 0 && (
+                <p style={{ padding: '0.9rem', color: 'var(--stone)', fontSize: '0.8rem' }}>Aucun adhérent trouvé.</p>
+              )}
+            </div>
+          </div>
+
+          {!selected || !form ? (
+            <p style={{ color: 'var(--stone)' }}>Sélectionnez un adhérent pour modifier ses informations.</p>
+          ) : (
+            <form onSubmit={handleSave} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', display: 'grid', gap: '0.9rem' }}>
+              <div style={{ paddingBottom: '0.8rem', borderBottom: '1px solid var(--line)' }}>
+                <b style={{ fontSize: '1.05rem' }}>{selected.prenom} {selected.nom}</b>
+                <div style={{ color: 'var(--ink-soft)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>{selected.email}</div>
+              </div>
+
+              <b style={{ fontSize: '0.85rem' }}>Identité & adhésion</b>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Prénom')}<input type="text" style={inputStyle} value={form.prenom} onChange={(e) => updateField('prenom', e.target.value)} /></div>
+                <div>{fieldLabel('Nom')}<input type="text" style={inputStyle} value={form.nom} onChange={(e) => updateField('nom', e.target.value)} /></div>
+              </div>
+              <div>{fieldLabel('Rôle')}<input type="text" style={inputStyle} value={form.role} onChange={(e) => updateField('role', e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>
+                  {fieldLabel('Groupe')}
+                  <select style={inputStyle} value={form.groupe} onChange={(e) => updateField('groupe', e.target.value)}>
+                    <option value="">—</option>
+                    {GROUPES_ADHERENT.map((g) => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  {fieldLabel('Statut')}
+                  <select style={inputStyle} value={form.statut} onChange={(e) => updateField('statut', e.target.value)}>
+                    <option value="">—</option>
+                    {STATUTS_ADHERENT.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <input type="checkbox" checked={form.isBureau} onChange={(e) => updateField('isBureau', e.target.checked)} />
+                Membre du bureau (accès à cette page d'administration)
+              </label>
+
+              <b style={{ fontSize: '0.85rem', marginTop: '0.6rem' }}>Informations confidentielles</b>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Date de naissance')}<input type="date" style={inputStyle} value={form.dateNaissance} onChange={(e) => updateField('dateNaissance', e.target.value)} /></div>
+                <div>{fieldLabel('Lieu de naissance')}<input type="text" style={inputStyle} value={form.lieuNaissance} onChange={(e) => updateField('lieuNaissance', e.target.value)} /></div>
+              </div>
+              <div>{fieldLabel('Adresse postale')}<input type="text" style={inputStyle} value={form.adresse} onChange={(e) => updateField('adresse', e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Code postal')}<input type="text" style={inputStyle} value={form.codePostal} onChange={(e) => updateField('codePostal', e.target.value)} /></div>
+                <div>{fieldLabel('Localité')}<input type="text" style={inputStyle} value={form.ville} onChange={(e) => updateField('ville', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Téléphone domicile')}<input type="tel" style={inputStyle} value={form.telephoneDomicile} onChange={(e) => updateField('telephoneDomicile', e.target.value)} /></div>
+                <div>{fieldLabel('Téléphone portable')}<input type="tel" style={inputStyle} value={form.telephonePortable} onChange={(e) => updateField('telephonePortable', e.target.value)} /></div>
+              </div>
+              <div>{fieldLabel('Nationalité')}<input type="text" style={inputStyle} value={form.nationalite} onChange={(e) => updateField('nationalite', e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel("Urgence : prénom nom")}<input type="text" style={inputStyle} value={form.urgenceNom} onChange={(e) => updateField('urgenceNom', e.target.value)} /></div>
+                <div>{fieldLabel('Urgence : téléphone')}<input type="tel" style={inputStyle} value={form.urgenceTelephone} onChange={(e) => updateField('urgenceTelephone', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
+                <div>
+                  {fieldLabel('Taille de maillot')}
+                  <select style={inputStyle} value={form.tailleMaillot} onChange={(e) => updateField('tailleMaillot', e.target.value)}>
+                    <option value="">—</option>
+                    {TAILLES_MAILLOT.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>{fieldLabel('VMA')}<input type="number" step="0.1" style={inputStyle} value={form.vma} onChange={(e) => updateField('vma', e.target.value)} /></div>
+                <div>{fieldLabel('Date de la VMA')}<input type="date" style={inputStyle} value={form.vmaDate} onChange={(e) => updateField('vmaDate', e.target.value)} /></div>
+              </div>
+
+              <b style={{ fontSize: '0.85rem', marginTop: '0.6rem' }}>Informations administratives</b>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Numéro de licence')}<input type="text" style={inputStyle} value={form.numeroLicence} onChange={(e) => updateField('numeroLicence', e.target.value)} /></div>
+                <div>{fieldLabel('Licencié(e) par')}<input type="text" style={inputStyle} value={form.licenciePar} onChange={(e) => updateField('licenciePar', e.target.value)} /></div>
+              </div>
+              <div>{fieldLabel('Fonction au bureau')}<input type="text" style={inputStyle} value={form.fonctionBureau} onChange={(e) => updateField('fonctionBureau', e.target.value)} /></div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <input type="checkbox" checked={form.droitAdminEvenements} onChange={(e) => updateField('droitAdminEvenements', e.target.checked)} />
+                Droit d'administrer les événements
+              </label>
+              <div>{fieldLabel('Origine du contact')}<input type="text" style={inputStyle} value={form.origineContact} onChange={(e) => updateField('origineContact', e.target.value)} /></div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Année de première adhésion')}<input type="number" style={inputStyle} value={form.anneePremiereAdhesion} onChange={(e) => updateField('anneePremiereAdhesion', e.target.value)} /></div>
+                <div>{fieldLabel('Date de première adhésion')}<input type="date" style={inputStyle} value={form.datePremiereAdhesion} onChange={(e) => updateField('datePremiereAdhesion', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Année de dernière adhésion')}<input type="number" style={inputStyle} value={form.anneeDerniereAdhesion} onChange={(e) => updateField('anneeDerniereAdhesion', e.target.value)} /></div>
+                <div>{fieldLabel('Date du dernier certificat médical')}<input type="date" style={inputStyle} value={form.dateDernierCertificat} onChange={(e) => updateField('dateDernierCertificat', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Activité pour la saison')}<input type="text" style={inputStyle} value={form.activiteSaison} onChange={(e) => updateField('activiteSaison', e.target.value)} /></div>
+                <div>{fieldLabel('Licence FFA pour la saison')}<input type="text" style={inputStyle} value={form.licenceFfaType} onChange={(e) => updateField('licenceFfaType', e.target.value)} /></div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.8rem' }}>
+                <div>{fieldLabel('Montant de la cotisation')}<input type="number" step="0.01" style={inputStyle} value={form.montantCotisation} onChange={(e) => updateField('montantCotisation', e.target.value)} /></div>
+                <div>{fieldLabel('Date de paiement')}<input type="date" style={inputStyle} value={form.datePaiementCotisation} onChange={(e) => updateField('datePaiementCotisation', e.target.value)} /></div>
+                <div>{fieldLabel('Mode de paiement')}<input type="text" style={inputStyle} value={form.modePaiement} onChange={(e) => updateField('modePaiement', e.target.value)} /></div>
+              </div>
+
+              {saveMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{saveMessage}</p>}
+              <button type="submit" disabled={saving} className="btn btn--solid" style={{ justifyContent: 'center' }}>
+                {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
     </div>
   )
 }

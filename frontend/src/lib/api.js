@@ -40,4 +40,9 @@ export const api = {
     form.append('photo', file)
     return request('/members/me/photo', { method: 'POST', token, body: form })
   },
+
+  adminListMembers: (token) => request('/admin/members', { token }),
+  adminGetMember: (token, id) => request(`/admin/members/${id}`, { token }),
+  adminUpdateMember: (token, id, data) =>
+    request(`/admin/members/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
 }

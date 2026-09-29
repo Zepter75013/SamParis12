@@ -51,6 +51,10 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("PUT /api/members/me/trombi", authService.RequireAuth(memberHandler.UpdateTrombi))
 	mux.HandleFunc("POST /api/members/me/photo", authService.RequireAuth(memberHandler.UploadPhoto))
 
+	mux.HandleFunc("GET /api/admin/members", authService.RequireBureau(memberHandler.AdminListMembers))
+	mux.HandleFunc("GET /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminGetMember))
+	mux.HandleFunc("PUT /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminUpdateMember))
+
 	// Photos de trombinoscope, servies telles quelles (pas de donnée sensible).
 	mux.Handle("GET /uploads/photos/", http.StripPrefix("/uploads/photos/", http.FileServer(http.Dir("uploads/photos"))))
 

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -127,6 +128,48 @@ type ConfidentialUpdate struct {
 	VMADate           *string  `json:"vmaDate"`
 }
 
+// AdminMemberUpdate est l'ensemble complet des champs qu'un membre du bureau
+// peut modifier sur la fiche d'un autre adhérent (identité, confidentielles
+// et administratives) — jamais l'email ni le mot de passe, qui restent gérés
+// par l'adhérent lui-même via leurs propres circuits.
+type AdminMemberUpdate struct {
+	Prenom   string `json:"prenom"`
+	Nom      string `json:"nom"`
+	Role     string `json:"role"`
+	Groupe   string `json:"groupe"`
+	Statut   string `json:"statut"`
+	IsBureau bool   `json:"isBureau"`
+
+	DateNaissance     *string  `json:"dateNaissance"`
+	LieuNaissance     string   `json:"lieuNaissance"`
+	Adresse           string   `json:"adresse"`
+	CodePostal        string   `json:"codePostal"`
+	Ville             string   `json:"ville"`
+	TelephoneDomicile string   `json:"telephoneDomicile"`
+	TelephonePortable string   `json:"telephonePortable"`
+	Nationalite       string   `json:"nationalite"`
+	UrgenceNom        string   `json:"urgenceNom"`
+	UrgenceTelephone  string   `json:"urgenceTelephone"`
+	TailleMaillot     string   `json:"tailleMaillot"`
+	VMA               *float64 `json:"vma"`
+	VMADate           *string  `json:"vmaDate"`
+
+	NumeroLicence          string   `json:"numeroLicence"`
+	LicenciePar            string   `json:"licenciePar"`
+	FonctionBureau         string   `json:"fonctionBureau"`
+	DroitAdminEvenements   bool     `json:"droitAdminEvenements"`
+	OrigineContact         string   `json:"origineContact"`
+	AnneePremiereAdhesion  *int     `json:"anneePremiereAdhesion"`
+	DatePremiereAdhesion   *string  `json:"datePremiereAdhesion"`
+	DateDernierCertificat  *string  `json:"dateDernierCertificat"`
+	AnneeDerniereAdhesion  *int     `json:"anneeDerniereAdhesion"`
+	ActiviteSaison         string   `json:"activiteSaison"`
+	LicenceFFAType         string   `json:"licenceFfaType"`
+	MontantCotisation      *float64 `json:"montantCotisation"`
+	DatePaiementCotisation *string  `json:"datePaiementCotisation"`
+	ModePaiement           string   `json:"modePaiement"`
+}
+
 type Repository struct {
 	db *sql.DB
 }
@@ -153,13 +196,21 @@ const memberColumns = `
 `
 
 func scanMember(row *sql.Row) (*Member, error) {
+	return scanMemberFunc(row.Scan)
+}
+
+func scanMemberRow(rows *sql.Rows) (*Member, error) {
+	return scanMemberFunc(rows.Scan)
+}
+
+func scanMemberFunc(scan func(...any) error) (*Member, error) {
 	var m Member
 	var (
 		dateNaissance, vmaDate, datePremiereAdhesion, dateDernierCertificat, datePaiementCotisation sql.NullString
 		vma, montantCotisation                                                                       sql.NullFloat64
 		anneePremiereAdhesion, anneeDerniereAdhesion                                                  sql.NullInt64
 	)
-	err := row.Scan(
+	err := scan(
 		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL, &m.IsBureau,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
 		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
@@ -297,6 +348,50 @@ func (r *Repository) UpdateConfidential(id int64, u ConfidentialUpdate) error {
 		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
 		u.TelephoneDomicile, u.TelephonePortable, u.Nationalite,
 		u.UrgenceNom, u.UrgenceTelephone, u.TailleMaillot, u.VMA, u.VMADate,
+		id,
+	)
+	return err
+}
+
+// ListFull retourne la fiche complète de tous les adhérents — réservé au bureau.
+func (r *Repository) ListFull() ([]Member, error) {
+	rows, err := r.db.Query(`SELECT ` + memberColumns + ` FROM members ORDER BY nom, prenom`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	members := []Member{}
+	for rows.Next() {
+		m, err := scanMemberRow(rows)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, *m)
+	}
+	return members, rows.Err()
+}
+
+func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
+	_, err := r.db.Exec(`
+		UPDATE members SET
+			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, is_bureau = ?,
+			date_naissance = ?, lieu_naissance = ?, adresse = ?, code_postal = ?, ville = ?,
+			telephone_domicile = ?, telephone_portable = ?, nationalite = ?,
+			urgence_nom = ?, urgence_telephone = ?, taille_maillot = ?, vma = ?, vma_date = ?,
+			numero_licence = ?, licencie_par = ?, fonction_bureau = ?, droit_admin_evenements = ?,
+			origine_contact = ?, annee_premiere_adhesion = ?, date_premiere_adhesion = ?,
+			date_dernier_certificat = ?, annee_derniere_adhesion = ?, activite_saison = ?,
+			licence_ffa_type = ?, montant_cotisation = ?, date_paiement_cotisation = ?, mode_paiement = ?
+		WHERE id = ?`,
+		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.IsBureau,
+		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
+		u.TelephoneDomicile, u.TelephonePortable, u.Nationalite,
+		u.UrgenceNom, u.UrgenceTelephone, u.TailleMaillot, u.VMA, u.VMADate,
+		u.NumeroLicence, u.LicenciePar, u.FonctionBureau, u.DroitAdminEvenements,
+		u.OrigineContact, u.AnneePremiereAdhesion, u.DatePremiereAdhesion,
+		u.DateDernierCertificat, u.AnneeDerniereAdhesion, u.ActiviteSaison,
+		u.LicenceFFAType, u.MontantCotisation, u.DatePaiementCotisation, u.ModePaiement,
 		id,
 	)
 	return err
@@ -655,6 +750,59 @@ func (h *Handler) UploadPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m, err := h.repo.GetByID(memberID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, m)
+}
+
+// ---------------------------------------------------------------------------
+// Administration (réservé aux membres du bureau, via AuthService.RequireBureau)
+
+func (h *Handler) AdminListMembers(w http.ResponseWriter, r *http.Request) {
+	members, err := h.repo.ListFull()
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible de charger les adhérents")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, members)
+}
+
+func (h *Handler) AdminGetMember(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	m, err := h.repo.GetByID(id)
+	if err == sql.ErrNoRows {
+		httpx.Error(w, http.StatusNotFound, "adhérent introuvable")
+		return
+	}
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, m)
+}
+
+func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	var u AdminMemberUpdate
+	if err := decodeJSON(r, &u); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	if err := h.repo.UpdateAdmin(id, u); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer les modifications")
+		return
+	}
+	m, err := h.repo.GetByID(id)
 	if err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
 		return

@@ -16,6 +16,7 @@ import (
 type contextKey string
 
 const memberIDContextKey contextKey = "memberID"
+const isBureauContextKey contextKey = "isBureau"
 
 type claims struct {
 	MemberID int64 `json:"memberId"`
@@ -71,13 +72,31 @@ func (a *AuthService) RequireAuth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		ctx := context.WithValue(r.Context(), memberIDContextKey, c.MemberID)
+		ctx = context.WithValue(ctx, isBureauContextKey, c.IsBureau)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
+}
+
+// RequireBureau protege un handler reserve aux membres du bureau
+// (is_bureau) : exige une authentification valide et le statut bureau.
+func (a *AuthService) RequireBureau(next http.HandlerFunc) http.HandlerFunc {
+	return a.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		if isBureau, _ := IsBureauFromContext(r.Context()); !isBureau {
+			httpx.Error(w, http.StatusForbidden, "reserve aux membres du bureau")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func MemberIDFromContext(ctx context.Context) (int64, bool) {
 	id, ok := ctx.Value(memberIDContextKey).(int64)
 	return id, ok
+}
+
+func IsBureauFromContext(ctx context.Context) (bool, bool) {
+	v, ok := ctx.Value(isBureauContextKey).(bool)
+	return v, ok
 }
 
 // generateCode produit un code numérique à 6 chiffres, envoyé par email.
