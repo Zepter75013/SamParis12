@@ -1683,7 +1683,7 @@ function CoursesPanel({ token, me, members }) {
                     {seekingBusy ? 'Enregistrement…' : detail.isSeekingByMe ? 'Je renonce (dossard recherché)' : 'Je cherche un dossard'}
                   </button>
                 )}
-                {detail.race.isRegisteredByMe && (
+                {(detail.race.isRegisteredByMe || detail.isCedingByMe) && (
                   <button
                     type="button"
                     onClick={handleToggleCedeDossard}

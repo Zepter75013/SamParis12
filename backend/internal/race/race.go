@@ -488,6 +488,11 @@ func (h *Handler) CedeDossard(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer ta cession de dossard")
 		return
 	}
+	// Céder son dossard, c'est ne plus participer : on sort de la liste des inscrits.
+	if err := h.repo.Unregister(id, memberID); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
 	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
