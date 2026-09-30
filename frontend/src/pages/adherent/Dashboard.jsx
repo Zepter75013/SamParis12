@@ -4,6 +4,7 @@ import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
 import { getTheme, setTheme as applyThemeChoice } from '../../lib/theme.js'
 import PasswordField from '../../components/PasswordField.jsx'
+import AboutContent from '../../components/AboutContent.jsx'
 
 const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
@@ -280,6 +281,7 @@ export default function Dashboard() {
   const [openVieCard, setOpenVieCard] = useState(null)
   const [openAdminCard, setOpenAdminCard] = useState(null)
   const [openMember, setOpenMember] = useState(null)
+  const [aboutOpen, setAboutOpen] = useState(false)
 
   const [token, setAuthToken] = useState(() => getToken())
   const [me, setMe] = useState(null)
@@ -938,11 +940,18 @@ export default function Dashboard() {
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.6rem 1.2rem', marginBottom: '0.6rem' }}>
           <button className="link-button" style={{ textTransform: 'none' }}>Plan du site</button>
           <button onClick={() => navigate('/adhesion/paiement')} className="link-button" style={{ textTransform: 'none' }}>Paiements Club</button>
+          <button onClick={() => setAboutOpen(true)} className="link-button" style={{ textTransform: 'none' }}>À propos</button>
         </div>
         SAM Paris 12 · Espace réservé aux adhérents (démonstration) · Licence FFA N° 075043<br />
         Contact : <a href="mailto:contact@samparis12.org" style={{ textDecoration: 'underline' }}>contact@samparis12.org</a>
         {' '}· Objets perdus : <a href="mailto:objetsperdus@samparis12.org" style={{ textDecoration: 'underline' }}>objetsperdus@samparis12.org</a>
       </footer>
+
+      {aboutOpen && (
+        <AdminModal onClose={() => setAboutOpen(false)} maxWidth={560}>
+          <AboutContent />
+        </AdminModal>
+      )}
     </div>
   )
 }

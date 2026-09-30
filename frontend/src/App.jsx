@@ -6,6 +6,7 @@ import NotFound from './pages/NotFound.jsx'
 import Login from './pages/adherent/Login.jsx'
 import Dashboard from './pages/adherent/Dashboard.jsx'
 import Paiement from './pages/Paiement.jsx'
+import APropos from './pages/APropos.jsx'
 
 function PublicLayout({ children }) {
   return (
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/espace-adherent" element={<Login />} />
       <Route path="/espace-adherent/tableau-de-bord" element={<Dashboard />} />
       <Route path="/adhesion/paiement" element={<Paiement />} />
+      <Route path="/a-propos" element={<PublicLayout><APropos /></PublicLayout>} />
       <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
     </Routes>
   )

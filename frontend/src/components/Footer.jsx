@@ -12,6 +12,7 @@ export default function Footer() {
         <Link to="/espace-adherent">Espace adhérent</Link>
         <a href="#foulees">Les Foulées du 12ème</a>
         <a href="#contact">Mentions légales</a>
+        <Link to="/a-propos">À propos</Link>
         <span className="sep" />
         {partner && (
           <span className="partner">
