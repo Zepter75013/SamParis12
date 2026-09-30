@@ -1672,24 +1672,28 @@ function CoursesPanel({ token, me, members }) {
                 >
                   {registering ? 'Enregistrement…' : detail.race.isRegisteredByMe ? "Je ne participe plus" : "J'y participe"}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleToggleSeekDossard}
-                  disabled={seekingBusy}
-                  className={`btn ${detail.isSeekingByMe ? 'btn--ghost' : 'btn--solid'}`}
-                  style={{ justifyContent: 'center', flex: '1 1 160px' }}
-                >
-                  {seekingBusy ? 'Enregistrement…' : detail.isSeekingByMe ? 'Je renonce (dossard recherché)' : 'Je cherche un dossard'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToggleCedeDossard}
-                  disabled={cedingBusy}
-                  className={`btn ${detail.isCedingByMe ? 'btn--ghost' : 'btn--solid'}`}
-                  style={{ justifyContent: 'center', flex: '1 1 160px' }}
-                >
-                  {cedingBusy ? 'Enregistrement…' : detail.isCedingByMe ? 'Je renonce (dossard cédé)' : 'Je cède un dossard'}
-                </button>
+                {!detail.race.isRegisteredByMe && (
+                  <button
+                    type="button"
+                    onClick={handleToggleSeekDossard}
+                    disabled={seekingBusy}
+                    className={`btn ${detail.isSeekingByMe ? 'btn--ghost' : 'btn--solid'}`}
+                    style={{ justifyContent: 'center', flex: '1 1 160px' }}
+                  >
+                    {seekingBusy ? 'Enregistrement…' : detail.isSeekingByMe ? 'Je renonce (dossard recherché)' : 'Je cherche un dossard'}
+                  </button>
+                )}
+                {detail.race.isRegisteredByMe && (
+                  <button
+                    type="button"
+                    onClick={handleToggleCedeDossard}
+                    disabled={cedingBusy}
+                    className={`btn ${detail.isCedingByMe ? 'btn--ghost' : 'btn--solid'}`}
+                    style={{ justifyContent: 'center', flex: '1 1 160px' }}
+                  >
+                    {cedingBusy ? 'Enregistrement…' : detail.isCedingByMe ? 'Je renonce (dossard cédé)' : 'Je cède un dossard'}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setShowWarning((v) => !v)}

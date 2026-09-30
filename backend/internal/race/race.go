@@ -189,6 +189,18 @@ func (r *Repository) Participants(raceID int64) ([]Participant, error) {
 	return participants, rows.Err()
 }
 
+func (r *Repository) IsRegistered(raceID, memberID int64) (bool, error) {
+	var exists int
+	err := r.db.QueryRow(`SELECT 1 FROM race_registrations WHERE race_id = ? AND member_id = ?`, raceID, memberID).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (r *Repository) Register(raceID, memberID int64) error {
 	_, err := r.db.Exec(`
 		INSERT INTO race_registrations (race_id, member_id) VALUES (?, ?)
@@ -372,6 +384,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusInternalServerError, "impossible de s'inscrire à la course")
 		return
 	}
+	// On a désormais une place : inutile de continuer à chercher un dossard.
+	_ = h.repo.DossardUnsignal(id, memberID, dossardKindRecherche)
 	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
@@ -390,27 +404,9 @@ func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusInternalServerError, "impossible de se désinscrire de la course")
 		return
 	}
+	// Sans inscription, plus de dossard à céder.
+	_ = h.repo.DossardUnsignal(id, memberID, dossardKindCession)
 	httpx.JSON(w, http.StatusNoContent, nil)
-}
-
-func (h *Handler) dossardSignalHandler(kind string, errMsg string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		memberID, ok := member.MemberIDFromContext(r.Context())
-		if !ok {
-			httpx.Error(w, http.StatusUnauthorized, "non authentifié")
-			return
-		}
-		id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-		if err != nil {
-			httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
-			return
-		}
-		if err := h.repo.DossardSignal(id, memberID, kind); err != nil {
-			httpx.Error(w, http.StatusInternalServerError, errMsg)
-			return
-		}
-		httpx.JSON(w, http.StatusNoContent, nil)
-	}
 }
 
 func (h *Handler) dossardUnsignalHandler(kind string, errMsg string) http.HandlerFunc {
@@ -433,16 +429,66 @@ func (h *Handler) dossardUnsignalHandler(kind string, errMsg string) http.Handle
 	}
 }
 
+// SeekDossard indique qu'un adhérent recherche un dossard pour une course —
+// refusé s'il y est déjà inscrit (il n'en a pas besoin).
 func (h *Handler) SeekDossard(w http.ResponseWriter, r *http.Request) {
-	h.dossardSignalHandler(dossardKindRecherche, "impossible d'enregistrer ta recherche de dossard")(w, r)
+	memberID, ok := member.MemberIDFromContext(r.Context())
+	if !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	registered, err := h.repo.IsRegistered(id, memberID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	if registered {
+		httpx.Error(w, http.StatusConflict, "tu participes déjà à cette course, inutile de chercher un dossard")
+		return
+	}
+	if err := h.repo.DossardSignal(id, memberID, dossardKindRecherche); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer ta recherche de dossard")
+		return
+	}
+	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
 func (h *Handler) UnseekDossard(w http.ResponseWriter, r *http.Request) {
 	h.dossardUnsignalHandler(dossardKindRecherche, "impossible d'annuler ta recherche de dossard")(w, r)
 }
 
+// CedeDossard indique qu'un adhérent cherche à céder son dossard — refusé
+// s'il n'est pas inscrit à la course (il n'a pas de dossard à céder).
 func (h *Handler) CedeDossard(w http.ResponseWriter, r *http.Request) {
-	h.dossardSignalHandler(dossardKindCession, "impossible d'enregistrer ta cession de dossard")(w, r)
+	memberID, ok := member.MemberIDFromContext(r.Context())
+	if !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	registered, err := h.repo.IsRegistered(id, memberID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	if !registered {
+		httpx.Error(w, http.StatusConflict, "tu dois être inscrit à cette course pour céder ton dossard")
+		return
+	}
+	if err := h.repo.DossardSignal(id, memberID, dossardKindCession); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer ta cession de dossard")
+		return
+	}
+	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
 func (h *Handler) UncedeDossard(w http.ResponseWriter, r *http.Request) {
