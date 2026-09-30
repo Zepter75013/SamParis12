@@ -57,6 +57,10 @@ export const api = {
   getRace: (token, id) => request(`/races/${id}`, { token }),
   registerRace: (token, id) => request(`/races/${id}/register`, { method: 'POST', token }),
   unregisterRace: (token, id) => request(`/races/${id}/register`, { method: 'DELETE', token }),
+  seekDossard: (token, id) => request(`/races/${id}/dossard/recherche`, { method: 'POST', token }),
+  unseekDossard: (token, id) => request(`/races/${id}/dossard/recherche`, { method: 'DELETE', token }),
+  cedeDossard: (token, id) => request(`/races/${id}/dossard/cession`, { method: 'POST', token }),
+  uncedeDossard: (token, id) => request(`/races/${id}/dossard/cession`, { method: 'DELETE', token }),
 
   listDocuments: (token) => request('/documents', { token }),
   uploadDocument: (token, formData) => request('/documents', { method: 'POST', token, body: formData }),

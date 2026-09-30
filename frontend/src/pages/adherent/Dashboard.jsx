@@ -1349,6 +1349,10 @@ function CoursesPanel({ token, me }) {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState('')
   const [registering, setRegistering] = useState(false)
+  const [seekingBusy, setSeekingBusy] = useState(false)
+  const [cedingBusy, setCedingBusy] = useState(false)
+  const [showEmails, setShowEmails] = useState(false)
+  const [showWarning, setShowWarning] = useState(false)
 
   function loadRaces() {
     return api.listRaces(token)
@@ -1367,6 +1371,8 @@ function CoursesPanel({ token, me }) {
     setDetail(null)
     setDetailError('')
     setDetailLoading(true)
+    setShowEmails(false)
+    setShowWarning(false)
     api.getRace(token, id)
       .then((data) => setDetail(data))
       .catch((err) => setDetailError(err.message))
@@ -1413,6 +1419,40 @@ function CoursesPanel({ token, me }) {
       setDetailError(err.message)
     } finally {
       setRegistering(false)
+    }
+  }
+
+  async function handleToggleSeekDossard() {
+    if (!detail) return
+    setSeekingBusy(true)
+    try {
+      if (detail.isSeekingByMe) {
+        await api.unseekDossard(token, detail.race.id)
+      } else {
+        await api.seekDossard(token, detail.race.id)
+      }
+      setDetail(await api.getRace(token, detail.race.id))
+    } catch (err) {
+      setDetailError(err.message)
+    } finally {
+      setSeekingBusy(false)
+    }
+  }
+
+  async function handleToggleCedeDossard() {
+    if (!detail) return
+    setCedingBusy(true)
+    try {
+      if (detail.isCedingByMe) {
+        await api.uncedeDossard(token, detail.race.id)
+      } else {
+        await api.cedeDossard(token, detail.race.id)
+      }
+      setDetail(await api.getRace(token, detail.race.id))
+    } catch (err) {
+      setDetailError(err.message)
+    } finally {
+      setCedingBusy(false)
     }
   }
 
@@ -1523,15 +1563,49 @@ function CoursesPanel({ token, me }) {
                 {infoRow('Inscrits', detail.race.inscritsCount)}
               </div>
 
-              <button
-                type="button"
-                onClick={handleToggleRegister}
-                disabled={registering}
-                className={`btn ${detail.race.isRegisteredByMe ? 'btn--ghost' : 'btn--solid'}`}
-                style={{ justifyContent: 'center', width: '100%', marginBottom: '1.5rem' }}
-              >
-                {registering ? 'Enregistrement…' : detail.race.isRegisteredByMe ? "Je ne participe plus" : "J'y participe"}
-              </button>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleToggleRegister}
+                  disabled={registering}
+                  className={`btn ${detail.race.isRegisteredByMe ? 'btn--ghost' : 'btn--solid'}`}
+                  style={{ justifyContent: 'center', flex: '1 1 160px' }}
+                >
+                  {registering ? 'Enregistrement…' : detail.race.isRegisteredByMe ? "Je ne participe plus" : "J'y participe"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggleSeekDossard}
+                  disabled={seekingBusy}
+                  className={`btn ${detail.isSeekingByMe ? 'btn--ghost' : 'btn--solid'}`}
+                  style={{ justifyContent: 'center', flex: '1 1 160px' }}
+                >
+                  {seekingBusy ? 'Enregistrement…' : detail.isSeekingByMe ? 'Je renonce (dossard recherché)' : 'Je cherche un dossard'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToggleCedeDossard}
+                  disabled={cedingBusy}
+                  className={`btn ${detail.isCedingByMe ? 'btn--ghost' : 'btn--solid'}`}
+                  style={{ justifyContent: 'center', flex: '1 1 160px' }}
+                >
+                  {cedingBusy ? 'Enregistrement…' : detail.isCedingByMe ? 'Je renonce (dossard cédé)' : 'Je cède un dossard'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowWarning((v) => !v)}
+                  className="btn btn--ghost"
+                  style={{ justifyContent: 'center', flex: '1 1 160px' }}
+                >
+                  Avertissements importants
+                </button>
+              </div>
+
+              {showWarning && (
+                <p style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', padding: '0.9rem 1rem', fontSize: '0.8rem', color: 'var(--ink-soft)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+                  Cette rubrique permet de faire savoir aux autres adhérents que tu participes à cette course, que tu recherches un dossard ou que tu cherches à céder le tien. Sauf mention contraire, l'inscription officielle à la course reste à faire séparément auprès de l'organisateur — ce site ne s'en charge pas. Lors des échanges de dossard, merci de rester prudent (vérifier l'identité de la personne, respecter les règles de transfert de l'organisateur) et de mentionner ton appartenance à la SAM Paris 12 lors de ton inscription officielle si possible.
+                </p>
+              )}
 
               <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
                 Adhérents inscrits ({detail.participants.length})
@@ -1539,13 +1613,57 @@ function CoursesPanel({ token, me }) {
               {detail.participants.length === 0 ? (
                 <p style={{ color: 'var(--stone)', fontSize: '0.85rem' }}>Personne ne s'est encore inscrit à cette course.</p>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
-                  {detail.participants.map((p) => (
-                    <div key={p.memberId} style={{ textAlign: 'center' }}>
-                      <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={56} />
-                      <div style={{ fontSize: '0.78rem', marginTop: '0.4rem' }}>{p.prenom} {p.nom}</div>
-                    </div>
-                  ))}
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginBottom: '0.8rem' }}>
+                    {detail.participants.map((p) => (
+                      <div key={p.memberId} style={{ textAlign: 'center' }}>
+                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={56} />
+                        <div style={{ fontSize: '0.78rem', marginTop: '0.4rem' }}>{p.prenom} {p.nom}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => setShowEmails((v) => !v)} className="link-button" style={{ fontSize: '0.78rem' }}>
+                    {showEmails ? 'Masquer les emails' : 'Voir les emails des participants'}
+                  </button>
+                  {showEmails && (
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', marginTop: '0.5rem', wordBreak: 'break-word' }}>
+                      {detail.participants.map((p) => p.email).join(', ')}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {detail.seekingDossard.length > 0 && (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
+                  <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
+                    Recherchent un dossard ({detail.seekingDossard.length})
+                  </b>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                    {detail.seekingDossard.map((p) => (
+                      <div key={p.memberId} style={{ textAlign: 'center' }}>
+                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {detail.cedingDossard.length > 0 && (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
+                  <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
+                    Cèdent un dossard ({detail.cedingDossard.length})
+                  </b>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                    {detail.cedingDossard.map((p) => (
+                      <div key={p.memberId} style={{ textAlign: 'center' }}>
+                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

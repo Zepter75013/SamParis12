@@ -39,13 +39,21 @@ type RaceCreate struct {
 	SiteInternet string `json:"siteInternet"`
 }
 
-// Participant est un adhérent inscrit à une course.
+// Participant est un adhérent inscrit à une course (ou recherchant/cédant un dossard).
 type Participant struct {
 	MemberID int64  `json:"memberId"`
 	Prenom   string `json:"prenom"`
 	Nom      string `json:"nom"`
 	PhotoURL string `json:"photoUrl"`
+	Email    string `json:"email"`
 }
+
+// dossardKindRecherche et dossardKindCession sont les deux valeurs possibles
+// de la colonne `kind` de race_dossard_signals.
+const (
+	dossardKindRecherche = "recherche"
+	dossardKindCession   = "cession"
+)
 
 type Repository struct {
 	db *sql.DB
@@ -160,7 +168,7 @@ func (r *Repository) Create(memberID int64, rc RaceCreate) (int64, error) {
 
 func (r *Repository) Participants(raceID int64) ([]Participant, error) {
 	rows, err := r.db.Query(`
-		SELECT m.id, m.prenom, m.nom, m.photo_path
+		SELECT m.id, m.prenom, m.nom, m.photo_path, m.email
 		FROM race_registrations rr
 		JOIN members m ON m.id = rr.member_id
 		WHERE rr.race_id = ?
@@ -173,7 +181,7 @@ func (r *Repository) Participants(raceID int64) ([]Participant, error) {
 	participants := []Participant{}
 	for rows.Next() {
 		var p Participant
-		if err := rows.Scan(&p.MemberID, &p.Prenom, &p.Nom, &p.PhotoURL); err != nil {
+		if err := rows.Scan(&p.MemberID, &p.Prenom, &p.Nom, &p.PhotoURL, &p.Email); err != nil {
 			return nil, err
 		}
 		participants = append(participants, p)
@@ -191,6 +199,55 @@ func (r *Repository) Register(raceID, memberID int64) error {
 func (r *Repository) Unregister(raceID, memberID int64) error {
 	_, err := r.db.Exec(`DELETE FROM race_registrations WHERE race_id = ? AND member_id = ?`, raceID, memberID)
 	return err
+}
+
+// DossardSignal (kind = "recherche" ou "cession") indique qu'un adhérent
+// recherche un dossard pour une course, ou au contraire cherche à céder le sien.
+func (r *Repository) DossardSignal(raceID, memberID int64, kind string) error {
+	_, err := r.db.Exec(`
+		INSERT INTO race_dossard_signals (race_id, member_id, kind) VALUES (?, ?, ?)
+		ON DUPLICATE KEY UPDATE id = id`, raceID, memberID, kind)
+	return err
+}
+
+func (r *Repository) DossardUnsignal(raceID, memberID int64, kind string) error {
+	_, err := r.db.Exec(`DELETE FROM race_dossard_signals WHERE race_id = ? AND member_id = ? AND kind = ?`, raceID, memberID, kind)
+	return err
+}
+
+func (r *Repository) DossardSignals(raceID int64, kind string) ([]Participant, error) {
+	rows, err := r.db.Query(`
+		SELECT m.id, m.prenom, m.nom, m.photo_path, m.email
+		FROM race_dossard_signals s
+		JOIN members m ON m.id = s.member_id
+		WHERE s.race_id = ? AND s.kind = ?
+		ORDER BY m.nom, m.prenom`, raceID, kind)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	signals := []Participant{}
+	for rows.Next() {
+		var p Participant
+		if err := rows.Scan(&p.MemberID, &p.Prenom, &p.Nom, &p.PhotoURL, &p.Email); err != nil {
+			return nil, err
+		}
+		signals = append(signals, p)
+	}
+	return signals, rows.Err()
+}
+
+func (r *Repository) DossardIsSignaled(raceID, memberID int64, kind string) (bool, error) {
+	var exists int
+	err := r.db.QueryRow(`SELECT 1 FROM race_dossard_signals WHERE race_id = ? AND member_id = ? AND kind = ?`, raceID, memberID, kind).Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 type Handler struct {
@@ -269,9 +326,34 @@ func (h *Handler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	seeking, err := h.repo.DossardSignals(id, dossardKindRecherche)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	ceding, err := h.repo.DossardSignals(id, dossardKindCession)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	isSeeking, err := h.repo.DossardIsSignaled(id, viewerID, dossardKindRecherche)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	isCeding, err := h.repo.DossardIsSignaled(id, viewerID, dossardKindCession)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
 	httpx.JSON(w, http.StatusOK, map[string]any{
-		"race":         race,
-		"participants": participants,
+		"race":           race,
+		"participants":   participants,
+		"seekingDossard": seeking,
+		"cedingDossard":  ceding,
+		"isSeekingByMe":  isSeeking,
+		"isCedingByMe":   isCeding,
 	})
 }
 
@@ -309,4 +391,60 @@ func (h *Handler) Unregister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.JSON(w, http.StatusNoContent, nil)
+}
+
+func (h *Handler) dossardSignalHandler(kind string, errMsg string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		memberID, ok := member.MemberIDFromContext(r.Context())
+		if !ok {
+			httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+			return
+		}
+		id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+		if err != nil {
+			httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+			return
+		}
+		if err := h.repo.DossardSignal(id, memberID, kind); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, errMsg)
+			return
+		}
+		httpx.JSON(w, http.StatusNoContent, nil)
+	}
+}
+
+func (h *Handler) dossardUnsignalHandler(kind string, errMsg string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		memberID, ok := member.MemberIDFromContext(r.Context())
+		if !ok {
+			httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+			return
+		}
+		id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+		if err != nil {
+			httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+			return
+		}
+		if err := h.repo.DossardUnsignal(id, memberID, kind); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, errMsg)
+			return
+		}
+		httpx.JSON(w, http.StatusNoContent, nil)
+	}
+}
+
+func (h *Handler) SeekDossard(w http.ResponseWriter, r *http.Request) {
+	h.dossardSignalHandler(dossardKindRecherche, "impossible d'enregistrer ta recherche de dossard")(w, r)
+}
+
+func (h *Handler) UnseekDossard(w http.ResponseWriter, r *http.Request) {
+	h.dossardUnsignalHandler(dossardKindRecherche, "impossible d'annuler ta recherche de dossard")(w, r)
+}
+
+func (h *Handler) CedeDossard(w http.ResponseWriter, r *http.Request) {
+	h.dossardSignalHandler(dossardKindCession, "impossible d'enregistrer ta cession de dossard")(w, r)
+}
+
+func (h *Handler) UncedeDossard(w http.ResponseWriter, r *http.Request) {
+	h.dossardUnsignalHandler(dossardKindCession, "impossible d'annuler ta cession de dossard")(w, r)
 }

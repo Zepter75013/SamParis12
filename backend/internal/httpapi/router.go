@@ -67,6 +67,10 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/races/{id}", authService.RequireAuth(raceHandler.GetDetail))
 	mux.HandleFunc("POST /api/races/{id}/register", authService.RequireAuth(raceHandler.Register))
 	mux.HandleFunc("DELETE /api/races/{id}/register", authService.RequireAuth(raceHandler.Unregister))
+	mux.HandleFunc("POST /api/races/{id}/dossard/recherche", authService.RequireAuth(raceHandler.SeekDossard))
+	mux.HandleFunc("DELETE /api/races/{id}/dossard/recherche", authService.RequireAuth(raceHandler.UnseekDossard))
+	mux.HandleFunc("POST /api/races/{id}/dossard/cession", authService.RequireAuth(raceHandler.CedeDossard))
+	mux.HandleFunc("DELETE /api/races/{id}/dossard/cession", authService.RequireAuth(raceHandler.UncedeDossard))
 
 	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
 	mux.HandleFunc("POST /api/documents", authService.RequireAuth(documentHandler.Upload))
