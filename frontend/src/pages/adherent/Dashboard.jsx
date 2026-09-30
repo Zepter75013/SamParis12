@@ -1668,9 +1668,14 @@ function DocumentsPanel({ token, me }) {
                 {!isEditing ? (
                   <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                     {doc ? (
-                      <a href={doc.fileUrl} download target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
-                        Télécharger ↓
-                      </a>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
+                          Visualiser
+                        </a>
+                        <a href={doc.fileUrl} download target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
+                          Télécharger ↓
+                        </a>
+                      </div>
                     ) : <span />}
                     {canUpload && (
                       <button type="button" onClick={() => openSlotForm(slot, doc)} className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>
