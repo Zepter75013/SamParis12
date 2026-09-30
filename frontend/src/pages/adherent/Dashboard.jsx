@@ -1554,6 +1554,40 @@ function CoursesPanel({ token, me }) {
                 <button type="button" onClick={closeRace} className="link-button" style={{ fontSize: '0.8rem' }}>Fermer ✕</button>
               </div>
 
+              {detail.seekingDossard.length > 0 && (
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
+                    Recherchent un dossard ({detail.seekingDossard.length})
+                  </b>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                    {detail.seekingDossard.map((p) => (
+                      <div key={p.memberId} style={{ textAlign: 'center' }}>
+                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {detail.cedingDossard.length > 0 && (
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
+                    Cèdent un dossard ({detail.cedingDossard.length})
+                  </b>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
+                    {detail.cedingDossard.map((p) => (
+                      <div key={p.memberId} style={{ textAlign: 'center' }}>
+                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
+                        <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'grid', gap: '0.55rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', marginBottom: '1.2rem' }}>
                 {infoRow('Date', formatRaceDate(detail.race.date))}
                 {detail.race.lieu && infoRow('Lieu', detail.race.lieu)}
@@ -1631,40 +1665,6 @@ function CoursesPanel({ token, me }) {
                     </p>
                   )}
                 </>
-              )}
-
-              {detail.seekingDossard.length > 0 && (
-                <div style={{ marginTop: '1.5rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
-                  <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
-                    Recherchent un dossard ({detail.seekingDossard.length})
-                  </b>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
-                    {detail.seekingDossard.map((p) => (
-                      <div key={p.memberId} style={{ textAlign: 'center' }}>
-                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
-                        <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {detail.cedingDossard.length > 0 && (
-                <div style={{ marginTop: '1.5rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
-                  <b style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.8rem' }}>
-                    Cèdent un dossard ({detail.cedingDossard.length})
-                  </b>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
-                    {detail.cedingDossard.map((p) => (
-                      <div key={p.memberId} style={{ textAlign: 'center' }}>
-                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
-                        <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
-                        <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               )}
             </div>
           )}
