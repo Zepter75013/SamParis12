@@ -1580,6 +1580,7 @@ function DocumentsPanel({ token, me }) {
   const [slotFile, setSlotFile] = useState(null)
   const [slotUploading, setSlotUploading] = useState(false)
   const [slotMessage, setSlotMessage] = useState('')
+  const [previewDoc, setPreviewDoc] = useState(null)
 
   const canUpload = !!(me?.isBureau || me?.droitUploadDocuments)
 
@@ -1644,7 +1645,7 @@ function DocumentsPanel({ token, me }) {
       {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
 
       {!loading && !loadError && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', gap: '1.2rem' }}>
           {DOCUMENT_SLOTS.map((slot) => {
             const doc = docs.find((d) => d.categorie === slot.categorie)
             const isEditing = editingCategorie === slot.categorie
@@ -1666,19 +1667,19 @@ function DocumentsPanel({ token, me }) {
                 </div>
 
                 {!isEditing ? (
-                  <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap', overflowX: 'auto' }}>
                     {doc ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'nowrap' }}>
+                        <button type="button" onClick={() => setPreviewDoc(doc)} className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
                           Visualiser
-                        </a>
-                        <a href={doc.fileUrl} download target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none' }}>
+                        </button>
+                        <a href={doc.fileUrl} download target="_blank" rel="noreferrer" className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', textDecoration: 'none', whiteSpace: 'nowrap' }}>
                           Télécharger ↓
                         </a>
                       </div>
                     ) : <span />}
                     {canUpload && (
-                      <button type="button" onClick={() => openSlotForm(slot, doc)} className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>
+                      <button type="button" onClick={() => openSlotForm(slot, doc)} className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
                         {doc ? 'Remplacer' : 'Ajouter'} le document
                       </button>
                     )}
@@ -1704,6 +1705,20 @@ function DocumentsPanel({ token, me }) {
             )
           })}
         </div>
+      )}
+
+      {previewDoc && (
+        <AdminModal onClose={() => setPreviewDoc(null)} maxWidth={900}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+            <b style={{ fontSize: '1rem' }}>{previewDoc.titre}</b>
+            <button type="button" onClick={() => setPreviewDoc(null)} className="link-button" style={{ fontSize: '0.8rem' }}>Fermer ✕</button>
+          </div>
+          <iframe
+            src={previewDoc.fileUrl}
+            title={previewDoc.titre}
+            style={{ width: '100%', height: '75vh', border: '1px solid var(--line)', background: '#fff' }}
+          />
+        </AdminModal>
       )}
     </div>
   )
