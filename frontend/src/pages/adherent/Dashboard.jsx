@@ -1679,17 +1679,24 @@ function CoursesPanel({ token, me, members }) {
                       <div key={p.memberId} style={{ textAlign: 'center' }}>
                         <AvatarButton photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={56} onClick={() => setOpenMemberId(p.memberId)} />
                         <div style={{ fontSize: '0.78rem', marginTop: '0.4rem' }}>{p.prenom} {p.nom}</div>
+                        {showEmails && (
+                          <div style={{ fontSize: '0.68rem', color: 'var(--stone)', wordBreak: 'break-word' }}>{p.email}</div>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <button type="button" onClick={() => setShowEmails((v) => !v)} className="link-button" style={{ fontSize: '0.78rem' }}>
-                    {showEmails ? 'Masquer les emails' : 'Voir les emails des participants'}
-                  </button>
-                  {showEmails && (
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', marginTop: '0.5rem', wordBreak: 'break-word' }}>
-                      {detail.participants.map((p) => p.email).join(', ')}
-                    </p>
-                  )}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', alignItems: 'center' }}>
+                    <button type="button" onClick={() => setShowEmails((v) => !v)} className="link-button" style={{ fontSize: '0.78rem' }}>
+                      {showEmails ? 'Masquer les emails' : 'Voir les emails des participants'}
+                    </button>
+                    <a
+                      href={`mailto:${detail.participants.map((p) => p.email).join(',')}`}
+                      className="btn btn--ghost"
+                      style={{ padding: '0.45rem 0.9rem', fontSize: '0.72rem', textDecoration: 'none' }}
+                    >
+                      ✉️ Envoyer un email à tous les inscrits
+                    </a>
+                  </div>
                 </>
               )}
             </div>
