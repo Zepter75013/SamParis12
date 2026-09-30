@@ -182,6 +182,90 @@ function Avatar({ photoUrl, nom, size }) {
   )
 }
 
+// AvatarButton : même rendu que Avatar, mais cliquable pour ouvrir la fiche
+// détaillée de l'adhérent (comme dans le Trombinoscope).
+function AvatarButton({ photoUrl, nom, size, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', borderRadius: '50%' }}
+      aria-label={`Voir la fiche de ${nom}`}
+    >
+      <Avatar photoUrl={photoUrl} nom={nom} size={size} />
+    </button>
+  )
+}
+
+function MemberDetailModal({ member, onClose }) {
+  if (!member) return null
+  return (
+    <div
+      role="dialog" aria-modal="true"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: 'var(--surface)', border: '1px solid var(--line)', maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '2rem', position: 'relative', textAlign: 'center' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer"
+          style={{ position: 'absolute', top: '1rem', right: '1rem', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink)' }}
+        >
+          ✕
+        </button>
+
+        <div style={{ margin: '0 auto 1rem', display: 'flex', justifyContent: 'center' }}>
+          <Avatar photoUrl={member.photoUrl} nom={`${member.prenom} ${member.nom}`} size={84} />
+        </div>
+        <h3 style={{ fontSize: '1.5rem', textTransform: 'uppercase' }}>{member.prenom} {member.nom}</h3>
+        {member.role && <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{member.role}</span>}
+        {(member.groupe || member.statut) && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--stone)', textTransform: 'uppercase', padding: '0.15rem 0.5rem', background: 'var(--surface-2)' }}>{member.groupe} · {member.statut}</span>
+          </div>
+        )}
+
+        <div style={{ textAlign: 'left', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--line)' }}>
+          <span className="eyebrow">Je me présente</span>
+          <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>
+            {member.trombiBio || (member.groupe ? `Membre du groupe ${member.groupe}.` : 'Aucune présentation renseignée.')}
+          </p>
+        </div>
+
+        {(member.trombiHabite || member.trombiNaissance || member.trombiOrigine || member.trombiProfession || member.trombiEmployeur || member.trombiDistanceFavorite || member.trombiEmail || member.trombiTelephone) && (
+          <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)', display: 'grid', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
+            {member.trombiHabite && <p>🏠 J'habite {member.trombiHabite}</p>}
+            {member.trombiNaissance && <p>🎂 Né le {member.trombiNaissance}</p>}
+            {member.trombiOrigine && <p>📍 Originaire de {member.trombiOrigine}</p>}
+            {(member.trombiProfession || member.trombiEmployeur) && (
+              <p>💼 {[member.trombiProfession, member.trombiEmployeur].filter(Boolean).join(' — ')}</p>
+            )}
+            {member.trombiDistanceFavorite && <p>🏃 Distance favorite : {member.trombiDistanceFavorite}</p>}
+            {member.trombiEmail && <p>✉️ <a href={`mailto:${member.trombiEmail}`} style={{ color: 'var(--vermilion)' }}>{member.trombiEmail}</a></p>}
+            {member.trombiTelephone && <p>📞 {member.trombiTelephone}</p>}
+          </div>
+        )}
+
+        <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
+          <span className="eyebrow">Agenda</span>
+          <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>Aucune course à venir renseignée pour le moment.</p>
+        </div>
+
+        <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
+          <span className="eyebrow">Derniers résultats</span>
+          <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+            Fonctionnalité de démonstration — dans l'espace adhérent réel, cette section affiche l'historique des courses de l'adhérent (date, épreuve, temps, classement).
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
@@ -558,73 +642,13 @@ export default function Dashboard() {
             </div>
 
             {openMember && (
-              <div
-                role="dialog" aria-modal="true"
-                style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
-                onClick={() => setOpenMember(null)}
-              >
-                <div
-                  style={{ background: 'var(--surface)', border: '1px solid var(--line)', maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '2rem', position: 'relative', textAlign: 'center' }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenMember(null)}
-                    aria-label="Fermer"
-                    style={{ position: 'absolute', top: '1rem', right: '1rem', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink)' }}
-                  >
-                    ✕
-                  </button>
-
-                  <div style={{ margin: '0 auto 1rem', display: 'flex', justifyContent: 'center' }}>
-                    <Avatar photoUrl={openMember.photoUrl} nom={`${openMember.prenom} ${openMember.nom}`} size={84} />
-                  </div>
-                  <h3 style={{ fontSize: '1.5rem', textTransform: 'uppercase' }}>{openMember.prenom} {openMember.nom}</h3>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{openMember.role}</span>
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--stone)', textTransform: 'uppercase', padding: '0.15rem 0.5rem', background: 'var(--surface-2)' }}>{openMember.groupe} · {openMember.statut}</span>
-                  </div>
-
-                  <div style={{ textAlign: 'left', marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--line)' }}>
-                    <span className="eyebrow">Je me présente</span>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>
-                      {openMember.trombiBio || `Membre du groupe ${openMember.groupe}.`}
-                    </p>
-                  </div>
-
-                  {(openMember.trombiHabite || openMember.trombiNaissance || openMember.trombiOrigine || openMember.trombiProfession || openMember.trombiEmployeur || openMember.trombiDistanceFavorite || openMember.trombiEmail || openMember.trombiTelephone) && (
-                    <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)', display: 'grid', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
-                      {openMember.trombiHabite && <p>🏠 J'habite {openMember.trombiHabite}</p>}
-                      {openMember.trombiNaissance && <p>🎂 Né le {openMember.trombiNaissance}</p>}
-                      {openMember.trombiOrigine && <p>📍 Originaire de {openMember.trombiOrigine}</p>}
-                      {(openMember.trombiProfession || openMember.trombiEmployeur) && (
-                        <p>💼 {[openMember.trombiProfession, openMember.trombiEmployeur].filter(Boolean).join(' — ')}</p>
-                      )}
-                      {openMember.trombiDistanceFavorite && <p>🏃 Distance favorite : {openMember.trombiDistanceFavorite}</p>}
-                      {openMember.trombiEmail && <p>✉️ <a href={`mailto:${openMember.trombiEmail}`} style={{ color: 'var(--vermilion)' }}>{openMember.trombiEmail}</a></p>}
-                      {openMember.trombiTelephone && <p>📞 {openMember.trombiTelephone}</p>}
-                    </div>
-                  )}
-
-                  <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
-                    <span className="eyebrow">Agenda</span>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>Aucune course à venir renseignée pour le moment.</p>
-                  </div>
-
-                  <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
-                    <span className="eyebrow">Derniers résultats</span>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem', fontStyle: 'italic' }}>
-                      Fonctionnalité de démonstration — dans l'espace adhérent réel, cette section affiche l'historique des courses de l'adhérent (date, épreuve, temps, classement).
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <MemberDetailModal member={openMember} onClose={() => setOpenMember(null)} />
             )}
           </div>
         )}
 
         {activeTab === 'courses' && (
-          <CoursesPanel token={token} me={me} />
+          <CoursesPanel token={token} me={me} members={members} />
         )}
 
         {activeTab === 'resultats' && (
@@ -1334,7 +1358,9 @@ function formatRaceDate(iso) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 }
 
-function CoursesPanel({ token, me }) {
+function CoursesPanel({ token, me, members }) {
+  const [openMemberId, setOpenMemberId] = useState(null)
+  const openMember = members?.find((m) => m.id === openMemberId) || null
   const [races, setRaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -1562,7 +1588,7 @@ function CoursesPanel({ token, me }) {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
                     {detail.seekingDossard.map((p) => (
                       <div key={p.memberId} style={{ textAlign: 'center' }}>
-                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
+                        <AvatarButton photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} onClick={() => setOpenMemberId(p.memberId)} />
                         <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
                         <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
                       </div>
@@ -1579,7 +1605,7 @@ function CoursesPanel({ token, me }) {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
                     {detail.cedingDossard.map((p) => (
                       <div key={p.memberId} style={{ textAlign: 'center' }}>
-                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} />
+                        <AvatarButton photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={48} onClick={() => setOpenMemberId(p.memberId)} />
                         <div style={{ fontSize: '0.75rem', marginTop: '0.3rem' }}>{p.prenom} {p.nom}</div>
                         <div style={{ fontSize: '0.68rem', color: 'var(--stone)' }}>{p.email}</div>
                       </div>
@@ -1651,7 +1677,7 @@ function CoursesPanel({ token, me }) {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem', marginBottom: '0.8rem' }}>
                     {detail.participants.map((p) => (
                       <div key={p.memberId} style={{ textAlign: 'center' }}>
-                        <Avatar photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={56} />
+                        <AvatarButton photoUrl={p.photoUrl} nom={`${p.prenom} ${p.nom}`} size={56} onClick={() => setOpenMemberId(p.memberId)} />
                         <div style={{ fontSize: '0.78rem', marginTop: '0.4rem' }}>{p.prenom} {p.nom}</div>
                       </div>
                     ))}
@@ -1669,6 +1695,10 @@ function CoursesPanel({ token, me }) {
             </div>
           )}
         </AdminModal>
+      )}
+
+      {openMember && (
+        <MemberDetailModal member={openMember} onClose={() => setOpenMemberId(null)} />
       )}
     </div>
   )
