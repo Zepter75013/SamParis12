@@ -380,6 +380,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
 		return
 	}
+	ceding, err := h.repo.DossardIsSignaled(id, memberID, dossardKindCession)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	if ceding {
+		httpx.Error(w, http.StatusConflict, "annule d'abord ta cession de dossard avant de participer à nouveau")
+		return
+	}
 	if err := h.repo.Register(id, memberID); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible de s'inscrire à la course")
 		return
@@ -449,6 +458,15 @@ func (h *Handler) SeekDossard(w http.ResponseWriter, r *http.Request) {
 	}
 	if registered {
 		httpx.Error(w, http.StatusConflict, "tu participes déjà à cette course, inutile de chercher un dossard")
+		return
+	}
+	ceding, err := h.repo.DossardIsSignaled(id, memberID, dossardKindCession)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	if ceding {
+		httpx.Error(w, http.StatusConflict, "annule d'abord ta cession de dossard avant d'en chercher un autre")
 		return
 	}
 	if err := h.repo.DossardSignal(id, memberID, dossardKindRecherche); err != nil {

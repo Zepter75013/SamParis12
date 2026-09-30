@@ -1671,17 +1671,25 @@ function CoursesPanel({ token, me, members }) {
                 {infoRow('Inscrits', detail.race.inscritsCount)}
               </div>
 
+              {detail.isCedingByMe && (
+                <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)', marginBottom: '1rem' }}>
+                  Tu as déclaré céder ton dossard sur cette course : annule cette déclaration ci-dessous si tu veux à nouveau participer ou chercher un dossard.
+                </p>
+              )}
+
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1.5rem' }}>
-                <button
-                  type="button"
-                  onClick={handleToggleRegister}
-                  disabled={registering}
-                  className={`btn ${detail.race.isRegisteredByMe ? 'btn--ghost' : 'btn--solid'}`}
-                  style={{ justifyContent: 'center', flex: '1 1 160px' }}
-                >
-                  {registering ? 'Enregistrement…' : detail.race.isRegisteredByMe ? "Je ne participe plus" : "J'y participe"}
-                </button>
-                {!detail.race.isRegisteredByMe && (
+                {!detail.isCedingByMe && (
+                  <button
+                    type="button"
+                    onClick={handleToggleRegister}
+                    disabled={registering}
+                    className={`btn ${detail.race.isRegisteredByMe ? 'btn--ghost' : 'btn--solid'}`}
+                    style={{ justifyContent: 'center', flex: '1 1 160px' }}
+                  >
+                    {registering ? 'Enregistrement…' : detail.race.isRegisteredByMe ? "Je ne participe plus" : "J'y participe"}
+                  </button>
+                )}
+                {!detail.race.isRegisteredByMe && !detail.isCedingByMe && (
                   <button
                     type="button"
                     onClick={handleToggleSeekDossard}
