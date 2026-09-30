@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
+import { getTheme, setTheme as applyThemeChoice } from '../../lib/theme.js'
 import PasswordField from '../../components/PasswordField.jsx'
 
 const TABS = [
@@ -13,6 +14,7 @@ const TABS = [
   { id: 'documents', label: 'Plans & Documents' },
   { id: 'vieduclub', label: 'Vie du Club' },
   { id: 'admin', label: 'Admin Club', badge: 'Bureau' },
+  { id: 'droitsBureau', label: 'Fonctionnalités', badge: 'Bureau' },
 ]
 
 // Reprend les rubriques réelles de "Le Club > Vie du Club" et "Préparation".
@@ -418,7 +420,7 @@ export default function Dashboard() {
 
         <div className="shell">
           <nav className="adherent-tabs-nav">
-            {TABS.filter((tab) => tab.id !== 'admin' || me?.isBureau).map((tab) => (
+            {TABS.filter((tab) => (tab.id !== 'admin' && tab.id !== 'droitsBureau') || me?.isBureau).map((tab) => (
               <button
                 key={tab.id}
                 className={`adh-tab-btn${activeTab === tab.id ? ' active' : ''}`}
@@ -920,6 +922,13 @@ export default function Dashboard() {
           </div>
         )}
 
+        {activeTab === 'droitsBureau' && !me?.isBureau && (
+          <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux membres du bureau du club.</p>
+        )}
+        {activeTab === 'droitsBureau' && me?.isBureau && (
+          <BureauRightsPanel token={token} />
+        )}
+
         {activeTab === 'profil' && (
           <ProfilPanel token={token} me={me} onMeUpdate={handleMeUpdate} onPasswordChanged={handlePasswordChanged} />
         )}
@@ -973,6 +982,13 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
 
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoMessage, setPhotoMessage] = useState('')
+
+  const [theme, setThemeState] = useState(getTheme)
+
+  function handleThemeChange(value) {
+    applyThemeChoice(value)
+    setThemeState(value)
+  }
 
   const [trombiForm, setTrombiForm] = useState(null)
   const [savingTrombi, setSavingTrombi] = useState(false)
@@ -1146,6 +1162,31 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
         </div>
       </div>
 
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', marginBottom: '1.5rem' }}>
+        <span className="eyebrow" style={{ fontWeight: 'bold' }}>Préférences</span>
+        <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1rem' }}>
+          Thème de l'application sur cet appareil.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem' }}>
+          {[
+            { value: 'dark', label: 'Sombre', hint: 'Fond sombre, comme aujourd’hui.' },
+            { value: 'light', label: 'Clair', hint: 'Fond clair pour un usage de jour.' },
+            { value: 'system', label: 'Système', hint: 'Suit le réglage de ton appareil.' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => handleThemeChange(opt.value)}
+              className={`btn ${theme === opt.value ? 'btn--solid' : 'btn--ghost'}`}
+              style={{ flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', padding: '0.9rem 1rem', gap: '0.2rem', height: 'auto' }}
+            >
+              <b style={{ fontSize: '0.85rem' }}>{opt.label}</b>
+              <span style={{ fontSize: '0.72rem', fontWeight: 'normal', opacity: 0.85 }}>{opt.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
           <span className="eyebrow" style={{ fontWeight: 'bold' }}>Informations confidentielles</span>
@@ -1286,8 +1327,6 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
             {infoRow('Numéro de licence', me.numeroLicence)}
             {infoRow('Licencié(e) par', me.licenciePar)}
             {infoRow('Fonction au bureau', me.fonctionBureau)}
-            {infoRow("Droit d'administrer les événements", me.droitAdminEvenements ? 'Oui' : 'Non')}
-            {infoRow("Droit d'ajouter des documents", me.droitUploadDocuments ? 'Oui' : 'Non')}
             {infoRow('Origine du contact', me.origineContact)}
             {infoRow('Année de première adhésion', me.anneePremiereAdhesion)}
             {infoRow('Date de première adhésion', me.datePremiereAdhesion)}
@@ -1886,6 +1925,23 @@ function adminFormFromMember(m) {
   }
 }
 
+// Convertit un formulaire (issu de adminFormFromMember, éventuellement modifié)
+// vers le format attendu par l'API (chaînes vides -> null pour les champs nullable).
+function toAdminUpdatePayload(form) {
+  return {
+    ...form,
+    dateNaissance: form.dateNaissance === '' ? null : form.dateNaissance,
+    vmaDate: form.vmaDate === '' ? null : form.vmaDate,
+    vma: form.vma === '' ? null : Number(form.vma),
+    anneePremiereAdhesion: form.anneePremiereAdhesion === '' ? null : Number(form.anneePremiereAdhesion),
+    datePremiereAdhesion: form.datePremiereAdhesion === '' ? null : form.datePremiereAdhesion,
+    dateDernierCertificat: form.dateDernierCertificat === '' ? null : form.dateDernierCertificat,
+    anneeDerniereAdhesion: form.anneeDerniereAdhesion === '' ? null : Number(form.anneeDerniereAdhesion),
+    montantCotisation: form.montantCotisation === '' ? null : Number(form.montantCotisation),
+    datePaiementCotisation: form.datePaiementCotisation === '' ? null : form.datePaiementCotisation,
+  }
+}
+
 const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', isBureau: false }
 
 function AdminModal({ onClose, maxWidth = 640, children }) {
@@ -1907,6 +1963,95 @@ function AdminModal({ onClose, maxWidth = 640, children }) {
 function sortValue(m, key) {
   if (key === 'bureau') return m.isBureau ? 1 : 0
   return (m[key] || '').toString().toLowerCase()
+}
+
+const BUREAU_FEATURES = [
+  { field: 'droitAdminEvenements', label: 'Administrer les événements' },
+  { field: 'droitUploadDocuments', label: 'Ajouter des documents' },
+]
+
+function BureauRightsPanel({ token }) {
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [savingKey, setSavingKey] = useState(null)
+
+  useEffect(() => {
+    setLoading(true)
+    api.adminListMembers(token)
+      .then((data) => setMembers(data.filter((m) => m.isBureau)))
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false))
+  }, [token])
+
+  async function toggleRight(member, field) {
+    const key = `${member.id}-${field}`
+    setSavingKey(key)
+    try {
+      const form = adminFormFromMember(member)
+      form[field] = !form[field]
+      const payload = toAdminUpdatePayload(form)
+      const updated = await api.adminUpdateMember(token, member.id, payload)
+      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
+    } catch (err) {
+      setLoadError(err.message)
+    } finally {
+      setSavingKey(null)
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <span className="eyebrow">Réservé au bureau du club</span>
+        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Fonctionnalités</h2>
+        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>
+          Donne à certains membres du bureau des droits supplémentaires sur des fonctionnalités précises du site.
+        </p>
+      </div>
+
+      {loading && <p style={{ color: 'var(--stone)' }}>Chargement…</p>}
+      {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+
+      {!loading && !loadError && (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
+            <thead>
+              <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.68rem' }}>
+                <th style={{ padding: '0.8rem 1rem' }}>Membre du bureau</th>
+                {BUREAU_FEATURES.map((f) => (
+                  <th key={f.field} style={{ padding: '0.8rem 1rem', textAlign: 'center' }}>{f.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m) => (
+                <tr key={m.id} style={{ borderBottom: '1px solid var(--line)' }}>
+                  <td style={{ padding: '0.8rem 1rem' }}>
+                    <b>{m.prenom} {m.nom}</b>
+                    <div style={{ color: 'var(--ink-soft)', fontSize: '0.72rem' }}>{m.email}</div>
+                  </td>
+                  {BUREAU_FEATURES.map((f) => (
+                    <td key={f.field} style={{ padding: '0.8rem 1rem', textAlign: 'center' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!m[f.field]}
+                        disabled={savingKey === `${m.id}-${f.field}`}
+                        onChange={() => toggleRight(m, f.field)}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              {members.length === 0 && (
+                <tr><td colSpan={1 + BUREAU_FEATURES.length} style={{ padding: '1rem', color: 'var(--stone)' }}>Aucun membre du bureau trouvé.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function AdminMembersPanel({ token, me, onMembersChanged }) {
@@ -2055,18 +2200,7 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
     setSaving(true)
     setSaveMessage('')
     try {
-      const payload = {
-        ...form,
-        dateNaissance: form.dateNaissance === '' ? null : form.dateNaissance,
-        vmaDate: form.vmaDate === '' ? null : form.vmaDate,
-        vma: form.vma === '' ? null : Number(form.vma),
-        anneePremiereAdhesion: form.anneePremiereAdhesion === '' ? null : Number(form.anneePremiereAdhesion),
-        datePremiereAdhesion: form.datePremiereAdhesion === '' ? null : form.datePremiereAdhesion,
-        dateDernierCertificat: form.dateDernierCertificat === '' ? null : form.dateDernierCertificat,
-        anneeDerniereAdhesion: form.anneeDerniereAdhesion === '' ? null : Number(form.anneeDerniereAdhesion),
-        montantCotisation: form.montantCotisation === '' ? null : Number(form.montantCotisation),
-        datePaiementCotisation: form.datePaiementCotisation === '' ? null : form.datePaiementCotisation,
-      }
+      const payload = toAdminUpdatePayload(form)
       const updated = await api.adminUpdateMember(token, selectedId, payload)
       setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
       setSaveMessage('Modifications enregistrées.')
@@ -2291,14 +2425,6 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                 <div>{fieldLabel('Licencié(e) par')}<input type="text" style={inputStyle} value={form.licenciePar} onChange={(e) => updateField('licenciePar', e.target.value)} /></div>
               </div>
               <div>{fieldLabel('Fonction au bureau')}<input type="text" style={inputStyle} value={form.fonctionBureau} onChange={(e) => updateField('fonctionBureau', e.target.value)} /></div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                <input type="checkbox" checked={form.droitAdminEvenements} onChange={(e) => updateField('droitAdminEvenements', e.target.checked)} />
-                Droit d'administrer les événements
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                <input type="checkbox" checked={form.droitUploadDocuments} onChange={(e) => updateField('droitUploadDocuments', e.target.checked)} />
-                Droit d'ajouter des documents (Plans &amp; Documents)
-              </label>
               <div>{fieldLabel('Origine du contact')}<input type="text" style={inputStyle} value={form.origineContact} onChange={(e) => updateField('origineContact', e.target.value)} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
                 <div>{fieldLabel('Année de première adhésion')}<input type="number" style={inputStyle} value={form.anneePremiereAdhesion} onChange={(e) => updateField('anneePremiereAdhesion', e.target.value)} /></div>
