@@ -1644,7 +1644,7 @@ function DocumentsPanel({ token, me }) {
       {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
 
       {!loading && !loadError && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.2rem' }}>
+        <div className="doc-slots-grid" style={{ width: '100vw', position: 'relative', left: '50%', marginLeft: '-50vw', paddingInline: 'var(--edge)', boxSizing: 'border-box', display: 'grid', gap: '1.2rem' }}>
           {DOCUMENT_SLOTS.map((slot) => {
             const doc = docs.find((d) => d.categorie === slot.categorie)
             const isEditing = editingCategorie === slot.categorie

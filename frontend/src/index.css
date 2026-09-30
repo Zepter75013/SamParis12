@@ -558,7 +558,11 @@ footer {
 .foot .sep { flex: 1; }
 .foot .partner { display: flex; align-items: center; gap: 0.6rem; }
 
+.doc-slots-grid { grid-template-columns: repeat(2, 1fr); }
+
 @media (max-width: 860px) {
+  .doc-slots-grid { grid-template-columns: 1fr; }
+
   .nav-links, .nav-actions { display: none; }
   .nav-toggle {
     position: relative;
