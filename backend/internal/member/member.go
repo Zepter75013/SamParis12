@@ -1013,6 +1013,52 @@ func (h *Handler) AdminSendWelcomeEmail(w http.ResponseWriter, r *http.Request) 
 	httpx.JSON(w, http.StatusOK, updated)
 }
 
+// AdminGenerateCode crée un code de connexion pour un adhérent (même
+// mécanisme que "Mot de passe oublié ?") et le renvoie en clair au bureau,
+// qui peut alors le communiquer par un autre moyen (téléphone, SMS, en
+// personne) si l'adhérent ne reçoit pas l'email — par ex. en cas de
+// filtrage anti-spam chez son fournisseur. L'envoi par email reste tenté en
+// parallèle (best-effort), mais son échec n'empêche pas de renvoyer le code.
+func (h *Handler) AdminGenerateCode(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	m, err := h.repo.GetByID(id)
+	if err == sql.ErrNoRows {
+		httpx.Error(w, http.StatusNotFound, "adhérent introuvable")
+		return
+	}
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
+	code := generateCode()
+	codeHash, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	_ = h.repo.InvalidateResetCodes(m.ID)
+	expiresAt := time.Now().Add(15 * time.Minute)
+	if err := h.repo.CreateResetCode(m.ID, string(codeHash), expiresAt); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible de générer le code")
+		return
+	}
+	if sendErr := h.mailer.SendCode(m.Email, code); sendErr != nil {
+		log.Printf("mailer: échec envoi code (généré par le bureau) à %s : %v", m.Email, sendErr)
+	} else {
+		log.Printf("mailer: code (généré par le bureau) envoyé à %s (relais SMTP OK)", m.Email)
+	}
+
+	httpx.JSON(w, http.StatusOK, map[string]any{
+		"code":      code,
+		"expiresAt": expiresAt.Format("2006-01-02 15:04:05"),
+	})
+}
+
 func (h *Handler) AdminGetMember(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {

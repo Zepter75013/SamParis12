@@ -2561,6 +2561,8 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
   const [createdMember, setCreatedMember] = useState(null)
   const [sendingWelcomeId, setSendingWelcomeId] = useState(null)
   const [actionError, setActionError] = useState('')
+  const [generatingCodeId, setGeneratingCodeId] = useState(null)
+  const [generatedCode, setGeneratedCode] = useState(null) // { member, code, expiresAt }
 
   useEffect(() => {
     let cancelled = false
@@ -2653,6 +2655,19 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
     }
   }
 
+  async function handleGenerateCode(targetMember) {
+    setGeneratingCodeId(targetMember.id)
+    setActionError('')
+    try {
+      const { code, expiresAt } = await api.adminGenerateCode(token, targetMember.id)
+      setGeneratedCode({ member: targetMember, code, expiresAt })
+    } catch (err) {
+      setActionError(err.message)
+    } finally {
+      setGeneratingCodeId(null)
+    }
+  }
+
   function updateNewField(key, value) {
     setNewForm((f) => ({ ...f, [key]: value }))
   }
@@ -2728,6 +2743,7 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
 
       {loading && <p style={{ color: 'var(--stone)' }}>Chargement des adhérents…</p>}
       {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+      {actionError && !createdMember && <p style={{ color: 'var(--vermilion)' }}>{actionError}</p>}
 
       {!loading && !loadError && (
         // Sort de la largeur de .shell (max-width: 1180px) pour profiter de
@@ -2800,6 +2816,17 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                           </button>
                         </>
                       )}
+                      <div>
+                        <button
+                          type="button"
+                          disabled={generatingCodeId === m.id}
+                          onClick={() => handleGenerateCode(m)}
+                          className="link-button"
+                          style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}
+                        >
+                          {generatingCodeId === m.id ? 'Génération…' : "Générer un code d'accès"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -2882,6 +2909,29 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                 {createdMember.welcomeEmailSentAt ? 'Fermer' : 'Plus tard'}
               </button>
             </div>
+          </div>
+        </AdminModal>
+      )}
+
+      {generatedCode && (
+        <AdminModal onClose={() => setGeneratedCode(null)} maxWidth={480}>
+          <div style={{ display: 'grid', gap: '0.9rem' }}>
+            <b style={{ fontSize: '1.05rem' }}>Code de connexion généré</b>
+            <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
+              Un envoi par email a été tenté vers {generatedCode.member.email}, mais si l'adhérent ne le reçoit pas
+              (filtrage anti-spam par ex.), communique-lui ce code par un autre moyen (téléphone, SMS, en personne) :
+            </p>
+            <div style={{ textAlign: 'center', padding: '1rem', background: 'var(--surface-2)', border: '1px solid var(--line)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '2rem', fontWeight: 'bold', letterSpacing: '0.2em' }}>{generatedCode.code}</span>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>
+              Valable jusqu'à {formatDateTime(generatedCode.expiresAt)}. L'adhérent doit se rendre sur la page de connexion,
+              cliquer sur « J'ai déjà un code (communiqué par le bureau) », puis saisir ce code pour définir son mot de passe —
+              <b> surtout pas « Mot de passe oublié ? »</b>, qui générerait un nouveau code et invaliderait celui-ci.
+            </p>
+            <button type="button" onClick={() => setGeneratedCode(null)} className="btn btn--solid" style={{ justifyContent: 'center' }}>
+              Fermer
+            </button>
           </div>
         </AdminModal>
       )}

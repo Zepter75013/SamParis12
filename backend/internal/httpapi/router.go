@@ -62,6 +62,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("PUT /api/admin/members/{id}/email", authService.RequireBureau(memberHandler.AdminUpdateEmail))
 	mux.HandleFunc("DELETE /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminDeleteMember))
 	mux.HandleFunc("POST /api/admin/members/{id}/send-welcome-email", authService.RequireBureau(memberHandler.AdminSendWelcomeEmail))
+	mux.HandleFunc("POST /api/admin/members/{id}/generate-code", authService.RequireBureau(memberHandler.AdminGenerateCode))
 
 	mux.HandleFunc("GET /api/races", authService.RequireAuth(raceHandler.List))
 	mux.HandleFunc("POST /api/races", authService.RequireAuth(raceHandler.Create))

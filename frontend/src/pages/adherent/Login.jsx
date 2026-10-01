@@ -140,6 +140,14 @@ export default function Login() {
               <button type="button" onClick={handleForgotPassword} className="link-button" style={{ justifySelf: 'center' }}>
                 Mot de passe oublié ?
               </button>
+              <button
+                type="button"
+                onClick={() => { setError(''); setInfo(''); setStep('code') }}
+                className="link-button"
+                style={{ justifySelf: 'center', fontSize: '0.7rem', color: 'var(--stone)' }}
+              >
+                J'ai déjà un code (communiqué par le bureau)
+              </button>
             </form>
           )}
 

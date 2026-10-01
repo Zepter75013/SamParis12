@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.4.0'
+export const APP_VERSION = '1.5.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.5.0',
+    date: '1er octobre 2026',
+    notes: "Gestion des adhérents : bouton « Générer un code d'accès », qui crée un code de connexion et l'affiche directement au bureau (en plus d'une tentative d'envoi par email) — utile quand l'adhérent ne reçoit ni l'email de bienvenue ni le code (filtrage anti-spam chez son fournisseur). Sur la page de connexion, un lien « J'ai déjà un code » permet de le saisir sans redemander un nouveau code par email.",
+  },
   {
     version: '1.4.0',
     date: '1er octobre 2026',
