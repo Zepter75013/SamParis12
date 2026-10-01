@@ -286,6 +286,7 @@ export default function Dashboard() {
   const [token, setAuthToken] = useState(() => getToken())
   const [me, setMe] = useState(null)
   const [members, setMembers] = useState([])
+  const [myUpcomingRaces, setMyUpcomingRaces] = useState([])
 
   useEffect(() => {
     if (!token) {
@@ -306,6 +307,15 @@ export default function Dashboard() {
       })
     return () => { cancelled = true }
   }, [token, navigate])
+
+  useEffect(() => {
+    if (!token || !me?.id) return
+    let cancelled = false
+    api.getMemberUpcomingRaces(token, me.id)
+      .then((data) => { if (!cancelled) setMyUpcomingRaces(data) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [token, me?.id])
 
   function handleLogout() {
     clearToken()
@@ -506,19 +516,35 @@ export default function Dashboard() {
               </div>
 
               <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
-                <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>Prochaine compétition ciblée</span>
-                <h3 style={{ fontSize: '1.4rem', textTransform: 'uppercase', marginTop: '0.3rem' }}>Semi-Marathon de Boulogne-Billancourt</h3>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', margin: '0.8rem 0 0', lineHeight: 1.6 }}>
-                  Date : <strong>Dimanche 15 Novembre 2026</strong><br />
-                  38 coureurs du SAM Paris 12 déjà inscrits !<br />
-                  Covoiturage et point de rassemblement club prévus sur place.
-                </p>
-                <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
-                  <span style={{ color: 'var(--stone)' }}>Tarif préférentiel négocié</span>
-                  <button onClick={() => setActiveTab('courses')} className="link-button" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>
-                    Voir la liste des inscrits →
-                  </button>
-                </div>
+                <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>Ma prochaine course</span>
+                {myUpcomingRaces.length === 0 ? (
+                  <>
+                    <h3 style={{ fontSize: '1.4rem', textTransform: 'uppercase', marginTop: '0.3rem' }}>Aucune course à venir</h3>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', margin: '0.8rem 0 0', lineHeight: 1.6 }}>
+                      Inscris-toi à une course depuis l'onglet Nos Courses pour la retrouver ici.
+                    </p>
+                    <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+                      <button onClick={() => setActiveTab('courses')} className="link-button" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>
+                        Voir Nos Courses →
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 style={{ fontSize: '1.4rem', textTransform: 'uppercase', marginTop: '0.3rem' }}>{myUpcomingRaces[0].titre}</h3>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', margin: '0.8rem 0 0', lineHeight: 1.6 }}>
+                      Date : <strong>{formatRaceDate(myUpcomingRaces[0].date)}</strong><br />
+                      {myUpcomingRaces[0].lieu && <>Lieu : <strong>{myUpcomingRaces[0].lieu}</strong><br /></>}
+                      {myUpcomingRaces[0].distanceKm > 0 && <>Distance : <strong>{myUpcomingRaces[0].distanceKm} km</strong><br /></>}
+                      {myUpcomingRaces[0].inscritsCount} adhérent{myUpcomingRaces[0].inscritsCount > 1 ? 's' : ''} du SAM Paris 12 inscrit{myUpcomingRaces[0].inscritsCount > 1 ? 's' : ''} !
+                    </p>
+                    <div style={{ marginTop: '1.2rem', paddingTop: '0.8rem', borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end', fontFamily: 'var(--font-mono)', fontSize: '0.72rem' }}>
+                      <button onClick={() => setActiveTab('courses')} className="link-button" style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>
+                        Voir la liste des inscrits →
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.5.2'
+export const APP_VERSION = '1.6.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.6.0',
+    date: '1er octobre 2026',
+    notes: "Tableau de bord : la carte « Ma prochaine course » affiche désormais la vraie prochaine course à laquelle l'adhérent est inscrit (date, lieu, distance, nombre d'inscrits), à la place du contenu de démonstration fixe.",
+  },
   {
     version: '1.5.2',
     date: '1er octobre 2026',
