@@ -11,6 +11,7 @@ const TABS = [
   { id: 'trombi', label: 'Trombinoscope' },
   { id: 'courses', label: 'Nos Courses' },
   { id: 'resultats', label: 'Résultats' },
+  { id: 'records', label: 'Records du Club' },
   { id: 'reseaute', label: 'SAM Réseaute' },
   { id: 'documents', label: 'Plans & Documents' },
   { id: 'vieduclub', label: 'Vie du Club' },
@@ -687,6 +688,10 @@ export default function Dashboard() {
 
         {activeTab === 'resultats' && (
           <ResultatsPanel token={token} me={me} members={members} />
+        )}
+
+        {activeTab === 'records' && (
+          <RecordsPanel token={token} me={me} members={members} />
         )}
 
         {activeTab === 'reseaute' && (
@@ -2242,6 +2247,76 @@ function ResultatsPanel({ token, me, members }) {
 
       {openMember && (
         <MemberRaceCardModal member={openMember} token={token} onClose={() => setOpenMemberId(null)} />
+      )}
+    </div>
+  )
+}
+
+// Vues disponibles pour Records du Club — reprend les rubriques du vrai site
+// (reportage.php > Records du Club). Les données ne sont pas encore
+// importées : cette structure est prête à être alimentée.
+const RECORD_VIEWS = [
+  { id: 'feminin', label: 'Féminin' },
+  { id: 'masculin', label: 'Masculin' },
+  { id: 'type', label: 'Par type de course' },
+  { id: 'categorie', label: 'Par catégorie' },
+  { id: 'hitparade', label: 'Hit-parade' },
+  { id: 'autres', label: 'Autres records' },
+]
+
+function RecordsPanel() {
+  const [view, setView] = useState('feminin')
+  // TODO : brancher sur de vraies données une fois importées (voir Résultats
+  // pour le même type d'import depuis le site réel).
+  const records = []
+  const filtered = records.filter((r) => {
+    if (view === 'feminin') return r.genre === 'femme'
+    if (view === 'masculin') return r.genre === 'homme'
+    return true
+  })
+
+  return (
+    <div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <span className="eyebrow">Performances historiques</span>
+        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Records du Club</h2>
+        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Meilleures performances réalisées par les adhérents du SAM Paris 12 sur chaque épreuve.</p>
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        {RECORD_VIEWS.map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            onClick={() => setView(v.id)}
+            className={`btn ${view === v.id ? 'btn--solid' : 'btn--ghost'}`}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.75rem' }}
+          >
+            {v.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => window.alert("Aucune donnée à exporter pour le moment.")}
+          className="btn btn--ghost"
+          style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', marginLeft: 'auto' }}
+        >
+          Télécharger Excel
+        </button>
+      </div>
+
+      {filtered.length === 0 ? (
+        <p style={{ color: 'var(--stone)' }}>Les records du club n'ont pas encore été importés sur le nouveau site.</p>
+      ) : (
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {filtered.map((r) => (
+            <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.1rem 1.3rem' }}>
+              <b>{r.epreuve}</b>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{r.performance}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>{r.detenteurNom}{r.date ? ` · ${r.date}` : ''}</div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )

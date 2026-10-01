@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.6.0'
+export const APP_VERSION = '1.6.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.6.1',
+    date: '1er octobre 2026',
+    notes: "Nouvel onglet « Records du Club » à côté de Résultats, avec les mêmes rubriques que le vrai site (Féminin, Masculin, Par type de course, Par catégorie, Hit-parade, Autres records, Télécharger Excel). Structure prête, en attente de l'import des données réelles.",
+  },
   {
     version: '1.6.0',
     date: '1er octobre 2026',
