@@ -52,6 +52,12 @@ type Member struct {
 	PhotoURL string `json:"photoUrl"`
 	IsBureau bool   `json:"isBureau"`
 
+	// Suivi de l'email de bienvenue envoyé par le bureau (nullable, date du
+	// dernier envoi) et de l'activation du compte par l'adhérent lui-même
+	// (nullable, première définition de mot de passe).
+	WelcomeEmailSentAt *string `json:"welcomeEmailSentAt"`
+	ActivatedAt        *string `json:"activatedAt"`
+
 	// Informations visibles des autres adhérents (trombinoscope) — distinctes
 	// des informations confidentielles ci-dessous, choisies et éditées par
 	// l'adhérent lui-même pour se présenter au reste du club.
@@ -79,21 +85,21 @@ type Member struct {
 	VMA               *float64 `json:"vma"`
 	VMADate           *string  `json:"vmaDate"`
 
-	NumeroLicence         string   `json:"numeroLicence"`
-	LicenciePar           string   `json:"licenciePar"`
-	FonctionBureau        string   `json:"fonctionBureau"`
-	DroitAdminEvenements  bool     `json:"droitAdminEvenements"`
-	DroitUploadDocuments  bool     `json:"droitUploadDocuments"`
-	OrigineContact        string   `json:"origineContact"`
-	AnneePremiereAdhesion *int     `json:"anneePremiereAdhesion"`
-	DatePremiereAdhesion  *string  `json:"datePremiereAdhesion"`
-	DateDernierCertificat *string  `json:"dateDernierCertificat"`
-	AnneeDerniereAdhesion *int     `json:"anneeDerniereAdhesion"`
-	ActiviteSaison        string   `json:"activiteSaison"`
-	LicenceFFAType        string   `json:"licenceFfaType"`
-	MontantCotisation     *float64 `json:"montantCotisation"`
-	DatePaiementCotisation *string `json:"datePaiementCotisation"`
-	ModePaiement          string  `json:"modePaiement"`
+	NumeroLicence          string   `json:"numeroLicence"`
+	LicenciePar            string   `json:"licenciePar"`
+	FonctionBureau         string   `json:"fonctionBureau"`
+	DroitAdminEvenements   bool     `json:"droitAdminEvenements"`
+	DroitUploadDocuments   bool     `json:"droitUploadDocuments"`
+	OrigineContact         string   `json:"origineContact"`
+	AnneePremiereAdhesion  *int     `json:"anneePremiereAdhesion"`
+	DatePremiereAdhesion   *string  `json:"datePremiereAdhesion"`
+	DateDernierCertificat  *string  `json:"dateDernierCertificat"`
+	AnneeDerniereAdhesion  *int     `json:"anneeDerniereAdhesion"`
+	ActiviteSaison         string   `json:"activiteSaison"`
+	LicenceFFAType         string   `json:"licenceFfaType"`
+	MontantCotisation      *float64 `json:"montantCotisation"`
+	DatePaiementCotisation *string  `json:"datePaiementCotisation"`
+	ModePaiement           string   `json:"modePaiement"`
 }
 
 // PublicMember est la vue trombinoscope : les informations que l'adhérent a
@@ -221,6 +227,7 @@ func NewRepository(db *sql.DB) *Repository {
 // scannable dans un **string).
 const memberColumns = `
 	id, email, prenom, nom, role, groupe, statut, photo_path, is_bureau,
+	DATE_FORMAT(welcome_email_sent_at, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(activated_at, '%Y-%m-%d %H:%i:%s'),
 	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
 	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio,
 	DATE_FORMAT(date_naissance, '%Y-%m-%d'), lieu_naissance, adresse, code_postal, ville,
@@ -244,11 +251,13 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 	var m Member
 	var (
 		dateNaissance, vmaDate, datePremiereAdhesion, dateDernierCertificat, datePaiementCotisation sql.NullString
-		vma, montantCotisation                                                                       sql.NullFloat64
-		anneePremiereAdhesion, anneeDerniereAdhesion                                                  sql.NullInt64
+		welcomeEmailSentAt, activatedAt                                                             sql.NullString
+		vma, montantCotisation                                                                      sql.NullFloat64
+		anneePremiereAdhesion, anneeDerniereAdhesion                                                sql.NullInt64
 	)
 	err := scan(
 		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL, &m.IsBureau,
+		&welcomeEmailSentAt, &activatedAt,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
 		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
 		&dateNaissance, &m.LieuNaissance, &m.Adresse, &m.CodePostal, &m.Ville,
@@ -262,6 +271,8 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 		return nil, err
 	}
 
+	m.WelcomeEmailSentAt = nullStringPtr(welcomeEmailSentAt)
+	m.ActivatedAt = nullStringPtr(activatedAt)
 	m.DateNaissance = nullStringPtr(dateNaissance)
 	m.VMADate = nullStringPtr(vmaDate)
 	m.DatePremiereAdhesion = nullStringPtr(datePremiereAdhesion)
@@ -461,7 +472,18 @@ func (r *Repository) UpdateEmail(id int64, email string) error {
 }
 
 func (r *Repository) SetPassword(id int64, passwordHash string) error {
-	_, err := r.db.Exec(`UPDATE members SET password_hash = ?, must_change_password = FALSE WHERE id = ?`, passwordHash, id)
+	_, err := r.db.Exec(`
+		UPDATE members SET
+			password_hash = ?, must_change_password = FALSE,
+			activated_at = COALESCE(activated_at, NOW())
+		WHERE id = ?`, passwordHash, id)
+	return err
+}
+
+// MarkWelcomeEmailSent enregistre la date d'envoi (ou de réenvoi) de l'email
+// de bienvenue par le bureau à un adhérent.
+func (r *Repository) MarkWelcomeEmailSent(id int64) error {
+	_, err := r.db.Exec(`UPDATE members SET welcome_email_sent_at = NOW() WHERE id = ?`, id)
 	return err
 }
 
@@ -494,13 +516,14 @@ func (r *Repository) consumeResetCode(id int64) error {
 // ---------------------------------------------------------------------------
 
 type Handler struct {
-	repo   *Repository
-	mailer *mailer.Mailer
-	auth   *AuthService
+	repo        *Repository
+	mailer      *mailer.Mailer
+	auth        *AuthService
+	frontendURL string
 }
 
-func NewHandler(repo *Repository, m *mailer.Mailer, auth *AuthService) *Handler {
-	return &Handler{repo: repo, mailer: m, auth: auth}
+func NewHandler(repo *Repository, m *mailer.Mailer, auth *AuthService, frontendURL string) *Handler {
+	return &Handler{repo: repo, mailer: m, auth: auth, frontendURL: frontendURL}
 }
 
 func decodeJSON(r *http.Request, dst any) error {
@@ -537,7 +560,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if mustChange {
 		httpx.JSON(w, http.StatusForbidden, map[string]any{
-			"error":            "vous devez définir votre mot de passe avant de continuer",
+			"error":              "vous devez définir votre mot de passe avant de continuer",
 			"mustChangePassword": true,
 		})
 		return
@@ -936,6 +959,43 @@ func (h *Handler) AdminDeleteMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.JSON(w, http.StatusNoContent, nil)
+}
+
+// AdminSendWelcomeEmail envoie (ou renvoie) à un adhérent l'email de
+// bienvenue lui expliquant comment définir son mot de passe et accéder à
+// l'espace adhérent.
+func (h *Handler) AdminSendWelcomeEmail(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	m, err := h.repo.GetByID(id)
+	if err == sql.ErrNoRows {
+		httpx.Error(w, http.StatusNotFound, "adhérent introuvable")
+		return
+	}
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
+	loginURL := strings.TrimRight(h.frontendURL, "/") + "/espace-adherent"
+	if err := h.mailer.SendWelcome(m.Email, m.Prenom, loginURL); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible d'envoyer l'email de bienvenue")
+		return
+	}
+	if err := h.repo.MarkWelcomeEmailSent(id); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
+	updated, err := h.repo.GetByID(id)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, updated)
 }
 
 func (h *Handler) AdminGetMember(w http.ResponseWriter, r *http.Request) {

@@ -51,6 +51,8 @@ export const api = {
     request(`/admin/members/${id}`, { method: 'DELETE', token }),
   adminUpdateEmail: (token, id, newEmail) =>
     request(`/admin/members/${id}/email`, { method: 'PUT', token, body: JSON.stringify({ newEmail }) }),
+  adminSendWelcomeEmail: (token, id) =>
+    request(`/admin/members/${id}/send-welcome-email`, { method: 'POST', token }),
 
   listRaces: (token) => request('/races', { token }),
   createRace: (token, data) => request('/races', { method: 'POST', token, body: JSON.stringify(data) }),

@@ -29,7 +29,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 
 	authService := member.NewAuthService(cfg.JWTSecret)
 	memberMailer := mailer.New(cfg)
-	memberHandler := member.NewHandler(member.NewRepository(db), memberMailer, authService)
+	memberHandler := member.NewHandler(member.NewRepository(db), memberMailer, authService, cfg.FrontendURL)
 	raceHandler := race.NewHandler(race.NewRepository(db))
 	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
 
@@ -61,6 +61,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("PUT /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminUpdateMember))
 	mux.HandleFunc("PUT /api/admin/members/{id}/email", authService.RequireBureau(memberHandler.AdminUpdateEmail))
 	mux.HandleFunc("DELETE /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminDeleteMember))
+	mux.HandleFunc("POST /api/admin/members/{id}/send-welcome-email", authService.RequireBureau(memberHandler.AdminSendWelcomeEmail))
 
 	mux.HandleFunc("GET /api/races", authService.RequireAuth(raceHandler.List))
 	mux.HandleFunc("POST /api/races", authService.RequireAuth(raceHandler.Create))

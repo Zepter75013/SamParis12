@@ -1785,6 +1785,14 @@ function formatDocDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
+// Formate une date MySQL 'YYYY-MM-DD HH:MM:SS' (ex. welcomeEmailSentAt, activatedAt).
+function formatDateTime(s) {
+  if (!s) return ''
+  const d = new Date(s.replace(' ', 'T'))
+  if (Number.isNaN(d.getTime())) return s
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
+
 function DocumentsPanel({ token, me }) {
   const [docs, setDocs] = useState([])
   const [loading, setLoading] = useState(true)
@@ -2098,6 +2106,10 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
   const [emailSaving, setEmailSaving] = useState(false)
   const [emailMessage, setEmailMessage] = useState('')
 
+  const [createdMember, setCreatedMember] = useState(null)
+  const [sendingWelcomeId, setSendingWelcomeId] = useState(null)
+  const [actionError, setActionError] = useState('')
+
   useEffect(() => {
     let cancelled = false
     api.adminListMembers(token)
@@ -2170,6 +2182,23 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
     setForm(null)
     setNewForm(NEW_MEMBER_FORM)
     setCreateMessage('')
+    setCreatedMember(null)
+  }
+
+  async function handleSendWelcome(targetMember) {
+    setSendingWelcomeId(targetMember.id)
+    setActionError('')
+    try {
+      const updated = await api.adminSendWelcomeEmail(token, targetMember.id)
+      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
+      if (createdMember && createdMember.id === updated.id) setCreatedMember(updated)
+      return updated
+    } catch (err) {
+      setActionError(err.message)
+      throw err
+    } finally {
+      setSendingWelcomeId(null)
+    }
   }
 
   function updateNewField(key, value) {
@@ -2183,15 +2212,18 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
     try {
       const created = await api.adminCreateMember(token, newForm)
       setMembers((prev) => [...prev, created])
-      setCreating(false)
-      selectMember(created)
-      setSaveMessage("Compte créé. L'adhérent doit utiliser « Mot de passe oublié ? » sur l'écran de connexion pour définir son mot de passe.")
+      setCreatedMember(created)
       onMembersChanged?.()
     } catch (err) {
       setCreateMessage(err.message)
     } finally {
       setCreateSaving(false)
     }
+  }
+
+  function closeCreatedPrompt() {
+    setCreating(false)
+    setCreatedMember(null)
   }
 
   async function handleDelete() {
@@ -2276,6 +2308,7 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                   <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('groupe')}>Groupe{sortIndicator('groupe')}</th>
                   <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('statut')}>Statut{sortIndicator('statut')}</th>
                   <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }} onClick={() => sortBy('bureau')}>Bureau{sortIndicator('bureau')}</th>
+                  <th style={{ padding: '1rem', whiteSpace: 'nowrap' }}>Activation du compte</th>
                 </tr>
               </thead>
               <tbody>
@@ -2296,10 +2329,30 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                     <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
                       {m.isBureau && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem', background: 'var(--vermilion)', color: '#fff' }}>Bureau</span>}
                     </td>
+                    <td style={{ padding: '0.9rem 1rem' }} onClick={(e) => e.stopPropagation()}>
+                      {m.activatedAt ? (
+                        <div style={{ fontSize: '0.78rem', color: '#065f46' }}>✓ Activé le {formatDateTime(m.activatedAt)}</div>
+                      ) : (
+                        <>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--stone)' }}>
+                            {m.welcomeEmailSentAt ? `Email envoyé le ${formatDateTime(m.welcomeEmailSentAt)}` : 'En attente'}
+                          </div>
+                          <button
+                            type="button"
+                            disabled={sendingWelcomeId === m.id}
+                            onClick={() => handleSendWelcome(m)}
+                            className="link-button"
+                            style={{ fontSize: '0.75rem', marginTop: '0.2rem' }}
+                          >
+                            {sendingWelcomeId === m.id ? 'Envoi…' : m.welcomeEmailSentAt ? "Renvoyer l'email" : "Envoyer l'email de bienvenue"}
+                          </button>
+                        </>
+                      )}
+                    </td>
                   </tr>
                 ))}
                 {sorted.length === 0 && (
-                  <tr><td colSpan={7} style={{ padding: '1.2rem 1rem', color: 'var(--stone)' }}>Aucun adhérent trouvé.</td></tr>
+                  <tr><td colSpan={8} style={{ padding: '1.2rem 1rem', color: 'var(--stone)' }}>Aucun adhérent trouvé.</td></tr>
                 )}
               </tbody>
             </table>
@@ -2307,7 +2360,7 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
         </div>
       )}
 
-      {creating && (
+      {creating && !createdMember && (
         <AdminModal onClose={() => setCreating(false)} maxWidth={560}>
           <form onSubmit={handleCreate} style={{ display: 'grid', gap: '0.9rem' }}>
               <b style={{ fontSize: '1.05rem' }}>Nouvel adhérent</b>
@@ -2349,6 +2402,35 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                 <button type="button" onClick={() => setCreating(false)} className="btn btn--ghost" style={{ justifyContent: 'center' }}>Annuler</button>
               </div>
           </form>
+        </AdminModal>
+      )}
+
+      {createdMember && (
+        <AdminModal onClose={closeCreatedPrompt} maxWidth={480}>
+          <div style={{ display: 'grid', gap: '0.9rem' }}>
+            <b style={{ fontSize: '1.05rem' }}>Adhérent créé ✓</b>
+            <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
+              <b>{createdMember.prenom} {createdMember.nom}</b> ({createdMember.email}) a été créé. Veux-tu lui envoyer tout de suite l'email de bienvenue, avec le lien pour définir son mot de passe ?
+            </p>
+            {createdMember.welcomeEmailSentAt && (
+              <p style={{ fontSize: '0.8rem', color: '#065f46' }}>✓ Email envoyé le {formatDateTime(createdMember.welcomeEmailSentAt)}.</p>
+            )}
+            {actionError && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{actionError}</p>}
+            <div style={{ display: 'flex', gap: '0.8rem' }}>
+              <button
+                type="button"
+                disabled={sendingWelcomeId === createdMember.id}
+                onClick={() => handleSendWelcome(createdMember)}
+                className="btn btn--solid"
+                style={{ justifyContent: 'center', flex: 1 }}
+              >
+                {sendingWelcomeId === createdMember.id ? 'Envoi…' : createdMember.welcomeEmailSentAt ? "Renvoyer l'email" : "Envoyer l'email maintenant"}
+              </button>
+              <button type="button" onClick={closeCreatedPrompt} className="btn btn--ghost" style={{ justifyContent: 'center' }}>
+                {createdMember.welcomeEmailSentAt ? 'Fermer' : 'Plus tard'}
+              </button>
+            </div>
+          </div>
         </AdminModal>
       )}
 
