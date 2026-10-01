@@ -1358,6 +1358,9 @@ function CoursesPanel({ token, me, members }) {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
 
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+
   const [creating, setCreating] = useState(false)
   const [newForm, setNewForm] = useState(NEW_RACE_FORM)
   const [createSaving, setCreateSaving] = useState(false)
@@ -1477,6 +1480,16 @@ function CoursesPanel({ token, me, members }) {
 
   const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
 
+  const raceTypes = [...new Set(races.map((r) => r.type).filter(Boolean))].sort()
+  const filteredRaces = races.filter((r) => {
+    if (typeFilter && r.type !== typeFilter) return false
+    if (search) {
+      const needle = search.toLowerCase()
+      if (!r.titre.toLowerCase().includes(needle) && !r.lieu.toLowerCase().includes(needle)) return false
+    }
+    return true
+  })
+
   return (
     <div>
       <div style={{ marginBottom: '1.5rem', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem' }}>
@@ -1490,12 +1503,24 @@ function CoursesPanel({ token, me, members }) {
         </button>
       </div>
 
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1.2rem' }}>
+        <input
+          type="text" placeholder="Rechercher par titre ou lieu…"
+          style={{ ...inputStyle, flex: '1 1 220px' }}
+          value={search} onChange={(e) => setSearch(e.target.value)}
+        />
+        <select style={{ ...inputStyle, flex: '0 1 220px' }} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+          <option value="">Tous les types</option>
+          {raceTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+
       {loading && <p style={{ color: 'var(--stone)' }}>Chargement des courses…</p>}
       {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
 
       {!loading && !loadError && (
         <div style={{ display: 'grid', gap: '1rem' }}>
-          {races.map((r) => (
+          {filteredRaces.map((r) => (
             <button
               key={r.id}
               type="button"
@@ -1529,6 +1554,9 @@ function CoursesPanel({ token, me, members }) {
           ))}
           {races.length === 0 && (
             <p style={{ color: 'var(--stone)' }}>Aucune course proposée pour le moment. Soyez le premier à en créer une !</p>
+          )}
+          {races.length > 0 && filteredRaces.length === 0 && (
+            <p style={{ color: 'var(--stone)' }}>Aucune course ne correspond à ces filtres.</p>
           )}
         </div>
       )}
@@ -1768,6 +1796,10 @@ function ResultatsPanel({ token, me, members }) {
   const [resultSaving, setResultSaving] = useState(false)
   const [resultMessage, setResultMessage] = useState('')
 
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [yearFilter, setYearFilter] = useState('')
+
   useEffect(() => {
     setLoading(true)
     api.listRaces(token)
@@ -1780,6 +1812,18 @@ function ResultatsPanel({ token, me, members }) {
   const pastRaces = races
     .filter((r) => r.date.slice(0, 10) < todayISO)
     .sort((a, b) => (a.date < b.date ? 1 : -1))
+
+  const raceTypes = [...new Set(pastRaces.map((r) => r.type).filter(Boolean))].sort()
+  const raceYears = [...new Set(pastRaces.map((r) => r.date.slice(0, 4)))].sort().reverse()
+  const filteredPastRaces = pastRaces.filter((r) => {
+    if (typeFilter && r.type !== typeFilter) return false
+    if (yearFilter && r.date.slice(0, 4) !== yearFilter) return false
+    if (search) {
+      const needle = search.toLowerCase()
+      if (!r.titre.toLowerCase().includes(needle) && !r.lieu.toLowerCase().includes(needle)) return false
+    }
+    return true
+  })
 
   function refreshDetail(id) {
     return api.getRace(token, id).then((data) => setDetail(data))
@@ -1862,8 +1906,24 @@ function ResultatsPanel({ token, me, members }) {
     <div>
       <div style={{ marginBottom: '1.5rem' }}>
         <span className="eyebrow">Performances officielles</span>
-        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Résultats &amp; Records du Club</h2>
+        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Résultats</h2>
         <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Chronos et classements des adhérents sur les courses passées du club.</p>
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1.2rem' }}>
+        <input
+          type="text" placeholder="Rechercher par titre ou lieu…"
+          style={{ ...inputStyle, flex: '1 1 220px' }}
+          value={search} onChange={(e) => setSearch(e.target.value)}
+        />
+        <select style={{ ...inputStyle, flex: '0 1 220px' }} value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+          <option value="">Tous les types</option>
+          {raceTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <select style={{ ...inputStyle, flex: '0 1 140px' }} value={yearFilter} onChange={(e) => setYearFilter(e.target.value)}>
+          <option value="">Toutes les années</option>
+          {raceYears.map((y) => <option key={y} value={y}>{y}</option>)}
+        </select>
       </div>
 
       {loading && <p style={{ color: 'var(--stone)' }}>Chargement des courses…</p>}
@@ -1871,7 +1931,7 @@ function ResultatsPanel({ token, me, members }) {
 
       {!loading && !loadError && (
         <div style={{ display: 'grid', gap: '1rem' }}>
-          {pastRaces.map((r) => (
+          {filteredPastRaces.map((r) => (
             <button
               key={r.id}
               type="button"
@@ -1906,6 +1966,9 @@ function ResultatsPanel({ token, me, members }) {
           ))}
           {pastRaces.length === 0 && (
             <p style={{ color: 'var(--stone)' }}>Aucune course passée pour le moment.</p>
+          )}
+          {pastRaces.length > 0 && filteredPastRaces.length === 0 && (
+            <p style={{ color: 'var(--stone)' }}>Aucune course ne correspond à ces filtres.</p>
           )}
         </div>
       )}

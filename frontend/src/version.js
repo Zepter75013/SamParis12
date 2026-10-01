@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.2.0'
+export const APP_VERSION = '1.2.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.2.1',
+    date: '1er octobre 2026',
+    notes: "Nos Courses et Résultats : ajout de filtres (recherche par titre/lieu, type de course, et année pour Résultats). La rubrique « Résultats & Records du Club » est renommée simplement « Résultats ».",
+  },
   {
     version: '1.2.0',
     date: '1er octobre 2026',
