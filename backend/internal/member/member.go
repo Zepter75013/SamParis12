@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -599,7 +600,9 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 		if hashErr == nil {
 			_ = h.repo.InvalidateResetCodes(m.ID)
 			if err := h.repo.CreateResetCode(m.ID, string(codeHash), time.Now().Add(15*time.Minute)); err == nil {
-				_ = h.mailer.SendCode(m.Email, code)
+				if sendErr := h.mailer.SendCode(m.Email, code); sendErr != nil {
+					log.Printf("mailer: échec envoi code à %s : %v", m.Email, sendErr)
+				}
 			}
 		}
 	}
@@ -982,6 +985,7 @@ func (h *Handler) AdminSendWelcomeEmail(w http.ResponseWriter, r *http.Request) 
 
 	loginURL := strings.TrimRight(h.frontendURL, "/") + "/espace-adherent"
 	if err := h.mailer.SendWelcome(m.Email, m.Prenom, loginURL); err != nil {
+		log.Printf("mailer: échec envoi email de bienvenue à %s : %v", m.Email, err)
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'envoyer l'email de bienvenue")
 		return
 	}
