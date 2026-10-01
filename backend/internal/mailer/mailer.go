@@ -1,13 +1,28 @@
 package mailer
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/smtp"
 	"strings"
+	"time"
 
 	"samparis12/backend/internal/config"
 )
+
+// messageID génère un Message-Id conforme (RFC 5322). Son absence, tout comme
+// celle de l'en-tête Date, est un signal de spam fort pour les filtres
+// stricts (Free.fr notamment), alors que Gmail s'en accommode très bien.
+func messageID(domain string) string {
+	buf := make([]byte, 8)
+	_, _ = rand.Read(buf)
+	if domain == "" {
+		domain = "samparis12.org"
+	}
+	return fmt.Sprintf("<%d.%s@%s>", time.Now().UnixNano(), hex.EncodeToString(buf), domain)
+}
 
 type Mailer struct {
 	cfg config.Config
@@ -31,8 +46,8 @@ func (m *Mailer) SendCode(to, code string) error {
 		"Bonjour,\r\n\r\nVoici votre code de vérification pour définir votre mot de passe sur l'Espace Adhérent SAM Paris 12 :\r\n\r\n    %s\r\n\r\nCe code est valable 15 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.\r\n\r\nSAM Paris 12",
 		code,
 	)
-	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
-		m.cfg.SMTPFrom, to, subject, body)
+	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\nMessage-Id: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
+		m.cfg.SMTPFrom, to, subject, time.Now().Format(time.RFC1123Z), messageID(""), body)
 
 	addr := m.cfg.SMTPHost + ":" + m.cfg.SMTPPort
 	auth := smtp.PlainAuth("", m.cfg.SMTPUsername, m.cfg.SMTPPassword, m.cfg.SMTPHost)
@@ -75,6 +90,8 @@ func buildAlternativeMessage(from, to, subject, textBody, htmlBody string) []byt
 	fmt.Fprintf(&b, "From: %s\r\n", from)
 	fmt.Fprintf(&b, "To: %s\r\n", to)
 	fmt.Fprintf(&b, "Subject: %s\r\n", subject)
+	fmt.Fprintf(&b, "Date: %s\r\n", time.Now().Format(time.RFC1123Z))
+	fmt.Fprintf(&b, "Message-Id: %s\r\n", messageID(""))
 	fmt.Fprintf(&b, "MIME-Version: 1.0\r\n")
 	fmt.Fprintf(&b, "Content-Type: multipart/alternative; boundary=\"%s\"\r\n\r\n", boundary)
 
