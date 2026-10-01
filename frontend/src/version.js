@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.7.0'
+export const APP_VERSION = '1.7.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.7.1',
+    date: '1er octobre 2026',
+    notes: "Records du Club : la photo de l'adhérent s'affiche désormais à côté de son nom dans le tableau.",
+  },
   {
     version: '1.7.0',
     date: '1er octobre 2026',

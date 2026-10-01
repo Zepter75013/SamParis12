@@ -2374,9 +2374,12 @@ function RecordsPanel({ token, members }) {
                     {view === 'categorie' && <td style={{ padding: '0.8rem 1rem' }}>{r.categorie}</td>}
                     {(view === 'type' || view === 'hitparade') && <td style={{ padding: '0.8rem 1rem', textTransform: 'capitalize' }}>{r.genre}</td>}
                     <td style={{ padding: '0.8rem 1rem' }}>
-                      <button type="button" onClick={() => setOpenMemberId(r.memberId)} className="link-button" style={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
-                        {r.prenom} {r.nom}
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <AvatarButton photoUrl={r.photoUrl} nom={`${r.prenom} ${r.nom}`} size={32} onClick={() => setOpenMemberId(r.memberId)} />
+                        <button type="button" onClick={() => setOpenMemberId(r.memberId)} className="link-button" style={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
+                          {r.prenom} {r.nom}
+                        </button>
+                      </div>
                     </td>
                     <td style={{ padding: '0.8rem 1rem', fontWeight: 'bold' }}>{formatTempsCourse(r.tempsSecondes)}</td>
                     <td style={{ padding: '0.8rem 1rem', color: 'var(--ink-soft)' }}>{formatAllure(r.allureKmh)}</td>
