@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.5.1'
+export const APP_VERSION = '1.5.2'
 
 export const CHANGELOG = [
+  {
+    version: '1.5.2',
+    date: '1er octobre 2026',
+    notes: "À propos : l'historique des versions se consulte maintenant via une liste déroulante (version la plus récente affichée par défaut) plutôt qu'une longue liste déroulée en entier.",
+  },
   {
     version: '1.5.1',
     date: '1er octobre 2026',
