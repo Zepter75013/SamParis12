@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.3.0'
+export const APP_VERSION = '1.4.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.4.0',
+    date: '1er octobre 2026',
+    notes: "Nouveau rôle SuperAdmin : seul-e à pouvoir modifier les fonctionnalités (droits accordés aux membres du bureau) depuis l'écran Fonctionnalités, qui devient invisible aux autres membres du bureau. Avoir is_bureau ne suffit plus pour y accéder.",
+  },
   {
     version: '1.3.0',
     date: '1er octobre 2026',

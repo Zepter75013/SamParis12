@@ -422,7 +422,11 @@ export default function Dashboard() {
 
         <div className="shell">
           <nav className="adherent-tabs-nav">
-            {TABS.filter((tab) => (tab.id !== 'admin' && tab.id !== 'droitsBureau') || me?.isBureau).map((tab) => (
+            {TABS.filter((tab) => {
+              if (tab.id === 'admin') return me?.isBureau
+              if (tab.id === 'droitsBureau') return me?.isSuperAdmin
+              return true
+            }).map((tab) => (
               <button
                 key={tab.id}
                 className={`adh-tab-btn${activeTab === tab.id ? ' active' : ''}`}
@@ -869,10 +873,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {activeTab === 'droitsBureau' && !me?.isBureau && (
-          <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux membres du bureau du club.</p>
+        {activeTab === 'droitsBureau' && !me?.isSuperAdmin && (
+          <p style={{ color: 'var(--stone)' }}>Cette section est réservée au SuperAdmin du club.</p>
         )}
-        {activeTab === 'droitsBureau' && me?.isBureau && (
+        {activeTab === 'droitsBureau' && me?.isSuperAdmin && (
           <BureauRightsPanel token={token} />
         )}
 
@@ -2385,6 +2389,7 @@ function adminFormFromMember(m) {
   return {
     prenom: m.prenom || '', nom: m.nom || '', role: m.role || '', groupe: m.groupe || '', statut: m.statut || '',
     isBureau: !!m.isBureau,
+    isSuperAdmin: !!m.isSuperAdmin,
 
     dateNaissance: m.dateNaissance || '', lieuNaissance: m.lieuNaissance || '', adresse: m.adresse || '',
     codePostal: m.codePostal || '', ville: m.ville || '', telephoneDomicile: m.telephoneDomicile || '',

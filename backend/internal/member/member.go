@@ -52,6 +52,9 @@ type Member struct {
 	Statut   string `json:"statut"`
 	PhotoURL string `json:"photoUrl"`
 	IsBureau bool   `json:"isBureau"`
+	// IsSuperAdmin est seul-e à pouvoir modifier les fonctionnalités (droits
+	// des autres membres du bureau) — is_bureau seul ne suffit pas.
+	IsSuperAdmin bool `json:"isSuperAdmin"`
 
 	// Suivi de l'email de bienvenue envoyé par le bureau (nullable, date du
 	// dernier envoi) et de l'activation du compte par l'adhérent lui-même
@@ -162,12 +165,13 @@ type ConfidentialUpdate struct {
 // et administratives) — jamais l'email ni le mot de passe, qui restent gérés
 // par l'adhérent lui-même via leurs propres circuits.
 type AdminMemberUpdate struct {
-	Prenom   string `json:"prenom"`
-	Nom      string `json:"nom"`
-	Role     string `json:"role"`
-	Groupe   string `json:"groupe"`
-	Statut   string `json:"statut"`
-	IsBureau bool   `json:"isBureau"`
+	Prenom       string `json:"prenom"`
+	Nom          string `json:"nom"`
+	Role         string `json:"role"`
+	Groupe       string `json:"groupe"`
+	Statut       string `json:"statut"`
+	IsBureau     bool   `json:"isBureau"`
+	IsSuperAdmin bool   `json:"isSuperAdmin"`
 
 	DateNaissance     *string  `json:"dateNaissance"`
 	LieuNaissance     string   `json:"lieuNaissance"`
@@ -229,7 +233,7 @@ func NewRepository(db *sql.DB) *Repository {
 // Go (le pilote MySQL, avec parseTime=true, renverrait sinon un time.Time non
 // scannable dans un **string).
 const memberColumns = `
-	id, email, prenom, nom, role, groupe, statut, photo_path, is_bureau,
+	id, email, prenom, nom, role, groupe, statut, photo_path, is_bureau, is_super_admin,
 	DATE_FORMAT(welcome_email_sent_at, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(activated_at, '%Y-%m-%d %H:%i:%s'),
 	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
 	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio,
@@ -259,7 +263,7 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 		anneePremiereAdhesion, anneeDerniereAdhesion                                                sql.NullInt64
 	)
 	err := scan(
-		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL, &m.IsBureau,
+		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL, &m.IsBureau, &m.IsSuperAdmin,
 		&welcomeEmailSentAt, &activatedAt,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
 		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
@@ -447,7 +451,7 @@ func (r *Repository) Delete(id int64) error {
 func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 	_, err := r.db.Exec(`
 		UPDATE members SET
-			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, is_bureau = ?,
+			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, is_bureau = ?, is_super_admin = ?,
 			date_naissance = ?, lieu_naissance = ?, adresse = ?, code_postal = ?, ville = ?,
 			telephone_domicile = ?, telephone_portable = ?, nationalite = ?,
 			urgence_nom = ?, urgence_telephone = ?, taille_maillot = ?, vma = ?, vma_date = ?,
@@ -456,7 +460,7 @@ func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 			date_dernier_certificat = ?, annee_derniere_adhesion = ?, activite_saison = ?,
 			licence_ffa_type = ?, montant_cotisation = ?, date_paiement_cotisation = ?, mode_paiement = ?
 		WHERE id = ?`,
-		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.IsBureau,
+		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.IsBureau, u.IsSuperAdmin,
 		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
 		u.TelephoneDomicile, u.TelephonePortable, u.Nationalite,
 		u.UrgenceNom, u.UrgenceTelephone, u.TailleMaillot, u.VMA, u.VMADate,
@@ -1040,6 +1044,29 @@ func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
 	}
 	u.Prenom = formatPrenom(u.Prenom)
 	u.Nom = formatNom(u.Nom)
+
+	current, err := h.repo.GetByID(id)
+	if err != nil {
+		httpx.Error(w, http.StatusNotFound, "adhérent introuvable")
+		return
+	}
+	// Les fonctionnalités (droits accordés aux membres du bureau) et le
+	// statut SuperAdmin lui-même ne sont modifiables que par un SuperAdmin —
+	// is_bureau ne suffit pas. On ne bloque que si l'un de ces champs change
+	// réellement, pour ne pas gêner l'édition normale d'un profil.
+	featuresChanged := u.DroitAdminEvenements != current.DroitAdminEvenements ||
+		u.DroitUploadDocuments != current.DroitUploadDocuments ||
+		u.DroitSaisieResultats != current.DroitSaisieResultats ||
+		u.IsSuperAdmin != current.IsSuperAdmin
+	if featuresChanged {
+		callerID, _ := MemberIDFromContext(r.Context())
+		caller, err := h.repo.GetByID(callerID)
+		if err != nil || !caller.IsSuperAdmin {
+			httpx.Error(w, http.StatusForbidden, "seul un SuperAdmin peut modifier les fonctionnalités")
+			return
+		}
+	}
+
 	if err := h.repo.UpdateAdmin(id, u); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer les modifications")
 		return
