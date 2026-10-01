@@ -602,9 +602,13 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 			if err := h.repo.CreateResetCode(m.ID, string(codeHash), time.Now().Add(15*time.Minute)); err == nil {
 				if sendErr := h.mailer.SendCode(m.Email, code); sendErr != nil {
 					log.Printf("mailer: échec envoi code à %s : %v", m.Email, sendErr)
+				} else {
+					log.Printf("mailer: code envoyé à %s (relais SMTP OK)", m.Email)
 				}
 			}
 		}
+	} else {
+		log.Printf("mailer: demande de code pour %s — aucun compte trouvé avec cet email", email)
 	}
 	// Toujours 204, que l'email existe ou non, pour ne pas révéler les comptes existants.
 	httpx.JSON(w, http.StatusNoContent, nil)
@@ -989,6 +993,7 @@ func (h *Handler) AdminSendWelcomeEmail(w http.ResponseWriter, r *http.Request) 
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'envoyer l'email de bienvenue")
 		return
 	}
+	log.Printf("mailer: email de bienvenue envoyé à %s (relais SMTP OK)", m.Email)
 	if err := h.repo.MarkWelcomeEmailSent(id); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
 		return
