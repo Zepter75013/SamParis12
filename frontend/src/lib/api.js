@@ -67,6 +67,10 @@ export const api = {
     request(`/races/${raceId}/results/${memberId}`, { method: 'PUT', token, body: JSON.stringify(data) }),
   deleteRaceResult: (token, raceId, memberId) =>
     request(`/races/${raceId}/results/${memberId}`, { method: 'DELETE', token }),
+  getMemberResults: (token, memberId, limit) =>
+    request(`/members/${memberId}/race-results${limit ? `?limit=${limit}` : ''}`, { token }),
+  getMemberUpcomingRaces: (token, memberId) =>
+    request(`/members/${memberId}/upcoming-races`, { token }),
 
   listDocuments: (token) => request('/documents', { token }),
   uploadDocument: (token, formData) => request('/documents', { method: 'POST', token, body: formData }),

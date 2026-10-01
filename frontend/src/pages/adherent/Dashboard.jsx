@@ -10,7 +10,7 @@ const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
   { id: 'trombi', label: 'Trombinoscope' },
   { id: 'courses', label: 'Nos Courses' },
-  { id: 'resultats', label: 'Résultats & Records' },
+  { id: 'resultats', label: 'Résultats' },
   { id: 'reseaute', label: 'SAM Réseaute' },
   { id: 'documents', label: 'Plans & Documents' },
   { id: 'vieduclub', label: 'Vie du Club' },
@@ -1779,6 +1779,118 @@ function resultFormFromResult(res) {
   }
 }
 
+// Affiché quand on clique sur la photo d'un coureur depuis Résultats : son
+// historique de courses (prochaines + derniers résultats), plutôt que sa
+// fiche profil complète (trombinoscope).
+function MemberRaceCardModal({ member, token, onClose }) {
+  const [upcoming, setUpcoming] = useState([])
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    if (!member) return
+    setLoading(true)
+    setShowAll(false)
+    Promise.all([
+      api.getMemberUpcomingRaces(token, member.id),
+      api.getMemberResults(token, member.id),
+    ])
+      .then(([u, r]) => { setUpcoming(u); setResults(r) })
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false))
+  }, [member, token])
+
+  if (!member) return null
+
+  const visibleResults = showAll ? results : results.slice(0, 5)
+
+  return (
+    <div
+      role="dialog" aria-modal="true"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: 'var(--surface)', border: '1px solid var(--line)', maxWidth: 520, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '2rem', position: 'relative' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button" onClick={onClose} aria-label="Fermer"
+          style={{ position: 'absolute', top: '1rem', right: '1rem', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink)' }}
+        >
+          ✕
+        </button>
+
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.8rem' }}>
+            <Avatar photoUrl={member.photoUrl} nom={`${member.prenom} ${member.nom}`} size={72} />
+          </div>
+          <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>{member.prenom} {member.nom}</h3>
+        </div>
+
+        {loading && <p style={{ color: 'var(--stone)' }}>Chargement…</p>}
+        {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+
+        {!loading && !loadError && (
+          <>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <b style={{ fontSize: '0.9rem', display: 'block', marginBottom: '0.6rem' }}>Prochaines courses</b>
+              {upcoming.length === 0 ? (
+                <p style={{ color: 'var(--stone)', fontSize: '0.85rem' }}>Aucune course à venir renseignée.</p>
+              ) : (
+                <div style={{ display: 'grid', gap: '0.5rem' }}>
+                  {upcoming.map((r) => (
+                    <div key={r.id} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', padding: '0.6rem 0.9rem', fontSize: '0.82rem' }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--stone)', marginRight: '0.6rem' }}>{formatRaceDate(r.date)}</span>
+                      <b>{r.titre}</b>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <b style={{ fontSize: '0.9rem', display: 'block', marginBottom: '0.6rem' }}>
+                Derniers résultats{!showAll && results.length > 5 ? ' (5 plus récents)' : ''}
+              </b>
+              {results.length === 0 ? (
+                <p style={{ color: 'var(--stone)', fontSize: '0.85rem' }}>Aucun résultat enregistré.</p>
+              ) : (
+                <>
+                  <div style={{ display: 'grid', gap: '0.5rem' }}>
+                    {visibleResults.map((r) => (
+                      <div key={r.raceId} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', padding: '0.6rem 0.9rem', fontSize: '0.82rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.6rem', flexWrap: 'wrap' }}>
+                          <span><span style={{ fontFamily: 'var(--font-mono)', color: 'var(--stone)', marginRight: '0.6rem' }}>{formatRaceDate(r.raceDate)}</span><b>{r.raceTitre}</b></span>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>{formatTempsCourse(r.tempsSecondes)}</span>
+                        </div>
+                        {(r.classementGeneral || r.categorie) && (
+                          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>
+                            {r.classementGeneral && `Général : ${r.classementGeneral}${r.classementGeneralTotal ? `/${r.classementGeneralTotal}` : ''}`}
+                            {r.classementGeneral && r.categorie && ' · '}
+                            {r.categorie}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {results.length > 5 && (
+                    <button type="button" onClick={() => setShowAll((v) => !v)} className="link-button" style={{ fontSize: '0.78rem', marginTop: '0.6rem' }}>
+                      {showAll ? 'Voir moins' : `Voir tous les résultats (${results.length})`}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ResultatsPanel({ token, me, members }) {
   const [openMemberId, setOpenMemberId] = useState(null)
   const openMember = members?.find((m) => m.id === openMemberId) || null
@@ -2099,7 +2211,7 @@ function ResultatsPanel({ token, me, members }) {
       )}
 
       {openMember && (
-        <MemberDetailModal member={openMember} onClose={() => setOpenMemberId(null)} />
+        <MemberRaceCardModal member={openMember} token={token} onClose={() => setOpenMemberId(null)} />
       )}
     </div>
   )

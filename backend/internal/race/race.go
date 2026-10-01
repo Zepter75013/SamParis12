@@ -359,6 +359,90 @@ func (r *Repository) DeleteResult(raceID, memberID int64) error {
 	return err
 }
 
+// MemberResult est le résultat d'un adhérent sur une course, vu depuis son
+// profil : les infos de la course (titre, date, distance) sont incluses pour
+// ne pas nécessiter d'appel supplémentaire.
+type MemberResult struct {
+	RaceID                   int64     `json:"raceId"`
+	RaceTitre                string    `json:"raceTitre"`
+	RaceDate                 time.Time `json:"raceDate"`
+	DistanceKm               float64   `json:"distanceKm"`
+	TempsSecondes            int       `json:"tempsSecondes"`
+	AllureKmh                float64   `json:"allureKmh"`
+	ClassementGeneral        *int      `json:"classementGeneral"`
+	ClassementGeneralTotal   *int      `json:"classementGeneralTotal"`
+	Categorie                string    `json:"categorie"`
+	ClassementCategorie      *int      `json:"classementCategorie"`
+	ClassementCategorieTotal *int      `json:"classementCategorieTotal"`
+}
+
+// ResultsByMember retourne les résultats d'un adhérent, du plus récent au
+// plus ancien. limit <= 0 retourne tout l'historique.
+func (r *Repository) ResultsByMember(memberID int64, limit int) ([]MemberResult, error) {
+	query := `
+		SELECT rz.race_id, ra.titre, ra.race_date, ra.distance_km,
+			rz.temps_secondes, rz.classement_general, rz.classement_general_total,
+			rz.categorie, rz.classement_categorie, rz.classement_categorie_total
+		FROM race_results rz
+		JOIN races ra ON ra.id = rz.race_id
+		WHERE rz.member_id = ?
+		ORDER BY ra.race_date DESC`
+	args := []any{memberID}
+	if limit > 0 {
+		query += ` LIMIT ?`
+		args = append(args, limit)
+	}
+
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []MemberResult{}
+	for rows.Next() {
+		var mr MemberResult
+		if err := rows.Scan(
+			&mr.RaceID, &mr.RaceTitre, &mr.RaceDate, &mr.DistanceKm,
+			&mr.TempsSecondes, &mr.ClassementGeneral, &mr.ClassementGeneralTotal,
+			&mr.Categorie, &mr.ClassementCategorie, &mr.ClassementCategorieTotal,
+		); err != nil {
+			return nil, err
+		}
+		if mr.DistanceKm > 0 && mr.TempsSecondes > 0 {
+			mr.AllureKmh = mr.DistanceKm / (float64(mr.TempsSecondes) / 3600.0)
+		}
+		results = append(results, mr)
+	}
+	return results, rows.Err()
+}
+
+// UpcomingRacesByMember retourne les courses futures auxquelles un adhérent
+// est inscrit, par date croissante.
+func (r *Repository) UpcomingRacesByMember(memberID int64) ([]Race, error) {
+	rows, err := r.db.Query(`
+		SELECT `+raceColumns+`
+		FROM races r
+		JOIN members m ON m.id = r.created_by
+		JOIN race_registrations rr ON rr.race_id = r.id
+		WHERE rr.member_id = ? AND r.race_date >= CURDATE()
+		ORDER BY r.race_date ASC`, memberID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	races := []Race{}
+	for rows.Next() {
+		race, err := scanRace(rows.Scan)
+		if err != nil {
+			return nil, err
+		}
+		races = append(races, *race)
+	}
+	return races, rows.Err()
+}
+
 type Handler struct {
 	repo       *Repository
 	memberRepo *member.Repository
@@ -368,15 +452,18 @@ func NewHandler(repo *Repository, memberRepo *member.Repository) *Handler {
 	return &Handler{repo: repo, memberRepo: memberRepo}
 }
 
-// canEnterResults vérifie en base que l'adhérent est bureau ou dispose du
-// droit de saisie des résultats — comme pour canUpload côté documents, un
-// droit accordé après la connexion doit prendre effet sans reconnexion.
+// canEnterResults vérifie en base que l'adhérent dispose explicitement du
+// droit de saisie des résultats. Contrairement à canUpload (documents), ce
+// droit n'est PAS accordé automatiquement aux membres du bureau : il doit
+// être activé individuellement depuis l'écran Fonctionnalités, même pour un
+// membre du bureau — c'est volontairement une capacité plus restreinte que
+// le statut de bureau en lui-même.
 func (h *Handler) canEnterResults(memberID int64) (bool, error) {
 	m, err := h.memberRepo.GetByID(memberID)
 	if err != nil {
 		return false, err
 	}
-	return m.IsBureau || m.DroitSaisieResultats, nil
+	return m.DroitSaisieResultats, nil
 }
 
 func decodeJSON(r *http.Request, dst any) error {
@@ -715,4 +802,49 @@ func (h *Handler) CedeDossard(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) UncedeDossard(w http.ResponseWriter, r *http.Request) {
 	h.dossardUnsignalHandler(dossardKindCession, "impossible d'annuler ta cession de dossard")(w, r)
+}
+
+// MemberResults retourne l'historique de résultats d'un adhérent (le sien ou
+// celui d'un autre — ouvert à tous les adhérents connectés, comme le reste
+// des informations de course). ?limit=N limite au N plus récents.
+func (h *Handler) MemberResults(w http.ResponseWriter, r *http.Request) {
+	if _, ok := member.MemberIDFromContext(r.Context()); !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	targetID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	limit := 0
+	if v := r.URL.Query().Get("limit"); v != "" {
+		limit, _ = strconv.Atoi(v)
+	}
+	results, err := h.repo.ResultsByMember(targetID, limit)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, results)
+}
+
+// MemberUpcomingRaces retourne les courses à venir auxquelles un adhérent
+// est inscrit.
+func (h *Handler) MemberUpcomingRaces(w http.ResponseWriter, r *http.Request) {
+	if _, ok := member.MemberIDFromContext(r.Context()); !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	targetID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant invalide")
+		return
+	}
+	races, err := h.repo.UpcomingRacesByMember(targetID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, races)
 }
