@@ -2236,9 +2236,14 @@ function formatDocDate(iso) {
 }
 
 // Formate une date MySQL 'YYYY-MM-DD HH:MM:SS' (ex. welcomeEmailSentAt, activatedAt).
+// Les dates/heures viennent du serveur (MySQL NOW() ou Go time.Now()) sous
+// forme de chaîne naïve 'YYYY-MM-DD HH:MM:SS' en UTC (conteneurs Docker, pas
+// d'heure locale configurée) — on l'indique explicitement avec le suffixe
+// 'Z' pour que le navigateur la convertisse vers l'heure locale du lecteur
+// au lieu de l'afficher telle quelle.
 function formatDateTime(s) {
   if (!s) return ''
-  const d = new Date(s.replace(' ', 'T'))
+  const d = new Date(s.replace(' ', 'T') + 'Z')
   if (Number.isNaN(d.getTime())) return s
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
