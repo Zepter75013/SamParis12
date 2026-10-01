@@ -30,7 +30,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	authService := member.NewAuthService(cfg.JWTSecret)
 	memberMailer := mailer.New(cfg)
 	memberHandler := member.NewHandler(member.NewRepository(db), memberMailer, authService, cfg.FrontendURL)
-	raceHandler := race.NewHandler(race.NewRepository(db))
+	raceHandler := race.NewHandler(race.NewRepository(db), member.NewRepository(db))
 	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
@@ -72,6 +72,8 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("DELETE /api/races/{id}/dossard/recherche", authService.RequireAuth(raceHandler.UnseekDossard))
 	mux.HandleFunc("POST /api/races/{id}/dossard/cession", authService.RequireAuth(raceHandler.CedeDossard))
 	mux.HandleFunc("DELETE /api/races/{id}/dossard/cession", authService.RequireAuth(raceHandler.UncedeDossard))
+	mux.HandleFunc("PUT /api/races/{id}/results/{memberId}", authService.RequireAuth(raceHandler.UpsertResult))
+	mux.HandleFunc("DELETE /api/races/{id}/results/{memberId}", authService.RequireAuth(raceHandler.DeleteResult))
 
 	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
 	mux.HandleFunc("POST /api/documents", authService.RequireAuth(documentHandler.Upload))

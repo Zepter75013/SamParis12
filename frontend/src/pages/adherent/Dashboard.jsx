@@ -656,62 +656,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'resultats' && (
-          <div>
-            <div style={{ marginBottom: '1.5rem' }}>
-              <span className="eyebrow">Performances officielles</span>
-              <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Résultats &amp; Records du Club</h2>
-              <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Derniers chronos enregistrés par les athlètes du SAM Paris 12 sur les compétitions officielles.</p>
-            </div>
-
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto', marginBottom: '2rem' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                <thead>
-                  <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.68rem' }}>
-                    <th style={{ padding: '0.8rem 1rem' }}>Athlète</th>
-                    <th style={{ padding: '0.8rem 1rem' }}>Course</th>
-                    <th style={{ padding: '0.8rem 1rem' }}>Distance</th>
-                    <th style={{ padding: '0.8rem 1rem' }}>Temps Officiel</th>
-                    <th style={{ padding: '0.8rem 1rem' }}>Mention / Classement</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ['Thomas G.', 'Trail des 25 Bosses (Fontainebleau)', '32 km · 1100m D+', '3h 42m 18s', '14e scratch'],
-                    ['Camille R.', '10 km Paris Centre', '10 km', '41m 24s', '3e M0F (Record personnel)'],
-                    ['Laurent D.', 'Semi-Marathon de Paris', '21,1 km', '1h 32m 45s', 'Qualif. Championnats de France'],
-                    ['Équipe Marche Nordique MNS', 'Nordique de la forêt de Meudon', '15 km', '1h 51m 10s', '2e équipe mixte'],
-                  ].map((row) => (
-                    <tr key={row[0] + row[1]} style={{ borderBottom: '1px solid var(--line)' }}>
-                      <td style={{ padding: '0.8rem 1rem' }}><b>{row[0]}</b></td>
-                      <td style={{ padding: '0.8rem 1rem' }}>{row[1]}</td>
-                      <td style={{ padding: '0.8rem 1rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{row[2]}</td>
-                      <td style={{ padding: '0.8rem 1rem', fontWeight: 'bold', fontSize: '0.85rem' }}>{row[3]}</td>
-                      <td style={{ padding: '0.8rem 1rem', color: 'var(--stone)' }}>{row[4]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem' }}>
-              <span className="eyebrow" style={{ color: 'var(--vermilion)', fontWeight: 'bold', marginBottom: '1rem', display: 'block' }}>
-                Tableau des records historiques du SAM Paris 12
-              </span>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', fontFamily: 'var(--font-mono)' }}>
-                {[
-                  ['10 KM Route', '30m 42s'],
-                  ['Semi-Marathon', '1h 07m 15s'],
-                  ['Marathon', '2h 24m 50s'],
-                  ['100 KM Route', '7h 12m 30s'],
-                ].map(([label, val]) => (
-                  <div key={label} style={{ background: '#fff', border: '1px solid var(--line)', padding: '1rem' }}>
-                    <span style={{ color: 'var(--stone)', fontSize: '0.68rem', textTransform: 'uppercase', display: 'block' }}>{label}</span>
-                    <b style={{ fontSize: '1.3rem', color: 'var(--vermilion)', display: 'block', marginTop: '0.2rem' }}>{val}</b>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <ResultatsPanel token={token} me={me} members={members} />
         )}
 
         {activeTab === 'reseaute' && (
@@ -1398,7 +1343,7 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
   )
 }
 
-const NEW_RACE_FORM = { titre: '', date: '', lieu: '', type: '', description: '', siteInternet: '' }
+const NEW_RACE_FORM = { titre: '', date: '', lieu: '', type: '', distanceKm: '', description: '', siteInternet: '' }
 
 function formatRaceDate(iso) {
   if (!iso) return ''
@@ -1467,7 +1412,7 @@ function CoursesPanel({ token, me, members }) {
     setCreateSaving(true)
     setCreateMessage('')
     try {
-      await api.createRace(token, newForm)
+      await api.createRace(token, { ...newForm, distanceKm: newForm.distanceKm === '' ? 0 : Number(newForm.distanceKm) })
       setCreating(false)
       setNewForm(NEW_RACE_FORM)
       await loadRaces()
@@ -1597,7 +1542,10 @@ function CoursesPanel({ token, me, members }) {
               <div>{fieldLabel('Date')}<input type="date" required style={inputStyle} value={newForm.date} onChange={(e) => updateNewField('date', e.target.value)} /></div>
               <div>{fieldLabel('Type (ex : Semi-marathon, Trail…)')}<input type="text" style={inputStyle} value={newForm.type} onChange={(e) => updateNewField('type', e.target.value)} /></div>
             </div>
-            <div>{fieldLabel('Lieu')}<input type="text" style={inputStyle} value={newForm.lieu} onChange={(e) => updateNewField('lieu', e.target.value)} /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+              <div>{fieldLabel('Lieu')}<input type="text" style={inputStyle} value={newForm.lieu} onChange={(e) => updateNewField('lieu', e.target.value)} /></div>
+              <div>{fieldLabel('Distance (km)')}<input type="number" min="0" step="0.1" style={inputStyle} value={newForm.distanceKm} onChange={(e) => updateNewField('distanceKm', e.target.value)} /></div>
+            </div>
             <div>{fieldLabel('Site internet')}<input type="url" placeholder="https://…" style={inputStyle} value={newForm.siteInternet} onChange={(e) => updateNewField('siteInternet', e.target.value)} /></div>
             <div>{fieldLabel('Description')}<textarea rows={4} style={{ ...inputStyle, resize: 'vertical' }} value={newForm.description} onChange={(e) => updateNewField('description', e.target.value)} /></div>
 
@@ -1665,6 +1613,7 @@ function CoursesPanel({ token, me, members }) {
               <div style={{ display: 'grid', gap: '0.55rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', marginBottom: '1.2rem' }}>
                 {infoRow('Date', formatRaceDate(detail.race.date))}
                 {detail.race.lieu && infoRow('Lieu', detail.race.lieu)}
+                {detail.race.distanceKm > 0 && infoRow('Distance', `${detail.race.distanceKm} km`)}
                 {detail.race.description && infoRow('Description', detail.race.description)}
                 {detail.race.siteInternet && infoRow('Site internet', <a href={detail.race.siteInternet} target="_blank" rel="noreferrer" style={{ color: 'var(--vermilion)' }}>{detail.race.siteInternet}</a>)}
                 {infoRow('Créée par', `${detail.race.createdByPrenom} ${detail.race.createdByNom}`)}
@@ -1761,6 +1710,328 @@ function CoursesPanel({ token, me, members }) {
               )}
             </div>
           )}
+        </AdminModal>
+      )}
+
+      {openMember && (
+        <MemberDetailModal member={openMember} onClose={() => setOpenMemberId(null)} />
+      )}
+    </div>
+  )
+}
+
+// Formate un temps de course en secondes vers "32'16"" (ou "1h32'16""
+// au-delà d'une heure), comme affiché sur les sites de chronométrage.
+function formatTempsCourse(sec) {
+  if (sec === null || sec === undefined) return ''
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  const s = Math.floor(sec % 60)
+  const ss = String(s).padStart(2, '0')
+  return h > 0 ? `${h}h${String(m).padStart(2, '0')}'${ss}"` : `${m}'${ss}"`
+}
+
+function formatAllure(kmh) {
+  if (!kmh) return ''
+  return `${kmh.toLocaleString('fr-FR', { maximumFractionDigits: 1, minimumFractionDigits: 1 })} km/h`
+}
+
+const RESULT_FORM = { memberId: '', heures: '', minutes: '', secondes: '', classementGeneral: '', classementGeneralTotal: '', categorie: '', classementCategorie: '', classementCategorieTotal: '' }
+
+function resultFormFromResult(res) {
+  const h = Math.floor(res.tempsSecondes / 3600)
+  const m = Math.floor((res.tempsSecondes % 3600) / 60)
+  const s = res.tempsSecondes % 60
+  return {
+    memberId: String(res.memberId),
+    heures: h ? String(h) : '', minutes: String(m), secondes: String(s),
+    classementGeneral: res.classementGeneral ?? '', classementGeneralTotal: res.classementGeneralTotal ?? '',
+    categorie: res.categorie || '',
+    classementCategorie: res.classementCategorie ?? '', classementCategorieTotal: res.classementCategorieTotal ?? '',
+  }
+}
+
+function ResultatsPanel({ token, me, members }) {
+  const [openMemberId, setOpenMemberId] = useState(null)
+  const openMember = members?.find((m) => m.id === openMemberId) || null
+  const [races, setRaces] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+
+  const [openRaceId, setOpenRaceId] = useState(null)
+  const [detail, setDetail] = useState(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [detailError, setDetailError] = useState('')
+
+  const [editingResult, setEditingResult] = useState(null) // null = fermé, {} = nouveau, result = édition
+  const [resultForm, setResultForm] = useState(RESULT_FORM)
+  const [resultSaving, setResultSaving] = useState(false)
+  const [resultMessage, setResultMessage] = useState('')
+
+  useEffect(() => {
+    setLoading(true)
+    api.listRaces(token)
+      .then((data) => setRaces(data))
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false))
+  }, [token])
+
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const pastRaces = races
+    .filter((r) => r.date.slice(0, 10) < todayISO)
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+
+  function refreshDetail(id) {
+    return api.getRace(token, id).then((data) => setDetail(data))
+  }
+
+  function openRace(id) {
+    setOpenRaceId(id)
+    setDetail(null)
+    setDetailError('')
+    setDetailLoading(true)
+    setEditingResult(null)
+    refreshDetail(id).catch((err) => setDetailError(err.message)).finally(() => setDetailLoading(false))
+  }
+
+  function closeRace() {
+    setOpenRaceId(null)
+    setDetail(null)
+  }
+
+  function startNewResult() {
+    setResultForm(RESULT_FORM)
+    setResultMessage('')
+    setEditingResult({})
+  }
+
+  function startEditResult(res) {
+    setResultForm(resultFormFromResult(res))
+    setResultMessage('')
+    setEditingResult(res)
+  }
+
+  function updateResultField(key, value) {
+    setResultForm((f) => ({ ...f, [key]: value }))
+  }
+
+  async function handleSaveResult(e) {
+    e.preventDefault()
+    if (!resultForm.memberId) {
+      setResultMessage('Choisis un adhérent.')
+      return
+    }
+    const tempsSecondes = (Number(resultForm.heures) || 0) * 3600 + (Number(resultForm.minutes) || 0) * 60 + (Number(resultForm.secondes) || 0)
+    if (tempsSecondes <= 0) {
+      setResultMessage('Renseigne un temps.')
+      return
+    }
+    setResultSaving(true)
+    setResultMessage('')
+    try {
+      await api.upsertRaceResult(token, detail.race.id, Number(resultForm.memberId), {
+        tempsSecondes,
+        classementGeneral: resultForm.classementGeneral === '' ? null : Number(resultForm.classementGeneral),
+        classementGeneralTotal: resultForm.classementGeneralTotal === '' ? null : Number(resultForm.classementGeneralTotal),
+        categorie: resultForm.categorie,
+        classementCategorie: resultForm.classementCategorie === '' ? null : Number(resultForm.classementCategorie),
+        classementCategorieTotal: resultForm.classementCategorieTotal === '' ? null : Number(resultForm.classementCategorieTotal),
+      })
+      setEditingResult(null)
+      await Promise.all([refreshDetail(detail.race.id), api.listRaces(token).then(setRaces)])
+    } catch (err) {
+      setResultMessage(err.message)
+    } finally {
+      setResultSaving(false)
+    }
+  }
+
+  async function handleDeleteResult(res) {
+    try {
+      await api.deleteRaceResult(token, detail.race.id, res.memberId)
+      await Promise.all([refreshDetail(detail.race.id), api.listRaces(token).then(setRaces)])
+    } catch (err) {
+      setDetailError(err.message)
+    }
+  }
+
+  const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
+  const availableMembers = (members || []).filter((m) => editingResult?.memberId === m.id || !detail?.results?.some((r) => r.memberId === m.id))
+
+  return (
+    <div>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <span className="eyebrow">Performances officielles</span>
+        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Résultats &amp; Records du Club</h2>
+        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Chronos et classements des adhérents sur les courses passées du club.</p>
+      </div>
+
+      {loading && <p style={{ color: 'var(--stone)' }}>Chargement des courses…</p>}
+      {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+
+      {!loading && !loadError && (
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {pastRaces.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => openRace(r.id)}
+              style={{
+                background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.3rem 1.5rem', textAlign: 'left',
+                display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem',
+                cursor: 'pointer', fontFamily: 'inherit', width: '100%',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                  {r.type && (
+                    <span style={{ background: 'var(--vermilion)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', textTransform: 'uppercase' }}>{r.type}</span>
+                  )}
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--stone)' }}>{formatRaceDate(r.date)}</span>
+                </div>
+                <h3 style={{ fontSize: '1.3rem', textTransform: 'uppercase' }}>{r.titre}</h3>
+                {(r.lieu || r.distanceKm > 0) && (
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--ink-soft)', margin: '0.3rem 0 0' }}>
+                    {[r.lieu, r.distanceKm > 0 ? `${r.distanceKm} km` : null].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--vermilion)' }}>
+                  {r.resultsCount} résultat{r.resultsCount > 1 ? 's' : ''}
+                </span>
+                <span className="btn btn--ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.7rem' }}>Voir →</span>
+              </div>
+            </button>
+          ))}
+          {pastRaces.length === 0 && (
+            <p style={{ color: 'var(--stone)' }}>Aucune course passée pour le moment.</p>
+          )}
+        </div>
+      )}
+
+      {openRaceId && (
+        <AdminModal onClose={closeRace} maxWidth={720}>
+          {detailLoading && <p style={{ color: 'var(--stone)' }}>Chargement…</p>}
+          {detailError && <p style={{ color: 'var(--vermilion)' }}>{detailError}</p>}
+          {detail && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '0.8rem', borderBottom: '1px solid var(--line)', marginBottom: '1rem' }}>
+                <div>
+                  {detail.race.type && (
+                    <span style={{ background: 'var(--vermilion)', color: '#fff', fontFamily: 'var(--font-mono)', fontSize: '0.68rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', textTransform: 'uppercase' }}>{detail.race.type}</span>
+                  )}
+                  <h3 style={{ fontSize: '1.5rem', textTransform: 'uppercase', marginTop: '0.4rem' }}>{detail.race.titre}</h3>
+                </div>
+                <button type="button" onClick={closeRace} className="link-button" style={{ fontSize: '0.8rem' }}>Fermer ✕</button>
+              </div>
+
+              <div style={{ display: 'grid', gap: '0.55rem', fontFamily: 'var(--font-mono)', fontSize: '0.82rem', marginBottom: '1.2rem' }}>
+                {infoRow('Date', formatRaceDate(detail.race.date))}
+                {detail.race.lieu && infoRow('Lieu', detail.race.lieu)}
+                {detail.race.distanceKm > 0 && infoRow('Distance', `${detail.race.distanceKm} km`)}
+                {detail.race.siteInternet && infoRow('Site internet', <a href={detail.race.siteInternet} target="_blank" rel="noreferrer" style={{ color: 'var(--vermilion)' }}>{detail.race.siteInternet}</a>)}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                <b style={{ fontSize: '0.95rem' }}>Résultats ({detail.results.length})</b>
+                {detail.canEnterResults && (
+                  <button type="button" onClick={startNewResult} className="btn btn--solid" style={{ padding: '0.5rem 1rem', fontSize: '0.72rem' }}>+ Ajouter un résultat</button>
+                )}
+              </div>
+
+              {detail.results.length === 0 ? (
+                <p style={{ color: 'var(--stone)', fontSize: '0.85rem' }}>Aucun résultat enregistré pour cette course pour le moment.</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' }}>
+                  {detail.results.map((res) => (
+                    <div key={res.memberId} style={{ textAlign: 'center', background: 'var(--surface-2)', border: '1px solid var(--line)', padding: '0.8rem' }}>
+                      <AvatarButton photoUrl={res.photoUrl} nom={`${res.prenom} ${res.nom}`} size={56} onClick={() => setOpenMemberId(res.memberId)} />
+                      <div style={{ fontSize: '0.8rem', fontWeight: 'bold', marginTop: '0.4rem' }}>{res.prenom} {res.nom}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', marginTop: '0.3rem' }}>{formatTempsCourse(res.tempsSecondes)}</div>
+                      {res.allureKmh > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--stone)' }}>Allure : {formatAllure(res.allureKmh)}</div>}
+                      {res.classementGeneral && (
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--ink-soft)' }}>Général : {res.classementGeneral}{res.classementGeneralTotal ? `/${res.classementGeneralTotal}` : ''}</div>
+                      )}
+                      {res.categorie && (
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', color: 'var(--ink-soft)' }}>
+                          {res.categorie}{res.classementCategorie ? ` : ${res.classementCategorie}${res.classementCategorieTotal ? `/${res.classementCategorieTotal}` : ''}` : ''}
+                        </div>
+                      )}
+                      {detail.canEnterResults && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.6rem', marginTop: '0.5rem' }}>
+                          <button type="button" onClick={() => startEditResult(res)} className="link-button" style={{ fontSize: '0.68rem' }}>Modifier</button>
+                          <button type="button" onClick={() => handleDeleteResult(res)} className="link-button" style={{ fontSize: '0.68rem', color: 'var(--vermilion)' }}>Supprimer</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </AdminModal>
+      )}
+
+      {editingResult && detail && (
+        <AdminModal onClose={() => setEditingResult(null)} maxWidth={480}>
+          <form onSubmit={handleSaveResult} style={{ display: 'grid', gap: '0.9rem' }}>
+            <b style={{ fontSize: '1.05rem' }}>{editingResult.memberId ? 'Modifier le résultat' : 'Ajouter un résultat'}</b>
+
+            <div>
+              {fieldLabel('Adhérent')}
+              <select
+                required
+                disabled={!!editingResult.memberId}
+                style={inputStyle}
+                value={resultForm.memberId}
+                onChange={(e) => updateResultField('memberId', e.target.value)}
+              >
+                <option value="">— Choisir —</option>
+                {availableMembers.map((m) => (
+                  <option key={m.id} value={m.id}>{m.prenom} {m.nom}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              {fieldLabel('Temps')}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                <input type="number" min="0" placeholder="h" style={inputStyle} value={resultForm.heures} onChange={(e) => updateResultField('heures', e.target.value)} />
+                <input type="number" min="0" max="59" placeholder="min" style={inputStyle} value={resultForm.minutes} onChange={(e) => updateResultField('minutes', e.target.value)} />
+                <input type="number" min="0" max="59" placeholder="sec" style={inputStyle} value={resultForm.secondes} onChange={(e) => updateResultField('secondes', e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              {fieldLabel('Classement général')}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <input type="number" min="1" placeholder="Place" style={inputStyle} value={resultForm.classementGeneral} onChange={(e) => updateResultField('classementGeneral', e.target.value)} />
+                <input type="number" min="1" placeholder="Total participants" style={inputStyle} value={resultForm.classementGeneralTotal} onChange={(e) => updateResultField('classementGeneralTotal', e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              {fieldLabel('Catégorie (ex : SEH, M4F, M0H…)')}
+              <input type="text" style={inputStyle} value={resultForm.categorie} onChange={(e) => updateResultField('categorie', e.target.value)} />
+            </div>
+
+            <div>
+              {fieldLabel('Classement catégorie')}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <input type="number" min="1" placeholder="Place" style={inputStyle} value={resultForm.classementCategorie} onChange={(e) => updateResultField('classementCategorie', e.target.value)} />
+                <input type="number" min="1" placeholder="Total catégorie" style={inputStyle} value={resultForm.classementCategorieTotal} onChange={(e) => updateResultField('classementCategorieTotal', e.target.value)} />
+              </div>
+            </div>
+
+            {resultMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{resultMessage}</p>}
+            <div style={{ display: 'flex', gap: '0.8rem' }}>
+              <button type="submit" disabled={resultSaving} className="btn btn--solid" style={{ justifyContent: 'center', flex: 1 }}>
+                {resultSaving ? 'Enregistrement…' : 'Enregistrer'}
+              </button>
+              <button type="button" onClick={() => setEditingResult(null)} className="btn btn--ghost" style={{ justifyContent: 'center' }}>Annuler</button>
+            </div>
+          </form>
         </AdminModal>
       )}
 
@@ -1946,7 +2217,7 @@ function adminFormFromMember(m) {
     urgenceTelephone: m.urgenceTelephone || '', tailleMaillot: m.tailleMaillot || '', vma: m.vma ?? '', vmaDate: m.vmaDate || '',
 
     numeroLicence: m.numeroLicence || '', licenciePar: m.licenciePar || '', fonctionBureau: m.fonctionBureau || '',
-    droitAdminEvenements: !!m.droitAdminEvenements, droitUploadDocuments: !!m.droitUploadDocuments, origineContact: m.origineContact || '',
+    droitAdminEvenements: !!m.droitAdminEvenements, droitUploadDocuments: !!m.droitUploadDocuments, droitSaisieResultats: !!m.droitSaisieResultats, origineContact: m.origineContact || '',
     anneePremiereAdhesion: m.anneePremiereAdhesion ?? '', datePremiereAdhesion: m.datePremiereAdhesion || '',
     dateDernierCertificat: m.dateDernierCertificat || '', anneeDerniereAdhesion: m.anneeDerniereAdhesion ?? '',
     activiteSaison: m.activiteSaison || '', licenceFfaType: m.licenceFfaType || '',
@@ -1997,6 +2268,7 @@ function sortValue(m, key) {
 const BUREAU_FEATURES = [
   { field: 'droitAdminEvenements', label: 'Administrer les événements' },
   { field: 'droitUploadDocuments', label: 'Ajouter des documents' },
+  { field: 'droitSaisieResultats', label: 'Saisir les résultats' },
 ]
 
 function BureauRightsPanel({ token }) {

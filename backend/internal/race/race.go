@@ -20,23 +20,26 @@ type Race struct {
 	Date             time.Time `json:"date"`
 	Lieu             string    `json:"lieu"`
 	Type             string    `json:"type"`
+	DistanceKm       float64   `json:"distanceKm"`
 	Description      string    `json:"description"`
 	SiteInternet     string    `json:"siteInternet"`
 	CreatedBy        int64     `json:"createdBy"`
 	CreatedByPrenom  string    `json:"createdByPrenom"`
 	CreatedByNom     string    `json:"createdByNom"`
 	InscritsCount    int       `json:"inscritsCount"`
+	ResultsCount     int       `json:"resultsCount"`
 	IsRegisteredByMe bool      `json:"isRegisteredByMe"`
 }
 
 // RaceCreate est le sous-ensemble de champs fourni par l'adhérent qui crée une course.
 type RaceCreate struct {
-	Titre        string `json:"titre"`
-	Date         string `json:"date"`
-	Lieu         string `json:"lieu"`
-	Type         string `json:"type"`
-	Description  string `json:"description"`
-	SiteInternet string `json:"siteInternet"`
+	Titre        string  `json:"titre"`
+	Date         string  `json:"date"`
+	Lieu         string  `json:"lieu"`
+	Type         string  `json:"type"`
+	DistanceKm   float64 `json:"distanceKm"`
+	Description  string  `json:"description"`
+	SiteInternet string  `json:"siteInternet"`
 }
 
 // Participant est un adhérent inscrit à une course (ou recherchant/cédant un dossard).
@@ -46,6 +49,38 @@ type Participant struct {
 	Nom      string `json:"nom"`
 	PhotoURL string `json:"photoUrl"`
 	Email    string `json:"email"`
+}
+
+// RaceResult est le résultat officiel d'un adhérent sur une course, saisi
+// manuellement par un membre ayant le droit de saisie des résultats.
+// L'allure (km/h) n'est jamais stockée : elle est recalculée à chaque lecture
+// à partir de la distance de la course et du temps, pour rester toujours
+// cohérente si l'un des deux est corrigé après coup.
+type RaceResult struct {
+	ID                       int64   `json:"id"`
+	RaceID                   int64   `json:"raceId"`
+	MemberID                 int64   `json:"memberId"`
+	Prenom                   string  `json:"prenom"`
+	Nom                      string  `json:"nom"`
+	PhotoURL                 string  `json:"photoUrl"`
+	TempsSecondes            int     `json:"tempsSecondes"`
+	AllureKmh                float64 `json:"allureKmh"`
+	ClassementGeneral        *int    `json:"classementGeneral"`
+	ClassementGeneralTotal   *int    `json:"classementGeneralTotal"`
+	Categorie                string  `json:"categorie"`
+	ClassementCategorie      *int    `json:"classementCategorie"`
+	ClassementCategorieTotal *int    `json:"classementCategorieTotal"`
+}
+
+// RaceResultInput est le sous-ensemble de champs fourni par la personne qui
+// saisit un résultat pour un adhérent donné.
+type RaceResultInput struct {
+	TempsSecondes            int    `json:"tempsSecondes"`
+	ClassementGeneral        *int   `json:"classementGeneral"`
+	ClassementGeneralTotal   *int   `json:"classementGeneralTotal"`
+	Categorie                string `json:"categorie"`
+	ClassementCategorie      *int   `json:"classementCategorie"`
+	ClassementCategorieTotal *int   `json:"classementCategorieTotal"`
 }
 
 // dossardKindRecherche et dossardKindCession sont les deux valeurs possibles
@@ -64,16 +99,17 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 const raceColumns = `
-	r.id, r.titre, r.race_date, r.lieu, r.type, r.description, r.site_internet,
+	r.id, r.titre, r.race_date, r.lieu, r.type, r.distance_km, r.description, r.site_internet,
 	r.created_by, m.prenom, m.nom,
-	(SELECT COUNT(*) FROM race_registrations rr WHERE rr.race_id = r.id)
+	(SELECT COUNT(*) FROM race_registrations rr WHERE rr.race_id = r.id),
+	(SELECT COUNT(*) FROM race_results rz WHERE rz.race_id = r.id)
 `
 
 func scanRace(scan func(...any) error) (*Race, error) {
 	var race Race
 	if err := scan(
-		&race.ID, &race.Titre, &race.Date, &race.Lieu, &race.Type, &race.Description, &race.SiteInternet,
-		&race.CreatedBy, &race.CreatedByPrenom, &race.CreatedByNom, &race.InscritsCount,
+		&race.ID, &race.Titre, &race.Date, &race.Lieu, &race.Type, &race.DistanceKm, &race.Description, &race.SiteInternet,
+		&race.CreatedBy, &race.CreatedByPrenom, &race.CreatedByNom, &race.InscritsCount, &race.ResultsCount,
 	); err != nil {
 		return nil, err
 	}
@@ -156,9 +192,9 @@ func (r *Repository) fillIsRegistered(races []Race, viewerID int64) error {
 
 func (r *Repository) Create(memberID int64, rc RaceCreate) (int64, error) {
 	res, err := r.db.Exec(`
-		INSERT INTO races (titre, race_date, lieu, type, description, site_internet, created_by)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		rc.Titre, rc.Date, rc.Lieu, rc.Type, rc.Description, rc.SiteInternet, memberID,
+		INSERT INTO races (titre, race_date, lieu, type, distance_km, description, site_internet, created_by)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		rc.Titre, rc.Date, rc.Lieu, rc.Type, rc.DistanceKm, rc.Description, rc.SiteInternet, memberID,
 	)
 	if err != nil {
 		return 0, err
@@ -262,12 +298,85 @@ func (r *Repository) DossardIsSignaled(raceID, memberID int64, kind string) (boo
 	return true, nil
 }
 
-type Handler struct {
-	repo *Repository
+// Results retourne les résultats enregistrés pour une course, triés par
+// classement général (les résultats sans classement renseigné arrivent en
+// dernier). L'allure (km/h) est calculée à la volée à partir de la distance
+// de la course.
+func (r *Repository) Results(raceID int64, distanceKm float64) ([]RaceResult, error) {
+	rows, err := r.db.Query(`
+		SELECT rz.id, rz.race_id, rz.member_id, m.prenom, m.nom, m.photo_path,
+			rz.temps_secondes, rz.classement_general, rz.classement_general_total,
+			rz.categorie, rz.classement_categorie, rz.classement_categorie_total
+		FROM race_results rz
+		JOIN members m ON m.id = rz.member_id
+		WHERE rz.race_id = ?
+		ORDER BY (rz.classement_general IS NULL), rz.classement_general ASC, rz.temps_secondes ASC`, raceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []RaceResult{}
+	for rows.Next() {
+		var res RaceResult
+		if err := rows.Scan(
+			&res.ID, &res.RaceID, &res.MemberID, &res.Prenom, &res.Nom, &res.PhotoURL,
+			&res.TempsSecondes, &res.ClassementGeneral, &res.ClassementGeneralTotal,
+			&res.Categorie, &res.ClassementCategorie, &res.ClassementCategorieTotal,
+		); err != nil {
+			return nil, err
+		}
+		if distanceKm > 0 && res.TempsSecondes > 0 {
+			res.AllureKmh = distanceKm / (float64(res.TempsSecondes) / 3600.0)
+		}
+		results = append(results, res)
+	}
+	return results, rows.Err()
 }
 
-func NewHandler(repo *Repository) *Handler {
-	return &Handler{repo: repo}
+func (r *Repository) UpsertResult(raceID, memberID, enteredBy int64, in RaceResultInput) error {
+	_, err := r.db.Exec(`
+		INSERT INTO race_results (
+			race_id, member_id, temps_secondes, classement_general, classement_general_total,
+			categorie, classement_categorie, classement_categorie_total, created_by
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			temps_secondes = VALUES(temps_secondes),
+			classement_general = VALUES(classement_general),
+			classement_general_total = VALUES(classement_general_total),
+			categorie = VALUES(categorie),
+			classement_categorie = VALUES(classement_categorie),
+			classement_categorie_total = VALUES(classement_categorie_total),
+			created_by = VALUES(created_by)`,
+		raceID, memberID, in.TempsSecondes, in.ClassementGeneral, in.ClassementGeneralTotal,
+		in.Categorie, in.ClassementCategorie, in.ClassementCategorieTotal, enteredBy,
+	)
+	return err
+}
+
+func (r *Repository) DeleteResult(raceID, memberID int64) error {
+	_, err := r.db.Exec(`DELETE FROM race_results WHERE race_id = ? AND member_id = ?`, raceID, memberID)
+	return err
+}
+
+type Handler struct {
+	repo       *Repository
+	memberRepo *member.Repository
+}
+
+func NewHandler(repo *Repository, memberRepo *member.Repository) *Handler {
+	return &Handler{repo: repo, memberRepo: memberRepo}
+}
+
+// canEnterResults vérifie en base que l'adhérent est bureau ou dispose du
+// droit de saisie des résultats — comme pour canUpload côté documents, un
+// droit accordé après la connexion doit prendre effet sans reconnexion.
+func (h *Handler) canEnterResults(memberID int64) (bool, error) {
+	m, err := h.memberRepo.GetByID(memberID)
+	if err != nil {
+		return false, err
+	}
+	return m.IsBureau || m.DroitSaisieResultats, nil
 }
 
 func decodeJSON(r *http.Request, dst any) error {
@@ -359,14 +468,104 @@ func (h *Handler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	results, err := h.repo.Results(id, race.DistanceKm)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	canEnterResults, err := h.canEnterResults(viewerID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
 	httpx.JSON(w, http.StatusOK, map[string]any{
-		"race":           race,
-		"participants":   participants,
-		"seekingDossard": seeking,
-		"cedingDossard":  ceding,
-		"isSeekingByMe":  isSeeking,
-		"isCedingByMe":   isCeding,
+		"race":            race,
+		"participants":    participants,
+		"seekingDossard":  seeking,
+		"cedingDossard":   ceding,
+		"isSeekingByMe":   isSeeking,
+		"isCedingByMe":    isCeding,
+		"results":         results,
+		"canEnterResults": canEnterResults,
 	})
+}
+
+// UpsertResult crée ou met à jour le résultat d'un adhérent sur une course —
+// réservé au bureau ou aux adhérents ayant le droit de saisie des résultats.
+func (h *Handler) UpsertResult(w http.ResponseWriter, r *http.Request) {
+	memberID, ok := member.MemberIDFromContext(r.Context())
+	if !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	allowed, err := h.canEnterResults(memberID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	if !allowed {
+		httpx.Error(w, http.StatusForbidden, "vous n'avez pas le droit de saisir des résultats")
+		return
+	}
+	raceID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant de course invalide")
+		return
+	}
+	targetMemberID, err := strconv.ParseInt(r.PathValue("memberId"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant d'adhérent invalide")
+		return
+	}
+	var in RaceResultInput
+	if err := decodeJSON(r, &in); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	if in.TempsSecondes <= 0 {
+		httpx.Error(w, http.StatusBadRequest, "le temps est obligatoire")
+		return
+	}
+	if err := h.repo.UpsertResult(raceID, targetMemberID, memberID, in); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer le résultat")
+		return
+	}
+	httpx.JSON(w, http.StatusNoContent, nil)
+}
+
+// DeleteResult supprime le résultat d'un adhérent sur une course — réservé
+// au bureau ou aux adhérents ayant le droit de saisie des résultats.
+func (h *Handler) DeleteResult(w http.ResponseWriter, r *http.Request) {
+	memberID, ok := member.MemberIDFromContext(r.Context())
+	if !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	allowed, err := h.canEnterResults(memberID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	if !allowed {
+		httpx.Error(w, http.StatusForbidden, "vous n'avez pas le droit de supprimer des résultats")
+		return
+	}
+	raceID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant de course invalide")
+		return
+	}
+	targetMemberID, err := strconv.ParseInt(r.PathValue("memberId"), 10, 64)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "identifiant d'adhérent invalide")
+		return
+	}
+	if err := h.repo.DeleteResult(raceID, targetMemberID); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible de supprimer le résultat")
+		return
+	}
+	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
