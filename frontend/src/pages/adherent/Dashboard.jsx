@@ -1547,8 +1547,13 @@ function CoursesPanel({ token, me, members }) {
 
   const inputStyle = { padding: '0.6rem 0.75rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '0.85rem' }
 
-  const raceTypes = [...new Set(races.map((r) => r.type).filter(Boolean))].sort()
-  const filteredRaces = races.filter((r) => {
+  // Les courses passées sont consultables dans Résultats — Nos Courses ne
+  // montre que ce qui reste à venir.
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const upcomingRaces = races.filter((r) => r.date.slice(0, 10) >= todayISO)
+
+  const raceTypes = [...new Set(upcomingRaces.map((r) => r.type).filter(Boolean))].sort()
+  const filteredRaces = upcomingRaces.filter((r) => {
     if (typeFilter && r.type !== typeFilter) return false
     if (search) {
       const needle = search.toLowerCase()
@@ -1619,10 +1624,10 @@ function CoursesPanel({ token, me, members }) {
               </div>
             </button>
           ))}
-          {races.length === 0 && (
-            <p style={{ color: 'var(--stone)' }}>Aucune course proposée pour le moment. Soyez le premier à en créer une !</p>
+          {upcomingRaces.length === 0 && (
+            <p style={{ color: 'var(--stone)' }}>Aucune course à venir proposée pour le moment. Soyez le premier à en créer une !</p>
           )}
-          {races.length > 0 && filteredRaces.length === 0 && (
+          {upcomingRaces.length > 0 && filteredRaces.length === 0 && (
             <p style={{ color: 'var(--stone)' }}>Aucune course ne correspond à ces filtres.</p>
           )}
         </div>
