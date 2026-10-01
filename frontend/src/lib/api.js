@@ -26,6 +26,8 @@ export const api = {
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
   requestCode: (email) =>
     request('/auth/request-code', { method: 'POST', body: JSON.stringify({ email }) }),
+  verifyCode: (email, code) =>
+    request('/auth/verify-code', { method: 'POST', body: JSON.stringify({ email, code }) }),
   confirmCode: (email, code, newPassword) =>
     request('/auth/confirm-code', { method: 'POST', body: JSON.stringify({ email, code, newPassword }) }),
 

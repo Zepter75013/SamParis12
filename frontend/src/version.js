@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.8.1'
+export const APP_VERSION = '1.9.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.9.0',
+    date: '2 octobre 2026',
+    notes: "Email du code de vérification habillé aux couleurs du site (même style que l'email de bienvenue), au lieu d'un simple texte brut. Sur la page de connexion, les champs de nouveau mot de passe ne s'affichent plus qu'après vérification que le code saisi est correct — plus de formulaire de mot de passe affiché avant d'avoir un code valide.",
+  },
   {
     version: '1.8.1',
     date: '2 octobre 2026',

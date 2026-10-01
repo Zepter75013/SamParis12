@@ -46,6 +46,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 
 	mux.HandleFunc("POST /api/auth/login", memberHandler.Login)
 	mux.HandleFunc("POST /api/auth/request-code", memberHandler.RequestCode)
+	mux.HandleFunc("POST /api/auth/verify-code", memberHandler.VerifyCode)
 	mux.HandleFunc("POST /api/auth/confirm-code", memberHandler.ConfirmCode)
 
 	mux.HandleFunc("GET /api/members", authService.RequireAuth(memberHandler.ListPublic))

@@ -620,6 +620,40 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 	httpx.JSON(w, http.StatusNoContent, nil)
 }
 
+type verifyCodeRequest struct {
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}
+
+// VerifyCode vérifie qu'un code est valide (actif, non expiré, correspond au
+// hash stocké) SANS le consommer ni rien modifier — utilisé par l'écran de
+// connexion pour n'afficher les champs de nouveau mot de passe qu'après
+// confirmation que le code saisi est correct. ConfirmCode revalide et
+// consomme le code au moment de l'enregistrement effectif.
+func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
+	var req verifyCodeRequest
+	if err := decodeJSON(r, &req); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	m, err := h.repo.GetByEmail(email)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "code invalide ou expiré")
+		return
+	}
+	_, codeHash, err := h.repo.activeResetCode(m.ID)
+	if err != nil {
+		httpx.Error(w, http.StatusBadRequest, "code invalide ou expiré")
+		return
+	}
+	if bcrypt.CompareHashAndPassword([]byte(codeHash), []byte(strings.TrimSpace(req.Code))) != nil {
+		httpx.Error(w, http.StatusBadRequest, "code invalide ou expiré")
+		return
+	}
+	httpx.JSON(w, http.StatusNoContent, nil)
+}
+
 type confirmCodeRequest struct {
 	Email       string `json:"email"`
 	Code        string `json:"code"`

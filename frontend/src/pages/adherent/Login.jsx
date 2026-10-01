@@ -10,6 +10,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
+  const [codeVerified, setCodeVerified] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [newPassword2, setNewPassword2] = useState('')
   const [error, setError] = useState('')
@@ -37,6 +38,7 @@ export default function Login() {
     } catch (err) {
       if (err.data?.mustChangePassword) {
         setInfo("Première connexion : un code vous a été envoyé par email pour définir votre mot de passe.")
+        setCodeVerified(false)
         setStep('code')
         try {
           await api.requestCode(email)
@@ -61,7 +63,23 @@ export default function Login() {
     try {
       await api.requestCode(email)
       setInfo('Si un compte existe avec cette adresse, un code vient de vous être envoyé par email.')
+      setCodeVerified(false)
       setStep('code')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleVerifyCode(e) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await api.verifyCode(email, code)
+      setCodeVerified(true)
+      setInfo('')
     } catch (err) {
       setError(err.message)
     } finally {
@@ -142,7 +160,7 @@ export default function Login() {
               </button>
               <button
                 type="button"
-                onClick={() => { setError(''); setInfo(''); setStep('code') }}
+                onClick={() => { setError(''); setInfo(''); setCodeVerified(false); setStep('code') }}
                 className="link-button"
                 style={{ justifySelf: 'center', fontSize: '0.7rem', color: 'var(--stone)' }}
               >
@@ -152,35 +170,49 @@ export default function Login() {
           )}
 
           {step === 'code' && (
-            <form onSubmit={handleConfirmCode} style={{ display: 'grid', gap: '1.2rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
+            <form onSubmit={codeVerified ? handleConfirmCode : handleVerifyCode} style={{ display: 'grid', gap: '1.2rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
               <div>
                 <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
                   Code reçu par email
                 </label>
-                <input type="text" inputMode="numeric" className="login-input" value={code} onChange={(e) => setCode(e.target.value)} required />
+                <input
+                  type="text" inputMode="numeric" className="login-input"
+                  value={code} onChange={(e) => setCode(e.target.value)}
+                  required disabled={codeVerified}
+                />
               </div>
 
-              <div>
-                <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
-                  Nouveau mot de passe
-                </label>
-                <PasswordField className="login-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
-              </div>
+              {codeVerified && (
+                <>
+                  <p style={{ color: '#065f46', margin: 0 }}>✓ Code vérifié</p>
+                  <div>
+                    <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
+                      Nouveau mot de passe
+                    </label>
+                    <PasswordField className="login-input" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                  </div>
 
-              <div>
-                <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
-                  Confirmer le mot de passe
-                </label>
-                <PasswordField className="login-input" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} required />
-              </div>
+                  <div>
+                    <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
+                      Confirmer le mot de passe
+                    </label>
+                    <PasswordField className="login-input" value={newPassword2} onChange={(e) => setNewPassword2(e.target.value)} required />
+                  </div>
+                </>
+              )}
 
               <div style={{ paddingTop: '0.5rem' }}>
                 <button type="submit" disabled={loading} className="btn btn--solid" style={{ width: '100%', justifyContent: 'center', padding: '0.85rem', fontSize: '0.75rem' }}>
-                  {loading ? 'Validation…' : 'Valider et me connecter'}
+                  {codeVerified ? (loading ? 'Validation…' : 'Valider et me connecter') : (loading ? 'Vérification…' : 'Vérifier le code')}
                 </button>
               </div>
 
-              <button type="button" onClick={() => setStep('login')} className="link-button" style={{ justifySelf: 'center' }}>
+              <button
+                type="button"
+                onClick={() => { setStep('login'); setCodeVerified(false); setCode('') }}
+                className="link-button"
+                style={{ justifySelf: 'center' }}
+              >
                 ← Retour à la connexion
               </button>
             </form>

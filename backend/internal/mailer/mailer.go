@@ -36,23 +36,24 @@ func New(cfg config.Config) *Mailer {
 // de passe) à l'adresse donnée. Si le SMTP n'est pas configuré (dev sans
 // identifiants), le code est simplement journalisé côté serveur.
 func (m *Mailer) SendCode(to, code string) error {
+	subject := "SAM Paris 12 — Votre code de vérification"
+	textBody := fmt.Sprintf(
+		"Bonjour,\r\n\r\nVoici votre code de vérification pour définir votre mot de passe sur l'Espace Adhérent SAM Paris 12 :\r\n\r\n    %s\r\n\r\nCe code est valable 15 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.\r\n\r\nSAM Paris 12",
+		code,
+	)
+	htmlBody := fmt.Sprintf(codeHTMLTemplate, code)
+
 	if m.cfg.SMTPHost == "" || m.cfg.SMTPUsername == "" {
 		log.Printf("mailer: SMTP non configuré, code pour %s : %s", to, code)
 		return nil
 	}
 
-	subject := "SAM Paris 12 — Votre code de vérification"
-	body := fmt.Sprintf(
-		"Bonjour,\r\n\r\nVoici votre code de vérification pour définir votre mot de passe sur l'Espace Adhérent SAM Paris 12 :\r\n\r\n    %s\r\n\r\nCe code est valable 15 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.\r\n\r\nSAM Paris 12",
-		code,
-	)
-	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nDate: %s\r\nMessage-Id: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
-		m.cfg.SMTPFrom, to, subject, time.Now().Format(time.RFC1123Z), messageID(""), body)
+	msg := buildAlternativeMessage(m.cfg.SMTPFrom, to, subject, textBody, htmlBody)
 
 	addr := m.cfg.SMTPHost + ":" + m.cfg.SMTPPort
 	auth := smtp.PlainAuth("", m.cfg.SMTPUsername, m.cfg.SMTPPassword, m.cfg.SMTPHost)
 
-	return smtp.SendMail(addr, auth, m.cfg.SMTPFrom, []string{to}, []byte(msg))
+	return smtp.SendMail(addr, auth, m.cfg.SMTPFrom, []string{to}, msg)
 }
 
 // SendWelcome envoie à un nouvel adhérent (créé par le bureau) l'email de
@@ -108,6 +109,55 @@ func buildAlternativeMessage(from, to, subject, textBody, htmlBody string) []byt
 	fmt.Fprintf(&b, "--%s--\r\n", boundary)
 	return []byte(b.String())
 }
+
+// codeHTMLTemplate reprend la charte du site (même bandeau et mise en page
+// que welcomeHTMLTemplate) — à usage avec fmt.Sprintf et un seul paramètre,
+// le code.
+const codeHTMLTemplate = `<!DOCTYPE html>
+<html>
+<body style="margin:0;padding:0;background:#EEEBE6;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background:#EEEBE6;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="background:#FBFAF9;border:1px solid #DEDAD3;max-width:480px;width:100%%;">
+          <tr>
+            <td style="background:#DE3327;padding:28px 32px;">
+              <span style="color:#ffffff;font-size:22px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">SAM Paris 12</span>
+              <div style="color:#ffffff;opacity:0.85;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:4px;">Club d'athlétisme &middot; Espace adhérent</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <h1 style="margin:0 0 16px;font-size:20px;color:#1C1917;text-transform:uppercase;">Ton code de vérification</h1>
+              <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#4A4441;">
+                Voici le code à saisir sur l'espace adhérent du SAM Paris 12 pour définir ton mot de passe&nbsp;:
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%%">
+                <tr>
+                  <td align="center" style="background:#EEEBE6;border:1px solid #DEDAD3;padding:18px;">
+                    <span style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#DE3327;font-family:'Courier New',monospace;">%s</span>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:20px 0 0;font-size:12px;line-height:1.6;color:#877D75;">
+                Ce code est valable 15 minutes. Si tu n'es pas à l'origine de cette demande, ignore simplement ce message.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px;border-top:1px solid #DEDAD3;">
+              <p style="margin:0;font-size:11px;color:#877D75;text-transform:uppercase;letter-spacing:0.5px;">
+                SAM Paris 12 &middot; Club d'athlétisme hors stade &middot; Paris 12e
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`
 
 // welcomeHTMLTemplate reprend la charte du site (bandeau vermillon, typo
 // condensée majuscule, bouton plein sans arrondi) — à usage avec fmt.Sprintf
