@@ -2264,23 +2264,61 @@ const RECORD_VIEWS = [
   { id: 'autres', label: 'Autres records' },
 ]
 
-function RecordsPanel() {
+function recordsToCsv(rows) {
+  const header = ['Type', 'Catégorie', 'Genre', 'Adhérent', 'Temps', 'Allure (km/h)', 'Course', 'Date']
+  const lines = [header, ...rows.map((r) => [
+    r.type || '', r.categorie || '', r.genre || '', `${r.prenom} ${r.nom}`,
+    formatTempsCourse(r.tempsSecondes), r.allureKmh ? r.allureKmh.toFixed(1).replace('.', ',') : '',
+    r.raceTitre, r.raceDate ? r.raceDate.slice(0, 10) : '',
+  ])]
+  return lines.map((l) => l.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n')
+}
+
+function RecordsPanel({ token, members }) {
   const [view, setView] = useState('feminin')
-  // TODO : brancher sur de vraies données une fois importées (voir Résultats
-  // pour le même type d'import depuis le site réel).
-  const records = []
-  const filtered = records.filter((r) => {
-    if (view === 'feminin') return r.genre === 'femme'
-    if (view === 'masculin') return r.genre === 'homme'
-    return true
-  })
+  const [data, setData] = useState({ byType: [], byCategory: [], hitParade: [] })
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [openMemberId, setOpenMemberId] = useState(null)
+  const openMember = members?.find((m) => m.id === openMemberId) || null
+
+  useEffect(() => {
+    setLoading(true)
+    api.getClubRecords(token)
+      .then(setData)
+      .catch((err) => setLoadError(err.message))
+      .finally(() => setLoading(false))
+  }, [token])
+
+  const rows = view === 'feminin' ? data.byType.filter((r) => r.genre === 'femme')
+    : view === 'masculin' ? data.byType.filter((r) => r.genre === 'homme')
+    : view === 'type' ? data.byType
+    : view === 'categorie' ? data.byCategory
+    : view === 'hitparade' ? data.hitParade
+    : []
+
+  function handleExport() {
+    if (rows.length === 0) {
+      window.alert("Aucune donnée à exporter pour cette vue.")
+      return
+    }
+    const blob = new Blob(['﻿' + recordsToCsv(rows)], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `records-club-${view}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div>
       <div style={{ marginBottom: '1.5rem' }}>
         <span className="eyebrow">Performances historiques</span>
         <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Records du Club</h2>
-        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Meilleures performances réalisées par les adhérents du SAM Paris 12 sur chaque épreuve.</p>
+        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>
+          Meilleures performances des adhérents du SAM Paris 12, calculées à partir des résultats enregistrés dans l'onglet Résultats.
+        </p>
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
@@ -2297,7 +2335,7 @@ function RecordsPanel() {
         ))}
         <button
           type="button"
-          onClick={() => window.alert("Aucune donnée à exporter pour le moment.")}
+          onClick={handleExport}
           className="btn btn--ghost"
           style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', marginLeft: 'auto' }}
         >
@@ -2305,18 +2343,54 @@ function RecordsPanel() {
         </button>
       </div>
 
-      {filtered.length === 0 ? (
-        <p style={{ color: 'var(--stone)' }}>Les records du club n'ont pas encore été importés sur le nouveau site.</p>
-      ) : (
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          {filtered.map((r) => (
-            <div key={r.id} style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.1rem 1.3rem' }}>
-              <b>{r.epreuve}</b>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{r.performance}</div>
-              <div style={{ fontSize: '0.8rem', color: 'var(--ink-soft)' }}>{r.detenteurNom}{r.date ? ` · ${r.date}` : ''}</div>
-            </div>
-          ))}
-        </div>
+      {loading && <p style={{ color: 'var(--stone)' }}>Chargement des records…</p>}
+      {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
+
+      {!loading && !loadError && (
+        view === 'autres' ? (
+          <p style={{ color: 'var(--stone)' }}>Aucun record de ce type pour le moment.</p>
+        ) : rows.length === 0 ? (
+          <p style={{ color: 'var(--stone)' }}>Aucun résultat chronométré enregistré pour le moment — saisis des résultats dans l'onglet Résultats pour voir apparaître les records ici.</p>
+        ) : (
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.68rem' }}>
+                  {view === 'hitparade' && <th style={{ padding: '0.8rem 1rem' }}>#</th>}
+                  <th style={{ padding: '0.8rem 1rem' }}>Type</th>
+                  {(view === 'categorie') && <th style={{ padding: '0.8rem 1rem' }}>Catégorie</th>}
+                  {(view === 'type' || view === 'hitparade') && <th style={{ padding: '0.8rem 1rem' }}>Genre</th>}
+                  <th style={{ padding: '0.8rem 1rem' }}>Adhérent</th>
+                  <th style={{ padding: '0.8rem 1rem' }}>Temps</th>
+                  <th style={{ padding: '0.8rem 1rem' }}>Allure</th>
+                  <th style={{ padding: '0.8rem 1rem' }}>Course</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={`${r.raceId}-${r.memberId}-${r.categorie}`} style={{ borderBottom: '1px solid var(--line)' }}>
+                    {view === 'hitparade' && <td style={{ padding: '0.8rem 1rem', color: 'var(--vermilion)', fontWeight: 'bold' }}>{i + 1}</td>}
+                    <td style={{ padding: '0.8rem 1rem' }}>{r.type}</td>
+                    {view === 'categorie' && <td style={{ padding: '0.8rem 1rem' }}>{r.categorie}</td>}
+                    {(view === 'type' || view === 'hitparade') && <td style={{ padding: '0.8rem 1rem', textTransform: 'capitalize' }}>{r.genre}</td>}
+                    <td style={{ padding: '0.8rem 1rem' }}>
+                      <button type="button" onClick={() => setOpenMemberId(r.memberId)} className="link-button" style={{ fontFamily: 'inherit', fontSize: 'inherit' }}>
+                        {r.prenom} {r.nom}
+                      </button>
+                    </td>
+                    <td style={{ padding: '0.8rem 1rem', fontWeight: 'bold' }}>{formatTempsCourse(r.tempsSecondes)}</td>
+                    <td style={{ padding: '0.8rem 1rem', color: 'var(--ink-soft)' }}>{formatAllure(r.allureKmh)}</td>
+                    <td style={{ padding: '0.8rem 1rem', color: 'var(--ink-soft)' }}>{r.raceTitre} · {formatRaceDate(r.raceDate)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      )}
+
+      {openMember && (
+        <MemberRaceCardModal member={openMember} token={token} onClose={() => setOpenMemberId(null)} />
       )}
     </div>
   )

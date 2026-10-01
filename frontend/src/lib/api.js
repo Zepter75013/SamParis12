@@ -73,6 +73,7 @@ export const api = {
     request(`/members/${memberId}/race-results${limit ? `?limit=${limit}` : ''}`, { token }),
   getMemberUpcomingRaces: (token, memberId) =>
     request(`/members/${memberId}/upcoming-races`, { token }),
+  getClubRecords: (token) => request('/records', { token }),
 
   listDocuments: (token) => request('/documents', { token }),
   uploadDocument: (token, formData) => request('/documents', { method: 'POST', token, body: formData }),

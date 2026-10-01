@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.6.1'
+export const APP_VERSION = '1.7.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.7.0',
+    date: '1er octobre 2026',
+    notes: "Records du Club calculés automatiquement à partir des résultats déjà enregistrés (onglet Résultats) : meilleur temps par type de course et par genre, par catégorie FFA, et hit-parade des meilleures allures. Export Excel (CSV) fonctionnel pour la vue affichée. « Autres records » reste vide : aucune notion correspondante dans les données actuelles.",
+  },
   {
     version: '1.6.1',
     date: '1er octobre 2026',

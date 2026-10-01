@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"samparis12/backend/internal/httpx"
@@ -847,4 +849,150 @@ func (h *Handler) MemberUpcomingRaces(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.JSON(w, http.StatusOK, races)
+}
+
+// ClubRecord est une performance d'adhérent candidate à un record — les
+// records du club ne sont pas saisis à part : ils sont calculés à la volée
+// à partir des résultats de courses déjà enregistrés (race_results).
+type ClubRecord struct {
+	RaceID        int64     `json:"raceId"`
+	RaceTitre     string    `json:"raceTitre"`
+	RaceDate      time.Time `json:"raceDate"`
+	Type          string    `json:"type"`
+	DistanceKm    float64   `json:"distanceKm"`
+	MemberID      int64     `json:"memberId"`
+	Prenom        string    `json:"prenom"`
+	Nom           string    `json:"nom"`
+	PhotoURL      string    `json:"photoUrl"`
+	TempsSecondes int       `json:"tempsSecondes"`
+	AllureKmh     float64   `json:"allureKmh"`
+	Categorie     string    `json:"categorie"`
+	Genre         string    `json:"genre"` // "homme" ou "femme", déduit du suffixe H/F de la catégorie FFA
+}
+
+// genreFromCategorie déduit le genre à partir du suffixe conventionnel des
+// catégories FFA (ex: SEH, M2H -> homme ; SEF, M2F -> femme). Renvoie une
+// chaîne vide si la catégorie ne suit pas cette convention.
+func genreFromCategorie(categorie string) string {
+	c := strings.ToUpper(strings.TrimSpace(categorie))
+	switch {
+	case strings.HasSuffix(c, "H"):
+		return "homme"
+	case strings.HasSuffix(c, "F"):
+		return "femme"
+	default:
+		return ""
+	}
+}
+
+// timedResults retourne tous les résultats chronométrés (temps renseigné)
+// avec le contexte nécessaire au calcul des records.
+func (r *Repository) timedResults() ([]ClubRecord, error) {
+	rows, err := r.db.Query(`
+		SELECT rz.race_id, ra.titre, ra.race_date, ra.type, ra.distance_km,
+			rz.member_id, m.prenom, m.nom, m.photo_path, rz.temps_secondes, rz.categorie
+		FROM race_results rz
+		JOIN races ra ON ra.id = rz.race_id
+		JOIN members m ON m.id = rz.member_id
+		WHERE rz.temps_secondes > 0`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	results := []ClubRecord{}
+	for rows.Next() {
+		var cr ClubRecord
+		if err := rows.Scan(
+			&cr.RaceID, &cr.RaceTitre, &cr.RaceDate, &cr.Type, &cr.DistanceKm,
+			&cr.MemberID, &cr.Prenom, &cr.Nom, &cr.PhotoURL, &cr.TempsSecondes, &cr.Categorie,
+		); err != nil {
+			return nil, err
+		}
+		cr.Genre = genreFromCategorie(cr.Categorie)
+		if cr.DistanceKm > 0 {
+			cr.AllureKmh = cr.DistanceKm / (float64(cr.TempsSecondes) / 3600.0)
+		}
+		results = append(results, cr)
+	}
+	return results, rows.Err()
+}
+
+// bestPerKey ne garde que la meilleure performance (temps le plus faible)
+// par clé de groupement.
+func bestPerKey(all []ClubRecord, keyOf func(ClubRecord) (string, bool)) []ClubRecord {
+	best := map[string]ClubRecord{}
+	for _, c := range all {
+		key, ok := keyOf(c)
+		if !ok {
+			continue
+		}
+		if existing, found := best[key]; !found || c.TempsSecondes < existing.TempsSecondes {
+			best[key] = c
+		}
+	}
+	out := make([]ClubRecord, 0, len(best))
+	for _, v := range best {
+		out = append(out, v)
+	}
+	return out
+}
+
+// ClubRecords calcule les records du club à partir des résultats de courses
+// enregistrés : meilleur temps par (type de course, genre) et par (type de
+// course, catégorie FFA), plus un hit-parade des meilleures allures tous
+// types confondus.
+func (h *Handler) ClubRecords(w http.ResponseWriter, r *http.Request) {
+	if _, ok := member.MemberIDFromContext(r.Context()); !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	all, err := h.repo.timedResults()
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
+	byType := bestPerKey(all, func(c ClubRecord) (string, bool) {
+		if c.Type == "" || c.Genre == "" {
+			return "", false
+		}
+		return c.Type + "|" + c.Genre, true
+	})
+	sort.Slice(byType, func(i, j int) bool {
+		if byType[i].Type != byType[j].Type {
+			return byType[i].Type < byType[j].Type
+		}
+		return byType[i].Genre < byType[j].Genre
+	})
+
+	byCategory := bestPerKey(all, func(c ClubRecord) (string, bool) {
+		if c.Type == "" || c.Categorie == "" {
+			return "", false
+		}
+		return c.Type + "|" + c.Categorie, true
+	})
+	sort.Slice(byCategory, func(i, j int) bool {
+		if byCategory[i].Type != byCategory[j].Type {
+			return byCategory[i].Type < byCategory[j].Type
+		}
+		return byCategory[i].Categorie < byCategory[j].Categorie
+	})
+
+	hitParade := make([]ClubRecord, 0, len(all))
+	for _, c := range all {
+		if c.AllureKmh > 0 {
+			hitParade = append(hitParade, c)
+		}
+	}
+	sort.Slice(hitParade, func(i, j int) bool { return hitParade[i].AllureKmh > hitParade[j].AllureKmh })
+	if len(hitParade) > 20 {
+		hitParade = hitParade[:20]
+	}
+
+	httpx.JSON(w, http.StatusOK, map[string]any{
+		"byType":     byType,
+		"byCategory": byCategory,
+		"hitParade":  hitParade,
+	})
 }
