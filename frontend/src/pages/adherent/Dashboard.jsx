@@ -201,7 +201,19 @@ function AvatarButton({ photoUrl, nom, size, onClick }) {
   )
 }
 
-function MemberDetailModal({ member, onClose }) {
+function MemberDetailModal({ member, token, onClose }) {
+  const [results, setResults] = useState([])
+  const [resultsLoading, setResultsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!member) return
+    setResultsLoading(true)
+    api.getMemberResults(token, member.id, 5)
+      .then(setResults)
+      .catch(() => setResults([]))
+      .finally(() => setResultsLoading(false))
+  }, [member, token])
+
   if (!member) return null
   return (
     <div
@@ -261,9 +273,29 @@ function MemberDetailModal({ member, onClose }) {
 
         <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
           <span className="eyebrow">Derniers résultats</span>
-          <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem', fontStyle: 'italic' }}>
-            Fonctionnalité de démonstration — dans l'espace adhérent réel, cette section affiche l'historique des courses de l'adhérent (date, épreuve, temps, classement).
-          </p>
+          {resultsLoading ? (
+            <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem' }}>Chargement…</p>
+          ) : results.length === 0 ? (
+            <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem' }}>Aucun résultat enregistré pour le moment.</p>
+          ) : (
+            <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.6rem' }}>
+              {results.map((r) => (
+                <div key={r.raceId} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', padding: '0.6rem 0.8rem', fontSize: '0.8rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    <span><span style={{ fontFamily: 'var(--font-mono)', color: 'var(--stone)', marginRight: '0.5rem' }}>{formatRaceDate(r.raceDate)}</span><b>{r.raceTitre}</b></span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>{formatTempsCourse(r.tempsSecondes)}</span>
+                  </div>
+                  {(r.classementGeneral || r.categorie) && (
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
+                      {r.classementGeneral && `Général : ${r.classementGeneral}${r.classementGeneralTotal ? `/${r.classementGeneralTotal}` : ''}`}
+                      {r.classementGeneral && r.categorie && ' · '}
+                      {r.categorie}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -677,7 +709,7 @@ export default function Dashboard() {
             </div>
 
             {openMember && (
-              <MemberDetailModal member={openMember} onClose={() => setOpenMember(null)} />
+              <MemberDetailModal member={openMember} token={token} onClose={() => setOpenMember(null)} />
             )}
           </div>
         )}
@@ -1777,7 +1809,7 @@ function CoursesPanel({ token, me, members }) {
       )}
 
       {openMember && (
-        <MemberDetailModal member={openMember} onClose={() => setOpenMemberId(null)} />
+        <MemberDetailModal member={openMember} token={token} onClose={() => setOpenMemberId(null)} />
       )}
     </div>
   )

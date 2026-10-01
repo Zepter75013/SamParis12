@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.7.1'
+export const APP_VERSION = '1.8.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.8.0',
+    date: '2 octobre 2026',
+    notes: "Trombinoscope : la fiche d'un adhérent affiche maintenant ses 5 derniers résultats (date, épreuve, temps, classement), à la place du message de fonctionnalité de démonstration.",
+  },
   {
     version: '1.7.1',
     date: '1er octobre 2026',
