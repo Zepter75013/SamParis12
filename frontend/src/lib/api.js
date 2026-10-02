@@ -21,6 +21,9 @@ async function request(path, { token, headers, ...options } = {}) {
 
 export const api = {
   getPartners: () => request('/partners'),
+  getPublicRaces: () => request('/public/races'),
+  getPublicResults: () => request('/public/results'),
+  getPublicRecords: () => request('/public/records'),
 
   login: (email, password) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),

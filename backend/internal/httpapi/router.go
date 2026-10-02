@@ -80,6 +80,11 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/members/{id}/upcoming-races", authService.RequireAuth(raceHandler.MemberUpcomingRaces))
 	mux.HandleFunc("GET /api/records", authService.RequireAuth(raceHandler.ClubRecords))
 
+	// Vues publiques du site vitrine (sans authentification, sans donnée nominative).
+	mux.HandleFunc("GET /api/public/races", raceHandler.PublicRaces)
+	mux.HandleFunc("GET /api/public/results", raceHandler.PublicResults)
+	mux.HandleFunc("GET /api/public/records", raceHandler.PublicRecords)
+
 	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
 	mux.HandleFunc("POST /api/documents", authService.RequireAuth(documentHandler.Upload))
 

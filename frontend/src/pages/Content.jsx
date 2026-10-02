@@ -2,16 +2,19 @@ import { Link } from 'react-router-dom'
 import ContentBlocks from '../components/ContentBlocks.jsx'
 import { Legs, sectionsFromBlocks } from '../components/Legs.jsx'
 import { SITE } from '../data/siteContent.js'
+import { api } from '../lib/api.js'
+import { useFetch } from '../lib/useFetch.js'
 
 // Gabarit commun : titre de page, introduction, puis un parcours de bornes
 // (une borne numérotée par section), comme sur l'accueil.
-function Page({ eyebrow, title, intro, sections, note }) {
+function Page({ eyebrow, title, intro, sections, note, status }) {
   return (
     <main>
       <div className="shell page-head">
         <p className="eyebrow">{eyebrow}</p>
         <h1>{title}</h1>
         {intro && <div className="prose">{intro}</div>}
+        {status && <p className="note">{status}</p>}
       </div>
       <Legs sections={sections} />
       {note && <div className="shell"><p className="note">{note}</p></div>}
@@ -162,8 +165,6 @@ export function LeClubPage() {
   return <Page eyebrow="Qui sommes-nous" title="Le club" sections={sections} />
 }
 
-const SNAPSHOT_NOTE = `Données reprises du site actuel du club (état au ${SITE.instantane}).`
-
 function groupBy(list, keyOf) {
   const groups = []
   for (const item of list) {
@@ -175,12 +176,28 @@ function groupBy(list, keyOf) {
   return groups
 }
 
+function statusOf({ loading, error }, count) {
+  if (loading) return 'Chargement…'
+  if (error) return 'Impossible de charger ces données pour le moment.'
+  if (count === 0) return 'Rien à afficher pour le moment.'
+  return null
+}
+
+function formatTemps(sec) {
+  const h = Math.floor(sec / 3600)
+  const m = Math.floor((sec % 3600) / 60)
+  const s = sec % 60
+  const ss = String(s).padStart(2, '0')
+  return h > 0 ? `${h}h${String(m).padStart(2, '0')}'${ss}"` : `${m}'${ss}"`
+}
+
+// Les pages Compétition lisent les données du club en base (API publique, sans aucune donnée nominative).
 export function NosCoursesPage() {
-  const today = new Date().toISOString().slice(0, 10)
-  const rows = SITE.prochainesCourses.filter((c) => c.iso >= today).sort((a, b) => (a.iso < b.iso ? -1 : 1))
-  const sections = groupBy(rows, (c) => c.iso.slice(0, 7)).map((g) => ({
+  const res = useFetch(() => api.getPublicRaces(), [])
+  const rows = [...(res.data || [])].sort((a, b) => (a.date < b.date ? -1 : 1))
+  const sections = groupBy(rows, (c) => c.date.slice(0, 7)).map((g) => ({
     eyebrow: `${g.items.length} course${g.items.length > 1 ? 's' : ''}`,
-    title: monthLabel(g.items[0].iso),
+    title: monthLabel(g.items[0].date),
     wide: true,
     children: (
       <div className="table-wrap">
@@ -188,11 +205,11 @@ export function NosCoursesPage() {
           <thead><tr><th>Date</th><th>Type</th><th>Course</th><th className="num">Inscrits SAM</th></tr></thead>
           <tbody>
             {g.items.map((c) => (
-              <tr key={c.iso + c.titre}>
-                <td>{formatDate(c.iso)}</td>
+              <tr key={c.id}>
+                <td>{formatDate(c.date)}</td>
                 <td>{c.type}</td>
-                <td>{c.url ? <a href={c.url} target="_blank" rel="noreferrer">{c.titre}</a> : c.titre}</td>
-                <td className="num">{c.inscrits}</td>
+                <td>{c.siteInternet ? <a href={c.siteInternet} target="_blank" rel="noreferrer">{c.titre}</a> : c.titre}</td>
+                <td className="num">{c.inscritsCount}</td>
               </tr>
             ))}
           </tbody>
@@ -200,33 +217,36 @@ export function NosCoursesPage() {
       </div>
     ),
   }))
-  sections.push({
-    eyebrow: 'Notre course',
-    title: 'Les Foulées du 12ème',
-    children: (
-      <p className="lead-note">
-        Depuis 2005, le club organise les Foulées du 12<sup>e</sup>, anciennes Foulées d'Aligre : une course
-        organisée par des coureurs pour des coureurs. Inscriptions et résultats des éditions passées sur{' '}
-        <a href="http://foulees.samparis12.org/" target="_blank" rel="noreferrer" style={{ color: 'var(--vermilion)' }}>foulees.samparis12.org</a>.
-      </p>
-    ),
-  })
+  if (!res.loading && !res.error) {
+    sections.push({
+      eyebrow: 'Notre course',
+      title: 'Les Foulées du 12ème',
+      children: (
+        <p className="lead-note">
+          Depuis 2005, le club organise les Foulées du 12<sup>e</sup>, anciennes Foulées d'Aligre : une course
+          organisée par des coureurs pour des coureurs. Inscriptions et résultats des éditions passées sur{' '}
+          <a href="http://foulees.samparis12.org/" target="_blank" rel="noreferrer" style={{ color: 'var(--vermilion)' }}>foulees.samparis12.org</a>.
+        </p>
+      ),
+    })
+  }
   return (
     <Page
       eyebrow="Compétition"
       title="Nos prochaines courses"
-      intro={<p>Nos coureurs sont inscrits à de nombreuses compétitions sur les mois à venir. Voici celles ayant plus de 5 inscrits SAM Paris 12.</p>}
+      intro={<p>Voici les courses à venir auxquelles nos coureurs sont inscrits.</p>}
+      status={statusOf(res, rows.length)}
       sections={sections}
-      note={SNAPSHOT_NOTE}
     />
   )
 }
 
 export function NosResultatsPage() {
-  const rows = [...SITE.derniersResultats].sort((a, b) => (a.iso < b.iso ? 1 : -1))
-  const sections = groupBy(rows, (r) => r.iso.slice(0, 7)).map((g) => ({
+  const res = useFetch(() => api.getPublicResults(), [])
+  const rows = [...(res.data || [])].sort((a, b) => (a.date < b.date ? 1 : -1))
+  const sections = groupBy(rows, (r) => r.date.slice(0, 7)).map((g) => ({
     eyebrow: `${g.items.length} course${g.items.length > 1 ? 's' : ''}`,
-    title: monthLabel(g.items[0].iso),
+    title: monthLabel(g.items[0].date),
     wide: true,
     children: (
       <div className="table-wrap">
@@ -236,12 +256,12 @@ export function NosResultatsPage() {
           </thead>
           <tbody>
             {g.items.map((r) => (
-              <tr key={r.iso + r.titre}>
-                <td>{formatDate(r.iso)}</td>
+              <tr key={r.id}>
+                <td>{formatDate(r.date)}</td>
                 <td>{r.type}</td>
-                <td>{r.url ? <a href={r.url} target="_blank" rel="noreferrer">{r.titre}</a> : r.titre}</td>
+                <td>{r.siteInternet ? <a href={r.siteInternet} target="_blank" rel="noreferrer">{r.titre}</a> : r.titre}</td>
                 <td className="num">{r.classesSam}</td>
-                <td className="num">{r.meilleurRang ? `${r.meilleurRang} / ${r.meilleurTotal}` : '—'}</td>
+                <td className="num">{r.meilleurRang ? `${r.meilleurRang}${r.meilleurTotal ? ` / ${r.meilleurTotal}` : ''}` : '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -253,9 +273,9 @@ export function NosResultatsPage() {
     <Page
       eyebrow="Compétition"
       title="Nos derniers résultats"
-      intro={<p>Voici les participations les plus importantes et les résultats les plus significatifs de nos coureurs.</p>}
+      intro={<p>Les résultats de nos coureurs sur les douze derniers mois.</p>}
+      status={statusOf(res, rows.length)}
       sections={sections}
-      note={SNAPSHOT_NOTE}
     />
   )
 }
@@ -264,23 +284,32 @@ function RecordCell({ rec }) {
   if (!rec) return <td className="rec rec--empty">—</td>
   return (
     <td className="rec">
-      <b>{rec.temps}</b>
-      <span>{rec.course}</span>
-      <span>{rec.date}</span>
+      <b>{formatTemps(rec.tempsSecondes)}</b>
+      <span>{rec.raceTitre}</span>
+      <span>{formatDate(rec.raceDate)}</span>
     </td>
   )
 }
 
+const RECORD_ORDER = ['5 km route', '10 km route', '15 km route', '20 km route', 'Semi-marathon', 'Marathon', '50 km', '100 km']
 const RECORD_GROUPS = [
   { title: 'Route', eyebrow: '5 km à 20 km', match: (e) => /^(5|10|15|20) km/.test(e) },
   { title: 'Semi-marathon et marathon', eyebrow: 'Grandes distances', match: (e) => /marathon/i.test(e) },
   { title: 'Ultra', eyebrow: '50 km et 100 km', match: (e) => /^(50|100) km/.test(e) },
-  { title: 'Piste', eyebrow: '800 m à 10 000 m', match: (e) => /^Piste/.test(e) },
 ]
 
 export function NosPerformancesPage() {
+  const res = useFetch(() => api.getPublicRecords(), [])
+  const list = res.data || []
+  const byEpreuve = RECORD_ORDER
+    .map((e) => ({
+      epreuve: e,
+      femme: list.find((r) => r.epreuve === e && r.genre === 'femme') || null,
+      homme: list.find((r) => r.epreuve === e && r.genre === 'homme') || null,
+    }))
+    .filter((r) => r.femme || r.homme)
   const sections = RECORD_GROUPS
-    .map((g) => ({ g, rows: SITE.records.filter((r) => g.match(r.epreuve)) }))
+    .map((g) => ({ g, rows: byEpreuve.filter((r) => g.match(r.epreuve)) }))
     .filter(({ rows }) => rows.length > 0)
     .map(({ g, rows }) => ({
       eyebrow: g.eyebrow,
@@ -307,9 +336,9 @@ export function NosPerformancesPage() {
     <Page
       eyebrow="Compétition"
       title="Nos meilleures performances"
-      intro={<p>Records du club depuis 2000.</p>}
+      intro={<p>Les records du club, calculés à partir des résultats enregistrés.</p>}
+      status={statusOf(res, byEpreuve.length)}
       sections={sections}
-      note={SNAPSHOT_NOTE}
     />
   )
 }

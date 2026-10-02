@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.12.2'
+export const APP_VERSION = '1.13.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.13.0',
+    date: '2 octobre 2026',
+    notes: "Rubrique Compétition du site public alimentée par les données du club en base (et non plus par un instantané du site actuel) : Nos courses (courses à venir avec inscrits), Nos résultats (12 derniers mois, classés et meilleur classement) et Nos performances (records calculés), via de nouvelles API publiques sans donnée nominative. Nous y étions reste un contenu éditorial.",
+  },
   {
     version: '1.12.2',
     date: '2 octobre 2026',

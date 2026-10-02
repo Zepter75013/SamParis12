@@ -996,3 +996,148 @@ func (h *Handler) ClubRecords(w http.ResponseWriter, r *http.Request) {
 		"hitParade":  hitParade,
 	})
 }
+
+// ---------------------------------------------------------------------------
+// Vues publiques (site vitrine) : aucune donnée nominative, jamais.
+
+// PublicRace est une course à venir vue depuis le site public.
+type PublicRace struct {
+	ID            int64     `json:"id"`
+	Titre         string    `json:"titre"`
+	Date          time.Time `json:"date"`
+	Type          string    `json:"type"`
+	DistanceKm    float64   `json:"distanceKm"`
+	SiteInternet  string    `json:"siteInternet"`
+	InscritsCount int       `json:"inscritsCount"`
+}
+
+// PublicRaces liste les courses à venir auxquelles au moins `min` adhérents
+// sont inscrits (1 par défaut), par date croissante.
+func (h *Handler) PublicRaces(w http.ResponseWriter, r *http.Request) {
+	min := 1
+	if v, err := strconv.Atoi(r.URL.Query().Get("min")); err == nil && v > 0 {
+		min = v
+	}
+	rows, err := h.repo.db.Query(`
+		SELECT r.id, r.titre, r.race_date, r.type, r.distance_km, r.site_internet,
+			(SELECT COUNT(*) FROM race_registrations rr WHERE rr.race_id = r.id) AS n
+		FROM races r
+		WHERE r.race_date >= CURDATE()
+		HAVING n >= ?
+		ORDER BY r.race_date ASC, r.titre ASC`, min)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	defer rows.Close()
+
+	out := []PublicRace{}
+	for rows.Next() {
+		var p PublicRace
+		if err := rows.Scan(&p.ID, &p.Titre, &p.Date, &p.Type, &p.DistanceKm, &p.SiteInternet, &p.InscritsCount); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+			return
+		}
+		out = append(out, p)
+	}
+	if err := rows.Err(); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, out)
+}
+
+// PublicResult résume une course passée : combien d'adhérents classés et le
+// meilleur classement général obtenu par l'un d'eux, sans l'identifier.
+type PublicResult struct {
+	ID            int64     `json:"id"`
+	Titre         string    `json:"titre"`
+	Date          time.Time `json:"date"`
+	Type          string    `json:"type"`
+	DistanceKm    float64   `json:"distanceKm"`
+	SiteInternet  string    `json:"siteInternet"`
+	ClassesSam    int       `json:"classesSam"`
+	MeilleurRang  *int      `json:"meilleurRang"`
+	MeilleurTotal *int      `json:"meilleurTotal"`
+}
+
+// PublicResults liste les courses des 12 derniers mois pour lesquelles des
+// résultats ont été saisis, de la plus récente à la plus ancienne.
+func (h *Handler) PublicResults(w http.ResponseWriter, r *http.Request) {
+	rows, err := h.repo.db.Query(`
+		SELECT r.id, r.titre, r.race_date, r.type, r.distance_km, r.site_internet,
+			(SELECT COUNT(*) FROM race_results rz WHERE rz.race_id = r.id) AS n,
+			(SELECT rz.classement_general FROM race_results rz
+				WHERE rz.race_id = r.id AND rz.classement_general IS NOT NULL
+				ORDER BY rz.classement_general ASC LIMIT 1),
+			(SELECT rz.classement_general_total FROM race_results rz
+				WHERE rz.race_id = r.id AND rz.classement_general IS NOT NULL
+				ORDER BY rz.classement_general ASC LIMIT 1)
+		FROM races r
+		WHERE r.race_date < CURDATE() AND r.race_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+		HAVING n > 0
+		ORDER BY r.race_date DESC, r.titre ASC`)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	defer rows.Close()
+
+	out := []PublicResult{}
+	for rows.Next() {
+		var p PublicResult
+		if err := rows.Scan(&p.ID, &p.Titre, &p.Date, &p.Type, &p.DistanceKm, &p.SiteInternet, &p.ClassesSam, &p.MeilleurRang, &p.MeilleurTotal); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+			return
+		}
+		out = append(out, p)
+	}
+	if err := rows.Err(); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, out)
+}
+
+// PublicRecord est le meilleur temps du club sur une épreuve et un genre,
+// sans le nom du détenteur (comme sur le site actuel du club).
+type PublicRecord struct {
+	Epreuve       string    `json:"epreuve"`
+	Genre         string    `json:"genre"`
+	TempsSecondes int       `json:"tempsSecondes"`
+	RaceTitre     string    `json:"raceTitre"`
+	RaceDate      time.Time `json:"raceDate"`
+}
+
+// recordEpreuves : seules les épreuves à distance fixe donnent des records
+// comparables (un trail ou un cross n'a pas de distance standard).
+var recordEpreuves = map[string]bool{
+	"5 km route": true, "10 km route": true, "15 km route": true, "20 km route": true,
+	"Semi-marathon": true, "Marathon": true, "50 km": true, "100 km": true,
+}
+
+// PublicRecords calcule les records du club à partir des résultats saisis.
+func (h *Handler) PublicRecords(w http.ResponseWriter, r *http.Request) {
+	all, err := h.repo.timedResults()
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	best := bestPerKey(all, func(c ClubRecord) (string, bool) {
+		if !recordEpreuves[c.Type] || c.Genre == "" {
+			return "", false
+		}
+		return c.Type + "|" + c.Genre, true
+	})
+	out := make([]PublicRecord, 0, len(best))
+	for _, c := range best {
+		out = append(out, PublicRecord{Epreuve: c.Type, Genre: c.Genre, TempsSecondes: c.TempsSecondes, RaceTitre: c.RaceTitre, RaceDate: c.RaceDate})
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].Epreuve != out[j].Epreuve {
+			return out[i].Epreuve < out[j].Epreuve
+		}
+		return out[i].Genre < out[j].Genre
+	})
+	httpx.JSON(w, http.StatusOK, out)
+}
