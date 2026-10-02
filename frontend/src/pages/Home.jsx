@@ -129,20 +129,13 @@ export default function Home() {
             <p className="eyebrow">Qui sommes-nous</p>
             <h2>Un club centenaire, la première référence hors stade à Paris</h2>
             <p className="lead-note">
-              Fondé en 1887 et affilié à la Fédération Française d'Athlétisme, le SAM Paris 12
-              rassemble plus de 675 adhérents, dont 44&nbsp;% de femmes. C'est aujourd'hui le
-              premier club d'athlétisme hors stade de Paris.
+              Fondé en 1887 et affilié à la Fédération Française d'Athlétisme, le SAM Paris 12 est
+              aujourd'hui le premier club d'athlétisme hors stade de Paris, distingué en 2026 par la
+              FFA (Label Or Running, Label Bronze Stade).
             </p>
-            <p>
-              En 2026, la FFA lui a décerné le Label Or pour le secteur Running et le Label Bronze
-              pour le secteur Stade, récompensant la qualité de son encadrement : 28 entraîneurs
-              de course à pied hors stade et 5 entraîneurs de marche nordique, tous diplômés et
-              bénévoles.
-            </p>
-            <p>
-              <Link to="/le-club" style={{ color: 'var(--vermilion)' }}>Conseil d'administration, entraîneurs et effectifs →</Link>
-              {' '}
-              <Link to="/histoire" style={{ color: 'var(--vermilion)' }}>L'histoire du club →</Link>
+            <p className="more-links">
+              <Link to="/le-club">Le club : conseil d'administration, entraîneurs, effectifs →</Link>
+              <Link to="/histoire">L'histoire du club →</Link>
             </p>
           </div>
         </section>
