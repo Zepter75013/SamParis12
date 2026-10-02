@@ -750,3 +750,5 @@ footer {
 .leg__body h2 + .journal,
 .leg__body h2 + .people,
 .leg__body h2 + .disc { margin-top: 1rem; }
+
+.menu-km { display: inline-block; min-width: 1.7rem; color: var(--vermilion); font-weight: 600; }

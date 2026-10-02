@@ -1,39 +1,32 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { BORNES } from '../data/rubriques.js'
 
-// Reprend les rubriques du menu du site actuel du club.
-const GROUPS = [
-  {
-    label: 'Le club',
-    items: [
-      { to: '/le-club', label: 'Qui sommes-nous' },
-      { to: '/histoire', label: 'Histoire du club' },
-      { to: '/horaires', label: 'Horaires et lieux' },
-      { to: '/terrain', label: 'Notre terrain de jeu' },
-      { to: '/marche-nordique', label: 'Marche nordique' },
-    ],
-  },
-  {
-    label: 'Compétition',
-    items: [
-      { to: '/nos-courses', label: 'Nos courses' },
-      { to: '/nos-resultats', label: 'Nos résultats' },
-      { to: '/nos-performances', label: 'Nos performances' },
-      { to: '/nous-y-etions', label: 'Nous y étions' },
-    ],
-  },
-]
+// Le menu suit exactement les bornes de l'accueil : même ordre, mêmes intitulés, même numéro de km.
+const item = (b, i) => ({ to: b.to, label: b.theme, n: i + 1 })
+const ITEMS = BORNES.map(item)
 
-const DIRECT = [
-  { to: '/adhesion', label: 'Adhésion' },
-  { to: '/contact', label: 'Contact' },
+// Ordre du menu = ordre des bornes (1-5 le club, 6 adhésion, 7-10 compétition, 11 contact).
+const MENU = [
+  { group: 'Le club', items: ITEMS.slice(0, 5) },
+  { ...ITEMS[5], label: 'Adhésion' },
+  { group: 'Compétition', items: ITEMS.slice(6, 10) },
+  { ...ITEMS[10], label: 'Contact' },
   { href: 'http://foulees.samparis12.org/', label: 'Les Foulées' },
 ]
 
-function NavLink({ item, onClick }) {
-  return item.href
-    ? <a href={item.href} target="_blank" rel="noreferrer" onClick={onClick}>{item.label}</a>
-    : <Link to={item.to} onClick={onClick}>{item.label}</Link>
+function MenuLink({ it, onClick }) {
+  return (
+    <Link to={it.to} onClick={onClick}>
+      <b className="menu-km">{String(it.n).padStart(2, '0')}</b>{it.label}
+    </Link>
+  )
+}
+
+function NavLink({ item: it, onClick }) {
+  return it.href
+    ? <a href={it.href} target="_blank" rel="noreferrer" onClick={onClick}>{it.label}</a>
+    : <Link to={it.to} title={`Km ${it.n}`} onClick={onClick}>{it.label}</Link>
 }
 
 export default function Header() {
@@ -50,15 +43,14 @@ export default function Header() {
           </span>
         </Link>
         <nav className="nav-links" aria-label="Principale">
-          {GROUPS.map((g) => (
-            <div className="nav-group" key={g.label}>
-              <button type="button" className="nav-group__btn" aria-haspopup="true">{g.label} <span aria-hidden="true">▾</span></button>
+          {MENU.map((m) => (m.group ? (
+            <div className="nav-group" key={m.group}>
+              <button type="button" className="nav-group__btn" aria-haspopup="true">{m.group} <span aria-hidden="true">▾</span></button>
               <div className="nav-menu">
-                {g.items.map((it) => <Link key={it.to} to={it.to}>{it.label}</Link>)}
+                {m.items.map((it) => <MenuLink key={it.to} it={it} />)}
               </div>
             </div>
-          ))}
-          {DIRECT.map((it) => <NavLink key={it.label} item={it} />)}
+          ) : <NavLink key={m.label} item={m} />))}
         </nav>
         <div className="nav-actions">
           <Link to="/espace-adherent" className="btn-adherent-nav">
@@ -92,17 +84,14 @@ export default function Header() {
       </div>
       {open && <div className="nav-backdrop open" onClick={() => setOpen(false)} />}
       <nav className={`nav-drawer${open ? ' open' : ''}`} id="drawer" aria-label="Mobile">
-        {GROUPS.map((g) => (
-          <div className="drawer-group" key={g.label}>
-            <span className="drawer-title">{g.label}</span>
-            {g.items.map((it) => (
-              <Link key={it.to} to={it.to} onClick={() => setOpen(false)}>{it.label}</Link>
+        {MENU.map((m) => (m.group ? (
+          <div className="drawer-group" key={m.group}>
+            <span className="drawer-title">{m.group}</span>
+            {m.items.map((it) => (
+              <MenuLink key={it.to} it={it} onClick={() => setOpen(false)} />
             ))}
           </div>
-        ))}
-        {DIRECT.map((it) => (
-          <NavLink key={it.label} item={it} onClick={() => setOpen(false)} />
-        ))}
+        ) : <NavLink key={m.label} item={m} onClick={() => setOpen(false)} />))}
         <Link to="/espace-adherent" onClick={() => setOpen(false)} className="btn-adherent-nav">
           <span className="dot-status" />
           Espace adhérent →
