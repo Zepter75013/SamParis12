@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.14.0'
+export const APP_VERSION = '1.14.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.14.1',
+    date: '2 octobre 2026',
+    notes: "Photos : les sous-menus passent de nouveau au-dessus des bandeaux photo (le bandeau héritait du style collant du menu) ; les photos ne sont plus tronquées : bandeaux de pages avec photo entière à côté du titre, photo entière au-dessus du texte sur mobile, recadrage de l'accueil réduit sur grand écran.",
+  },
   {
     version: '1.14.0',
     date: '2 octobre 2026',

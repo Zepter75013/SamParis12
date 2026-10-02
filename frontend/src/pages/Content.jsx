@@ -11,16 +11,17 @@ import { useFetch } from '../lib/useFetch.js'
 function Page({ eyebrow, title, intro, sections, note, status }) {
   return (
     <main>
-      <header className="page-hero">
-        <img src={bannerPhoto(title)} alt="" decoding="async" />
-        <div className="page-hero__veil" />
-        <div className="shell">
-          <p className="eyebrow">{eyebrow}</p>
-          <h1>{title}</h1>
-          {intro && <div className="prose">{intro}</div>}
-          {status && <p className="note">{status}</p>}
+      <section className="page-hero">
+        <div className="shell page-hero__grid">
+          <div className="page-hero__text">
+            <p className="eyebrow">{eyebrow}</p>
+            <h1>{title}</h1>
+            {intro && <div className="prose">{intro}</div>}
+            {status && <p className="note">{status}</p>}
+          </div>
+          <img className="page-hero__photo" src={bannerPhoto(title)} alt="" decoding="async" />
         </div>
-      </header>
+      </section>
       <Legs sections={sections} />
       {note && <div className="shell"><p className="note">{note}</p></div>}
     </main>
