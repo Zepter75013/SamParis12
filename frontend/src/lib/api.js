@@ -24,6 +24,7 @@ export const api = {
   getPublicRaces: () => request('/public/races'),
   getPublicResults: () => request('/public/results'),
   getPublicRecords: () => request('/public/records'),
+  getPublicStats: () => request('/public/stats'),
 
   login: (email, password) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),

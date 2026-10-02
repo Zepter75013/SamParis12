@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Borne, useActiveLegs } from '../components/Legs.jsx'
 import { BORNES } from '../data/rubriques.js'
+import { api } from '../lib/api.js'
+import { useFetch } from '../lib/useFetch.js'
 
 export default function Home() {
   const lineRef = useRef(null)
@@ -42,6 +44,9 @@ export default function Home() {
   }, [])
 
   useActiveLegs()
+  // Effectifs réels du club (base de données) ; tant qu'ils ne sont pas chargés, rien d'inventé.
+  const { data: stats } = useFetch(() => api.getPublicStats(), [])
+  const ages = stats && stats.ageMin != null && stats.ageMax != null ? `${stats.ageMin} → ${stats.ageMax} ans` : null
 
   return (
     <main id="top">
@@ -66,8 +71,10 @@ export default function Home() {
           <p className="eyebrow">Club d'athlétisme affilié FFA · Porte de Charenton · Fondé en 1887</p>
           <h1>On court le 12<sup>e</sup> depuis <em>1887</em></h1>
           <p className="lead">
-            Premier club d'athlétisme hors stade de Paris, avec 686 adhérents de 16 à 84 ans.
-            Running du 5 km à l'ultra-trail, marche nordique sportive : un encadrement diplômé
+            Premier club d'athlétisme hors stade de Paris
+            {stats ? `, avec ${stats.adherents} adhérents` : ''}
+            {stats && ages ? ` de ${stats.ageMin} à ${stats.ageMax} ans` : ''}.
+            {' '}Running du 5 km à l'ultra-trail, marche nordique sportive : un encadrement diplômé
             FFA, pour tous les niveaux.
           </p>
           <div className="hero-actions">
@@ -92,12 +99,12 @@ export default function Home() {
           <dd>1887</dd>
         </div>
         <div>
-          <dt>Adhérents (2 oct. 2026)</dt>
-          <dd>686</dd>
+          <dt>Adhérents</dt>
+          <dd>{stats ? stats.adherents : '—'}</dd>
         </div>
         <div>
           <dt>Âges accueillis</dt>
-          <dd>16 → 84 ans</dd>
+          <dd>{ages || 'Dès 16 ans'}</dd>
         </div>
         <div>
           <dt>Créneaux hebdo</dt>

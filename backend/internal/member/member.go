@@ -1158,3 +1158,91 @@ func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
 	}
 	httpx.JSON(w, http.StatusOK, m)
 }
+
+// ---------------------------------------------------------------------------
+// Statistiques publiques (site vitrine) : agrégats uniquement, aucune donnée nominative.
+
+type ActiviteCount struct {
+	Activite string `json:"activite"`
+	Nombre   int    `json:"nombre"`
+}
+
+type TrancheAgeCount struct {
+	Tranche string `json:"tranche"`
+	Nombre  int    `json:"nombre"`
+}
+
+type PublicStats struct {
+	Adherents   int               `json:"adherents"`
+	AgeMin      *int              `json:"ageMin"`
+	AgeMax      *int              `json:"ageMax"`
+	Activites   []ActiviteCount   `json:"activites"`
+	TranchesAge []TrancheAgeCount `json:"tranchesAge"`
+}
+
+// PublicStats calcule les effectifs du club à partir des adhérents en base :
+// total, âges extrêmes et répartition par activité et par tranche de 5 ans
+// (uniquement pour les adhérents dont la date de naissance est renseignée).
+func (h *Handler) PublicStats(w http.ResponseWriter, r *http.Request) {
+	db := h.repo.db
+	var st PublicStats
+	st.Activites = []ActiviteCount{}
+	st.TranchesAge = []TrancheAgeCount{}
+
+	if err := db.QueryRow(`SELECT COUNT(*) FROM members`).Scan(&st.Adherents); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+
+	var ageMin, ageMax sql.NullInt64
+	if err := db.QueryRow(`
+		SELECT MIN(TIMESTAMPDIFF(YEAR, date_naissance, CURDATE())), MAX(TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()))
+		FROM members WHERE date_naissance IS NOT NULL`).Scan(&ageMin, &ageMax); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	if ageMin.Valid {
+		v := int(ageMin.Int64)
+		st.AgeMin = &v
+	}
+	if ageMax.Valid {
+		v := int(ageMax.Int64)
+		st.AgeMax = &v
+	}
+
+	rows, err := db.Query(`
+		SELECT activite_saison, COUNT(*) FROM members
+		WHERE activite_saison <> '' GROUP BY activite_saison ORDER BY COUNT(*) DESC, activite_saison`)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	for rows.Next() {
+		var a ActiviteCount
+		if err := rows.Scan(&a.Activite, &a.Nombre); err != nil {
+			rows.Close()
+			httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+			return
+		}
+		st.Activites = append(st.Activites, a)
+	}
+	rows.Close()
+
+	rows, err = db.Query(`
+		SELECT FLOOR(TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()) / 5) * 5 AS b, COUNT(*)
+		FROM members WHERE date_naissance IS NOT NULL GROUP BY b ORDER BY b`)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var b, n int
+		if err := rows.Scan(&b, &n); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+			return
+		}
+		st.TranchesAge = append(st.TranchesAge, TrancheAgeCount{Tranche: fmt.Sprintf("%d-%d", b, b+4), Nombre: n})
+	}
+	httpx.JSON(w, http.StatusOK, st)
+}

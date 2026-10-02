@@ -752,3 +752,9 @@ footer {
 .leg__body h2 + .disc { margin-top: 1rem; }
 
 .menu-km { display: inline-block; min-width: 1.7rem; color: var(--vermilion); font-weight: 600; }
+
+.ages { max-width: 40rem; font-family: var(--font-mono); font-size: 0.8rem; }
+.ages-row { display: grid; grid-template-columns: 6rem 1fr 2.5rem; align-items: center; gap: 0.6rem; margin: 3px 0; }
+.ages-row b { font-weight: 600; }
+.ages-bar div { height: 1.05rem; background: var(--vermilion); }
+.ages-row span { text-align: right; }

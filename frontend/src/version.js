@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.13.0'
+export const APP_VERSION = '1.13.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.13.1',
+    date: '2 octobre 2026',
+    notes: "Accueil et page Le club : effectifs réels du club (nombre d'adhérents, âges extrêmes, répartition par activité et par tranche d'âge) calculés à partir de la base via une API publique agrégée, à la place des chiffres du site actuel (686 adhérents, 16 à 84 ans) ; la pyramide des âges par genre est retirée faute de donnée de genre.",
+  },
   {
     version: '1.13.0',
     date: '2 octobre 2026',

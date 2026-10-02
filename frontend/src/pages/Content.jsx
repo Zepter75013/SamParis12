@@ -59,34 +59,6 @@ export const MarcheNordiquePage = () => (
   <ArticlePage eyebrow="Disciplines" title="Marche nordique" blocks={SITE.marcheNordique} level="h3" />
 )
 
-function Pyramide() {
-  const max = Math.max(...SITE.pyramide.flatMap((b) => [Number(b.femmes) || 0, Number(b.hommes) || 0]))
-  const totalF = SITE.pyramide.reduce((s, b) => s + (Number(b.femmes) || 0), 0)
-  const totalH = SITE.pyramide.reduce((s, b) => s + (Number(b.hommes) || 0), 0)
-  const total = totalF + totalH
-  return (
-    <div className="pyr" role="img" aria-label={`Pyramide des âges : ${totalF} femmes et ${totalH} hommes`}>
-      <div className="pyr-legend">
-        <span><i style={{ background: 'var(--vermilion)' }} /> Femmes · {totalF} ({Math.round((totalF / total) * 100)} %)</span>
-        <span><i style={{ background: 'var(--ink-soft)' }} /> Hommes · {totalH} ({Math.round((totalH / total) * 100)} %)</span>
-      </div>
-      {SITE.pyramide.map((b) => (
-        <div className="pyr-row" key={b.tranche}>
-          <div className="pyr-side pyr-side--f">
-            <span>{Number(b.femmes) || ''}</span>
-            <div className="pyr-bar"><div style={{ width: `${((Number(b.femmes) || 0) / max) * 100}%`, background: 'var(--vermilion)' }} /></div>
-          </div>
-          <b>{b.tranche}</b>
-          <div className="pyr-side">
-            <div className="pyr-bar"><div style={{ width: `${((Number(b.hommes) || 0) / max) * 100}%`, background: 'var(--ink-soft)' }} /></div>
-            <span>{Number(b.hommes) || ''}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function People({ list }) {
   return (
     <ul className="people">
@@ -97,8 +69,61 @@ function People({ list }) {
   )
 }
 
+// Le texte de présentation vient du site actuel et cite des chiffres de ce site (675 adhérents, 44 % de
+// femmes, 16 à 84 ans) : on les remplace par ceux de la base, ou par une formule neutre tant qu'ils manquent.
+function withStats(blocks, stats) {
+  const hasAges = stats && stats.ageMin != null && stats.ageMax != null
+  const nb = stats ? `${stats.adherents} adhérents` : 'de nombreux adhérents'
+  const ages = hasAges ? `ont entre ${stats.ageMin} et ${stats.ageMax} ans` : 'sont de toutes les générations'
+  return blocks.map((b) => (b.t !== 'p' ? b : {
+    ...b,
+    lines: b.lines.map((l) => l
+      .replace('plus de 675 adhérents, dont 44% de femmes', nb)
+      .replace('ont entre 16 et 84 ans', ages)),
+  }))
+}
+
+function EffectifsTable({ stats }) {
+  return (
+    <table className="data-table data-table--narrow">
+      <thead><tr><th>Activité</th><th className="num">Adhérents</th></tr></thead>
+      <tbody>
+        {stats.activites.map((a) => (
+          <tr key={a.activite}><td>{a.activite}</td><td className="num">{a.nombre}</td></tr>
+        ))}
+        <tr className="total"><td>Total</td><td className="num">{stats.adherents}</td></tr>
+      </tbody>
+    </table>
+  )
+}
+
+// Répartition par tranche d'âge (adhérents dont la date de naissance est connue).
+function Ages({ tranches }) {
+  const max = Math.max(...tranches.map((t) => t.nombre))
+  return (
+    <div className="ages">
+      {tranches.map((t) => (
+        <div className="ages-row" key={t.tranche}>
+          <b>{t.tranche} ans</b>
+          <div className="ages-bar"><div style={{ width: `${(t.nombre / max) * 100}%` }} /></div>
+          <span>{t.nombre}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function effectifsSections(stats) {
+  const out = [{ title: 'Effectifs', children: <EffectifsTable stats={stats} /> }]
+  if (stats.tranchesAge.length > 0) {
+    out.push({ title: 'Répartition par âge', wide: true, children: <Ages tranches={stats.tranchesAge} /> })
+  }
+  return out
+}
+
 export function LeClubPage() {
-  const textSections = sectionsFromBlocks(SITE.leClub, 'h3').map((s) => ({
+  const { data: stats } = useFetch(() => api.getPublicStats(), [])
+  const textSections = sectionsFromBlocks(withStats(SITE.leClub, stats), 'h3').map((s) => ({
     title: s.title,
     children: <ContentBlocks blocks={s.blocks} />,
   }))
@@ -145,22 +170,7 @@ export function LeClubPage() {
         </>
       ),
     },
-    {
-      title: `Effectifs au ${SITE.effectifsDate}`,
-      children: (
-        <table className="data-table data-table--narrow">
-          <thead><tr><th>Activité</th><th className="num">Adhérents</th></tr></thead>
-          <tbody>
-            {SITE.effectifs.map((e) => (
-              <tr key={e.activite} className={e.activite === 'Total' ? 'total' : ''}>
-                <td>{e.activite}</td><td className="num">{e.nombre}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ),
-    },
-    { title: `Pyramide des âges au ${SITE.effectifsDate}`, wide: true, children: <Pyramide /> },
+    ...(stats ? effectifsSections(stats) : []),
   ]
   return <Page eyebrow="Qui sommes-nous" title="Le club" sections={sections} />
 }

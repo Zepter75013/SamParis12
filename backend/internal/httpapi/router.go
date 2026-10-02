@@ -84,6 +84,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/public/races", raceHandler.PublicRaces)
 	mux.HandleFunc("GET /api/public/results", raceHandler.PublicResults)
 	mux.HandleFunc("GET /api/public/records", raceHandler.PublicRecords)
+	mux.HandleFunc("GET /api/public/stats", memberHandler.PublicStats)
 
 	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
 	mux.HandleFunc("POST /api/documents", authService.RequireAuth(documentHandler.Upload))
