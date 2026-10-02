@@ -33,8 +33,15 @@ export function HeroSlides() {
   )
 }
 
+// Photos choisies à la main pour certaines pages (les autres sont tirées de façon stable d'après le titre).
+const CHOIX = {
+  'Marche nordique': PHOTOS[15],
+  'Notre terrain de jeu': PHOTOS[7],
+}
+
 // Photo de bandeau stable pour une page donnée (même page = même photo).
 export function bannerPhoto(key) {
+  if (CHOIX[key]) return CHOIX[key]
   let h = 0
   for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) % 9973
   return PHOTOS[h % PHOTOS.length]
