@@ -12,15 +12,14 @@ function Page({ eyebrow, title, intro, sections, note, status }) {
   return (
     <main>
       <section className="page-hero">
-        <img className="page-hero__bg" src={bannerPhoto(title)} alt="" aria-hidden="true" decoding="async" />
-        <div className="shell page-hero__grid">
+        <img className="page-hero__photo" src={bannerPhoto(title)} alt="" aria-hidden="true" decoding="async" />
+        <div className="shell">
           <div className="page-hero__text">
             <p className="eyebrow">{eyebrow}</p>
             <h1>{title}</h1>
             {intro && <div className="prose">{intro}</div>}
             {status && <p className="note">{status}</p>}
           </div>
-          <img className="page-hero__photo" src={bannerPhoto(title)} alt="" decoding="async" />
         </div>
       </section>
       <Legs sections={sections} />

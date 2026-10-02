@@ -759,42 +759,41 @@ footer {
 .ages-bar div { height: 1.05rem; background: var(--vermilion); }
 .ages-row span { text-align: right; }
 
-/* ---------- Photos du club : diaporama de l'accueil et bandeaux de pages ---------- */
-.hero { background: #17120e; color: #fff; }
-.hero .shell { position: static; z-index: auto; }
-.hero__text, .hero-slides { position: relative; z-index: 1; }
-.hero-bg, .hero-bgimg, .page-hero__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.hero-bg { overflow: hidden; background: #17120e; }
-.hero-bg::after, .page-hero::after { content: ''; position: absolute; inset: 0; background: rgba(14, 11, 8, 0.62); }
-.hero-bgimg { transform: scale(1.15); filter: blur(22px) saturate(1.1); }
-.hero__grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
-.hero-slides { position: relative; width: 100%; aspect-ratio: 3 / 2; overflow: hidden; background: #0e0b08; border: 1px solid rgba(255, 255, 255, 0.14); }
-.hero-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+/* ---------- Photos du club : photo nette en fond, jamais recadrée ni floutée ---------- */
+/* Sur grand écran la photo entière (3:2) occupe le fond, calée à droite ; le texte se lit sur un dégradé à gauche. */
+.hero, .page-hero { position: relative; overflow: hidden; background: #17120e; color: #fff; }
+.hero { min-height: min(88vh, 66vw); display: flex; align-items: center; }
+.page-hero { min-height: clamp(260px, 38vw, 480px); display: flex; align-items: center; }
+.hero::after, .page-hero::after {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, #17120e 0%, rgba(23, 18, 14, 0.95) 34%, rgba(23, 18, 14, 0.7) 50%, rgba(23, 18, 14, 0) 70%);
+}
+.hero .shell, .page-hero .shell { position: relative; z-index: 2; width: 100%; }
+.hero__text { max-width: 32rem; }
+.page-hero__text { max-width: 36rem; }
+.hero-slides { position: absolute; inset: 0; z-index: 0; }
+.hero-slide, .page-hero__photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: right center; }
 .hero-slide--in { animation: heroFade 1.4s ease both; }
 @keyframes heroFade { from { opacity: 0; } to { opacity: 1; } }
-.hero .eyebrow { color: rgba(255, 255, 255, 0.78); }
-.hero p.lead { color: rgba(255, 255, 255, 0.92); }
+.hero .eyebrow, .page-hero .eyebrow { color: rgba(255, 255, 255, 0.82); }
+.hero p.lead { color: rgba(255, 255, 255, 0.95); }
 .hero h1 em { color: #ff6a5c; }
 .hero .btn--ghost { color: #fff; border-color: #fff; }
 .hero .btn--ghost:hover { background: #fff; color: #1c1917; }
 @media (prefers-reduced-motion: reduce) {
   .hero-slide--in { animation: none; }
 }
+.page-hero .shell { padding-block: clamp(1.8rem, 4vw, 3rem); }
+.page-hero h1 { font-size: clamp(2rem, 5vw, 3rem); text-transform: uppercase; margin-top: 0.4rem; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
+.page-hero .prose { color: rgba(255, 255, 255, 0.95); margin-top: 0.8rem; }
+.page-hero .note { color: rgba(255, 255, 255, 0.82); }
 
-.page-hero { position: relative; overflow: hidden; background: #17120e; color: #fff; }
-.page-hero__bg { transform: scale(1.15); filter: blur(22px) saturate(1.1); }
-.page-hero .shell { position: relative; z-index: 1; }
-.page-hero__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 2.2rem; align-items: center; padding-block: clamp(1.8rem, 4vw, 3rem); }
-.page-hero__photo { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: contain; background: #0e0b08; border: 1px solid rgba(255, 255, 255, 0.14); }
-.page-hero .eyebrow { color: rgba(255, 255, 255, 0.78); }
-.page-hero h1 { font-size: clamp(2rem, 5vw, 3rem); text-transform: uppercase; margin-top: 0.4rem; }
-.page-hero .prose { color: rgba(255, 255, 255, 0.92); margin-top: 0.8rem; }
-.page-hero .note { color: rgba(255, 255, 255, 0.78); }
-
+/* Mobile / tablette : la photo entière en haut, nette et pleine largeur, puis le texte dessous. */
 @media (max-width: 860px) {
-  .hero__grid { grid-template-columns: 1fr; gap: 1.4rem; }
-  .hero-slides { order: -1; }
+  .hero, .page-hero { display: block; min-height: 0; }
+  .hero::after, .page-hero::after { display: none; }
+  .hero-slides { position: relative; inset: auto; aspect-ratio: 3 / 2; }
+  .page-hero__photo { position: relative; inset: auto; display: block; height: auto; aspect-ratio: 3 / 2; object-position: center; }
   .hero .shell { padding-block: 1.4rem 2.4rem; }
-  .page-hero__grid { grid-template-columns: 1fr; gap: 1.2rem; }
-  .page-hero__photo { order: -1; }
+  .hero__text, .page-hero__text { max-width: none; }
 }
