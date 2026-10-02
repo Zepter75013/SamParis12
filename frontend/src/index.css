@@ -626,12 +626,12 @@ footer {
   background: none; border: 0; padding: 4px 0; color: var(--ink-soft); cursor: pointer;
   transition: color 0.15s;
 }
-.nav-group:hover .nav-group__btn, .nav-group:focus-within .nav-group__btn { color: var(--vermilion); }
+.nav-group:hover .nav-group__btn, .nav-group.is-open .nav-group__btn { color: var(--vermilion); }
 .nav-menu {
   display: none; position: absolute; top: calc(100% - 14px); left: -0.9rem; min-width: 15rem; padding: 0.4rem 0;
   background: var(--surface); border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18); z-index: 60;
 }
-.nav-group:hover .nav-menu, .nav-group:focus-within .nav-menu { display: block; }
+.nav-group.is-open .nav-menu { display: block; }
 .nav-links .nav-menu a { display: block; padding: 0.55rem 1rem; white-space: nowrap; }
 .nav-links .nav-menu a:hover { background: var(--surface-2); }
 .drawer-group { display: flex; flex-direction: column; }

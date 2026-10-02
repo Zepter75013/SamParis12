@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BORNES } from '../data/rubriques.js'
 
@@ -31,6 +31,21 @@ function NavLink({ item: it, onClick }) {
 
 export default function Header() {
   const [open, setOpen] = useState(false)
+  const [group, setGroup] = useState(null) // sous-menu desktop ouvert
+  const navRef = useRef(null)
+
+  // Le sous-menu se ferme au choix d'un lien, au clic à l'extérieur ou avec Échap.
+  useEffect(() => {
+    if (!group) return undefined
+    const onDown = (e) => { if (navRef.current && !navRef.current.contains(e.target)) setGroup(null) }
+    const onKey = (e) => { if (e.key === 'Escape') setGroup(null) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [group])
 
   return (
     <header>
@@ -42,15 +57,23 @@ export default function Header() {
             <span className="tagline">Club d'athlétisme · 1887</span>
           </span>
         </Link>
-        <nav className="nav-links" aria-label="Principale">
+        <nav className="nav-links" aria-label="Principale" ref={navRef}>
           {MENU.map((m) => (m.group ? (
-            <div className="nav-group" key={m.group}>
-              <button type="button" className="nav-group__btn" aria-haspopup="true">{m.group} <span aria-hidden="true">▾</span></button>
+            <div className={`nav-group${group === m.group ? ' is-open' : ''}`} key={m.group}>
+              <button
+                type="button"
+                className="nav-group__btn"
+                aria-haspopup="true"
+                aria-expanded={group === m.group}
+                onClick={() => setGroup((g) => (g === m.group ? null : m.group))}
+              >
+                {m.group} <span aria-hidden="true">▾</span>
+              </button>
               <div className="nav-menu">
-                {m.items.map((it) => <MenuLink key={it.to} it={it} />)}
+                {m.items.map((it) => <MenuLink key={it.to} it={it} onClick={() => setGroup(null)} />)}
               </div>
             </div>
-          ) : <NavLink key={m.label} item={m} />))}
+          ) : <NavLink key={m.label} item={m} onClick={() => setGroup(null)} />))}
         </nav>
         <div className="nav-actions">
           <Link to="/espace-adherent" className="btn-adherent-nav">
