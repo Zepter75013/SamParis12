@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.12.0'
+export const APP_VERSION = '1.12.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.12.1',
+    date: '2 octobre 2026',
+    notes: "Bornes en route sinueuse : une borne sur deux est décalée (accueil et pages de rubriques), reliées par des courbes pointillées, sur grand écran. Sur mobile, les bornes restent alignées.",
+  },
   {
     version: '1.12.0',
     date: '2 octobre 2026',

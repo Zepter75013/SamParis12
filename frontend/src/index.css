@@ -699,6 +699,32 @@ footer {
 .pyr-side--f .pyr-bar { justify-content: flex-end; }
 .pyr-bar div { height: 1.05rem; }
 
+/* Route sinueuse : une borne sur deux est décalée, des courbes pointillées les relient (bureau uniquement) */
+@media (min-width: 861px) {
+  .legs { --zig: clamp(60px, 11vw, 130px); }
+  .course-line { display: none; }
+  .leg__marker { position: relative; z-index: 1; }
+  .leg::before, .leg::after { content: ''; position: absolute; pointer-events: none; z-index: 0; }
+  .leg::before {
+    left: 37px; top: 104px; bottom: 40px; width: 0;
+    border-left: 2px dashed color-mix(in srgb, var(--vermilion) 45%, transparent);
+  }
+  .leg::after {
+    left: 37px; bottom: -40px; width: var(--zig); height: 80px;
+    background: color-mix(in srgb, var(--vermilion) 45%, transparent);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80' preserveAspectRatio='none'%3E%3Cpath d='M1 0 C1 44 99 36 99 80' fill='none' stroke='%23000' stroke-width='2' stroke-dasharray='6 6' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80' preserveAspectRatio='none'%3E%3Cpath d='M1 0 C1 44 99 36 99 80' fill='none' stroke='%23000' stroke-width='2' stroke-dasharray='6 6' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  }
+  .leg:nth-of-type(even) { padding-left: var(--zig); }
+  .leg:nth-of-type(even)::before { left: calc(var(--zig) + 37px); }
+  .leg:nth-of-type(even)::after {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80' preserveAspectRatio='none'%3E%3Cpath d='M99 0 C99 44 1 36 1 80' fill='none' stroke='%23000' stroke-width='2' stroke-dasharray='6 6' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 80' preserveAspectRatio='none'%3E%3Cpath d='M99 0 C99 44 1 36 1 80' fill='none' stroke='%23000' stroke-width='2' stroke-dasharray='6 6' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  }
+  .leg:last-of-type::after { display: none; }
+  .leg:last-of-type::before { bottom: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0s !important; transition-duration: 0s !important; }
 }
