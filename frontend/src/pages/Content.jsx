@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import ContentBlocks from '../components/ContentBlocks.jsx'
 import { Legs, sectionsFromBlocks } from '../components/Legs.jsx'
+import { bannerPhoto } from '../components/HeroSlides.jsx'
 import { SITE } from '../data/siteContent.js'
 import { api } from '../lib/api.js'
 import { useFetch } from '../lib/useFetch.js'
@@ -10,12 +11,16 @@ import { useFetch } from '../lib/useFetch.js'
 function Page({ eyebrow, title, intro, sections, note, status }) {
   return (
     <main>
-      <div className="shell page-head">
-        <p className="eyebrow">{eyebrow}</p>
-        <h1>{title}</h1>
-        {intro && <div className="prose">{intro}</div>}
-        {status && <p className="note">{status}</p>}
-      </div>
+      <header className="page-hero">
+        <img src={bannerPhoto(title)} alt="" decoding="async" />
+        <div className="page-hero__veil" />
+        <div className="shell">
+          <p className="eyebrow">{eyebrow}</p>
+          <h1>{title}</h1>
+          {intro && <div className="prose">{intro}</div>}
+          {status && <p className="note">{status}</p>}
+        </div>
+      </header>
       <Legs sections={sections} />
       {note && <div className="shell"><p className="note">{note}</p></div>}
     </main>

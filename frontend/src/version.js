@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.13.1'
+export const APP_VERSION = '1.14.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.14.0',
+    date: '2 octobre 2026',
+    notes: "Photos du club (reprises de la page d'accueil du site actuel) : diaporama en fondu enchaîné dans l'en-tête de l'accueil et bandeau photo en tête de chaque page de rubrique.",
+  },
   {
     version: '1.13.1',
     date: '2 octobre 2026',

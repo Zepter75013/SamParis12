@@ -758,3 +758,37 @@ footer {
 .ages-row b { font-weight: 600; }
 .ages-bar div { height: 1.05rem; background: var(--vermilion); }
 .ages-row span { text-align: right; }
+
+/* ---------- Photos du club : diaporama de l'accueil et bandeaux de pages ---------- */
+.hero { background: #17120e; color: #fff; }
+.hero-slides { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.hero-slide { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.hero-slide--in { animation: heroFade 1.4s ease both; }
+@keyframes heroFade { from { opacity: 0; } to { opacity: 1; } }
+.hero-veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(18, 14, 10, 0.86) 0%, rgba(18, 14, 10, 0.6) 48%, rgba(18, 14, 10, 0.2) 100%);
+}
+.hero .eyebrow { color: rgba(255, 255, 255, 0.78); }
+.hero p.lead { color: rgba(255, 255, 255, 0.92); }
+.hero h1 em { color: #ff6a5c; }
+.hero .btn--ghost { color: #fff; border-color: #fff; }
+.hero .btn--ghost:hover { background: #fff; color: #1c1917; }
+@media (max-width: 860px) {
+  .hero-veil { background: rgba(18, 14, 10, 0.68); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide--in { animation: none; }
+}
+
+.page-hero { position: relative; overflow: hidden; background: #17120e; color: #fff; }
+.page-hero > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; }
+.page-hero .page-hero__veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(18, 14, 10, 0.86) 0%, rgba(18, 14, 10, 0.55) 55%, rgba(18, 14, 10, 0.25) 100%);
+}
+.page-hero .shell { position: relative; z-index: 1; padding-block: clamp(2.2rem, 6vw, 4rem); }
+.page-hero .eyebrow { color: rgba(255, 255, 255, 0.78); }
+.page-hero h1 { font-size: clamp(2rem, 5vw, 3rem); text-transform: uppercase; margin-top: 0.4rem; }
+.page-hero .prose { color: rgba(255, 255, 255, 0.92); margin-top: 0.8rem; }
+.page-hero .note { color: rgba(255, 255, 255, 0.78); }
