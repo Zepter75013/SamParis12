@@ -25,11 +25,22 @@ export function HeroSlides() {
     img.src = PHOTOS[(cur + 1) % PHOTOS.length]
   }, [cur])
 
+  const layer = (cls, i, extra = {}) => (
+    <img key={`${cls}${i}`} className={cls} src={PHOTOS[i]} alt="" {...extra} />
+  )
+
+  // Fond : la même photo agrandie et floutée remplit toute la section ; au premier plan, la photo entière.
   return (
-    <div className="hero-slides" aria-hidden="true">
-      {prev.current !== null && <img key={`p${prev.current}`} className="hero-slide" src={PHOTOS[prev.current]} alt="" />}
-      <img key={cur} className="hero-slide hero-slide--in" src={PHOTOS[cur]} alt="" fetchpriority={cur === 0 ? 'high' : undefined} />
-    </div>
+    <>
+      <div className="hero-bg" aria-hidden="true">
+        {prev.current !== null && layer('hero-bgimg', prev.current)}
+        {layer('hero-bgimg hero-slide--in', cur)}
+      </div>
+      <div className="hero-slides" aria-hidden="true">
+        {prev.current !== null && layer('hero-slide', prev.current)}
+        {layer('hero-slide hero-slide--in', cur, { fetchpriority: cur === 0 ? 'high' : undefined })}
+      </div>
+    </>
   )
 }
 
