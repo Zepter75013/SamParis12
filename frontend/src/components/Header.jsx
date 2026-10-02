@@ -1,12 +1,33 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const LINKS = [
-  { href: '#club', label: 'Le club' },
-  { href: '#disciplines', label: 'Disciplines' },
-  { href: '#terrain', label: 'Terrain de jeu' },
-  { href: '#foulees', label: 'Les Foulées' },
-  { href: '#adhesion', label: 'Adhésion' },
+// Reprend les rubriques du menu du site actuel du club.
+const GROUPS = [
+  {
+    label: 'Le club',
+    items: [
+      { to: '/le-club', label: 'Qui sommes-nous' },
+      { to: '/histoire', label: 'Histoire du club' },
+      { to: '/horaires', label: 'Horaires et lieux' },
+      { to: '/#terrain', label: 'Notre terrain de jeu' },
+      { to: '/#disciplines', label: 'Les disciplines' },
+      { to: '/marche-nordique', label: 'Marche nordique' },
+    ],
+  },
+  {
+    label: 'Compétition',
+    items: [
+      { to: '/nos-courses', label: 'Nos courses' },
+      { to: '/nos-resultats', label: 'Nos résultats' },
+      { to: '/nos-performances', label: 'Nos performances' },
+    ],
+  },
+]
+
+const DIRECT = [
+  { to: '/#foulees', label: 'Les Foulées' },
+  { to: '/#adhesion', label: 'Adhésion' },
+  { to: '/#contact', label: 'Contact' },
 ]
 
 export default function Header() {
@@ -15,17 +36,23 @@ export default function Header() {
   return (
     <header>
       <div className="shell nav">
-        <a className="brand" href="#top">
+        <Link className="brand" to="/">
           <img src="/logo.png" alt="SAM Paris 12" width="42" height="38" />
           <span>
             <b>SAM Paris 12</b>
             <span className="tagline">Club d'athlétisme · 1887</span>
           </span>
-        </a>
+        </Link>
         <nav className="nav-links" aria-label="Principale">
-          {LINKS.map((link) => (
-            <a key={link.href} href={link.href}>{link.label}</a>
+          {GROUPS.map((g) => (
+            <div className="nav-group" key={g.label}>
+              <button type="button" className="nav-group__btn" aria-haspopup="true">{g.label} <span aria-hidden="true">▾</span></button>
+              <div className="nav-menu">
+                {g.items.map((it) => <Link key={it.to} to={it.to}>{it.label}</Link>)}
+              </div>
+            </div>
           ))}
+          {DIRECT.map((it) => <Link key={it.to} to={it.to}>{it.label}</Link>)}
         </nav>
         <div className="nav-actions">
           <Link to="/espace-adherent" className="btn-adherent-nav">
@@ -59,10 +86,17 @@ export default function Header() {
       </div>
       {open && <div className="nav-backdrop open" onClick={() => setOpen(false)} />}
       <nav className={`nav-drawer${open ? ' open' : ''}`} id="drawer" aria-label="Mobile">
-        {LINKS.map((link) => (
-          <a key={link.href} href={link.href} onClick={() => setOpen(false)}>{link.label}</a>
+        {GROUPS.map((g) => (
+          <div className="drawer-group" key={g.label}>
+            <span className="drawer-title">{g.label}</span>
+            {g.items.map((it) => (
+              <Link key={it.to} to={it.to} onClick={() => setOpen(false)}>{it.label}</Link>
+            ))}
+          </div>
         ))}
-        <a href="#contact" onClick={() => setOpen(false)}>Contact</a>
+        {DIRECT.map((it) => (
+          <Link key={it.to} to={it.to} onClick={() => setOpen(false)}>{it.label}</Link>
+        ))}
         <Link to="/espace-adherent" onClick={() => setOpen(false)} className="btn-adherent-nav">
           <span className="dot-status" />
           Espace adhérent →

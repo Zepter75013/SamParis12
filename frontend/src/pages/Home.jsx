@@ -81,13 +81,13 @@ export default function Home() {
           <p className="eyebrow">Club d'athlétisme affilié FFA · Porte de Charenton · Fondé en 1887</p>
           <h1>On court le 12<sup>e</sup> depuis <em>1887</em></h1>
           <p className="lead">
-            Premier club d'athlétisme hors stade de Paris, avec plus de 680 adhérents majeurs.
+            Premier club d'athlétisme hors stade de Paris, avec 686 adhérents de 16 à 84 ans.
             Running du 5 km à l'ultra-trail, marche nordique sportive : un encadrement diplômé
             FFA, pour tous les niveaux.
           </p>
           <div className="hero-actions">
             <a className="btn btn--solid" href="#adhesion">Rejoindre le club →</a>
-            <a className="btn btn--ghost" href="#terrain">Voir les créneaux</a>
+            <Link className="btn btn--ghost" to="/horaires">Voir les créneaux</Link>
           </div>
           <div className="next-run">
             <b>Entraînements de la semaine</b>
@@ -95,8 +95,8 @@ export default function Home() {
               Mardi &amp; jeudi · 18h30 et 19h30 <span className="dot">·</span> Stade Léo Lagrange
             </span>
             <br />
-            Dimanche · 9h30 <span className="dot">·</span> Bois de Vincennes{' '}
-            <span className="dot">·</span> programme du trimestre selon le groupe
+            Samedi &amp; dimanche · 9h30 <span className="dot">·</span> Bois de Vincennes{' '}
+            <span className="dot">·</span> sorties longues et trails, programme du trimestre selon le groupe
           </div>
         </div>
       </section>
@@ -107,16 +107,16 @@ export default function Home() {
           <dd>1887</dd>
         </div>
         <div>
-          <dt>Adhérents</dt>
-          <dd>680+</dd>
+          <dt>Adhérents (2 oct. 2026)</dt>
+          <dd>686</dd>
         </div>
         <div>
-          <dt>Catégories accueillies</dt>
-          <dd>Séniors → Vétérans</dd>
+          <dt>Âges accueillis</dt>
+          <dd>16 → 84 ans</dd>
         </div>
         <div>
           <dt>Créneaux hebdo</dt>
-          <dd>Mar · Jeu · Dim</dd>
+          <dd>Mar · Jeu · Sam · Dim</dd>
         </div>
       </dl>
 
@@ -130,7 +130,7 @@ export default function Home() {
             <h2>Un club centenaire, la première référence hors stade à Paris</h2>
             <p className="lead-note">
               Fondé en 1887 et affilié à la Fédération Française d'Athlétisme, le SAM Paris 12
-              rassemble plus de 680 adhérents majeurs (44&nbsp;% de femmes). C'est aujourd'hui le
+              rassemble plus de 675 adhérents, dont 44&nbsp;% de femmes. C'est aujourd'hui le
               premier club d'athlétisme hors stade de Paris.
             </p>
             <p>
@@ -138,6 +138,11 @@ export default function Home() {
               pour le secteur Stade, récompensant la qualité de son encadrement : 28 entraîneurs
               de course à pied hors stade et 5 entraîneurs de marche nordique, tous diplômés et
               bénévoles.
+            </p>
+            <p>
+              <Link to="/le-club" style={{ color: 'var(--vermilion)' }}>Conseil d'administration, entraîneurs et effectifs →</Link>
+              {' '}
+              <Link to="/histoire" style={{ color: 'var(--vermilion)' }}>L'histoire du club →</Link>
             </p>
           </div>
         </section>
@@ -166,7 +171,7 @@ export default function Home() {
               </article>
               <article>
                 <h3>Marche nordique sportive <span>DEPUIS 2015</span></h3>
-                <p>Mardi, jeudi et dimanche. Technique, allure et convivialité, encadrées par des entraîneurs diplômés MNS.</p>
+                <p>Mardi, jeudi, samedi et dimanche. Technique, allure et convivialité, encadrées par des entraîneurs diplômés MNS. <Link to="/marche-nordique" style={{ color: 'var(--vermilion)' }}>En savoir plus →</Link></p>
               </article>
             </div>
           </div>
@@ -180,6 +185,7 @@ export default function Home() {
             <p className="lead-note">
               « Le Paradis de la course à pied se trouve à 100&nbsp;% sur le sol parisien : c'est
               le Bois de Vincennes. » Tout part du stade Léo Lagrange, à la Porte de Charenton.
+              {' '}<Link to="/horaires" style={{ color: 'var(--vermilion)' }}>Horaires et lieux →</Link>
             </p>
             <ul className="spots">
               <li><b>Stade Léo Lagrange</b><span>Le point de rendez-vous de toutes nos séances, et le lieu du fractionné sur piste (400 m).</span></li>
@@ -256,6 +262,8 @@ export default function Home() {
                 <li>Plus de certificat médical : un questionnaire de santé FFA suffit</li>
                 <li>Entraînements encadrés par des entraîneurs diplômés et bénévoles</li>
                 <li>Tarif préférentiel chez notre partenaire Team Outdoor</li>
+                <li>Séances d'essai complètes pour cette saison — écrire à contact@samparis12.org pour rejoindre le club</li>
+                <li>Débutant(e)s : à partir du 1<sup>er</sup> octobre, contactez le club au préalable (contact@samparis12.org ou 07 82 18 08 90)</li>
               </ul>
               <div className="join-foot">
                 <Link className="btn btn--solid" to="/adhesion/paiement">
@@ -283,11 +291,11 @@ export default function Home() {
               </div>
               <div>
                 <dt>Écrire au club</dt>
-                <dd><a href="mailto:contact@samparis12.org">contact@samparis12.org</a><br />07 82 18 08 90</dd>
+                <dd><a href="mailto:contact@samparis12.org">contact@samparis12.org</a><br />07 82 18 08 90<br />SAM Paris 12 · 9, allée des vergers – boîte n° 10<br />75012 Paris</dd>
               </div>
               <div>
                 <dt>Suivre le club</dt>
-                <dd><a href="https://www.facebook.com/SamParis12/">Facebook</a></dd>
+                <dd><a href="https://www.facebook.com/SamParis12/">Facebook</a><br />Marche nordique : <a href="mailto:entraineurmns@samparis12.org">entraineurmns@samparis12.org</a></dd>
               </div>
               <div>
                 <dt>Accès</dt>

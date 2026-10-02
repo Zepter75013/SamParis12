@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.9.0'
+export const APP_VERSION = '1.10.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.10.0',
+    date: '2 octobre 2026',
+    notes: "Site public mis à jour avec le contenu réel du site actuel du club : nouvelles pages Qui sommes-nous (conseil d'administration, entraîneurs, effectifs et pyramide des âges), Histoire du club, Horaires et lieux, Marche nordique, Nos courses, Nos résultats et Nos performances (records), menu déroulant, chiffres et horaires de l'accueil mis à jour (686 adhérents, séances du samedi, contact postal, séances d'essai).",
+  },
   {
     version: '1.9.0',
     date: '2 octobre 2026',
