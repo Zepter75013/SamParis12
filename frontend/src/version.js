@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.14.1'
+export const APP_VERSION = '1.14.2'
 
 export const CHANGELOG = [
+  {
+    version: '1.14.2',
+    date: '2 octobre 2026',
+    notes: "Photos jamais tronquées : le diaporama de l'accueil affiche lui aussi la photo entière à côté du texte (au-dessus du texte sur mobile), comme les bandeaux des pages.",
+  },
   {
     version: '1.14.1',
     date: '2 octobre 2026',

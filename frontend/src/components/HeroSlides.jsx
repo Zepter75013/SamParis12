@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 // Photos du club (reprises de la page d'accueil du site actuel), dans /public/photos.
 export const PHOTOS = Array.from({ length: 18 }, (_, i) => `/photos/sam-${String(i + 1).padStart(2, '0')}.jpg`)
 
-// Diaporama plein cadre en fondu enchaîné. Une seule photo est chargée à la fois,
+// Diaporama en fondu enchaîné, photo toujours entière (jamais recadrée). Une seule photo est chargée à la fois,
 // plus la suivante en avance ; aucun défilement si l'utilisateur préfère moins d'animations.
 export function HeroSlides() {
   const [cur, setCur] = useState(0)
@@ -29,7 +29,6 @@ export function HeroSlides() {
     <div className="hero-slides" aria-hidden="true">
       {prev.current !== null && <img key={`p${prev.current}`} className="hero-slide" src={PHOTOS[prev.current]} alt="" />}
       <img key={cur} className="hero-slide hero-slide--in" src={PHOTOS[cur]} alt="" fetchpriority={cur === 0 ? 'high' : undefined} />
-      <div className="hero-veil" />
     </div>
   )
 }

@@ -14,8 +14,8 @@ export default function Home() {
   return (
     <main id="top">
       <section className="hero">
-        <HeroSlides />
-        <div className="shell">
+        <div className="shell hero__grid">
+          <div className="hero__text">
           <p className="eyebrow">Club d'athlétisme affilié FFA · Porte de Charenton · Fondé en 1887</p>
           <h1>On court le 12<sup>e</sup> depuis <em>1887</em></h1>
           <p className="lead">
@@ -38,6 +38,8 @@ export default function Home() {
             Samedi &amp; dimanche · 9h30 <span className="dot">·</span> Bois de Vincennes{' '}
             <span className="dot">·</span> sorties longues et trails, programme du trimestre selon le groupe
           </div>
+          </div>
+          <HeroSlides />
         </div>
       </section>
 
