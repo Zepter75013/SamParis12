@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.11.0'
+export const APP_VERSION = '1.12.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.12.0',
+    date: '2 octobre 2026',
+    notes: "Les pages de chaque rubrique du menu reprennent le principe de l'accueil : un parcours de bornes kilométriques numérotées, une par section (chapitres de l'histoire, parcours du terrain de jeu, mois pour les courses et résultats, familles d'épreuves pour les records, années pour Nous y étions, etc.).",
+  },
   {
     version: '1.11.0',
     date: '2 octobre 2026',

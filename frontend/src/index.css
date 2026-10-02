@@ -704,7 +704,23 @@ footer {
 }
 
 .journal-entry { border: 1px solid var(--line); background: var(--surface); padding: 1.2rem 1.4rem; margin-top: 1rem; max-width: 70ch; }
-.journal-entry h2 { font-size: 1.3rem; text-transform: uppercase; margin-bottom: 0.7rem; }
+.journal-entry h3 { font-size: 1.15rem; text-transform: uppercase; margin-bottom: 0.7rem; }
 .journal-entry p { margin: 0 0 0.7rem; line-height: 1.6; }
 .journal-entry a { color: var(--vermilion); }
 .journal-entry img { display: block; max-width: 100%; height: auto; margin: 0.6rem 0; }
+
+/* Pages détaillées : en-tête puis parcours de bornes */
+.page-head { padding-top: 3rem; }
+.page-head h1 { font-size: clamp(2rem, 5vw, 3rem); text-transform: uppercase; margin-top: 0.4rem; }
+.legs--page { padding-block: clamp(1.5rem, 4vw, 3rem) clamp(3rem, 7vw, 5rem); }
+.leg__body--wide { max-width: none; }
+.leg__body .prose { max-width: 70ch; }
+.leg__body .prose p, .leg__body .prose ul { margin-top: 0; }
+.leg__body .table-wrap { margin-top: 0.4rem; }
+.leg__body .data-table--narrow { margin-top: 0.4rem; }
+.leg__body .journal-entry { margin-top: 0; margin-bottom: 1rem; }
+.leg__body h2 + .prose,
+.leg__body h2 + .table-wrap,
+.leg__body h2 + .journal,
+.leg__body h2 + .people,
+.leg__body h2 + .disc { margin-top: 1rem; }

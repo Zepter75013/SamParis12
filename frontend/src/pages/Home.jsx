@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
+import { Borne, useActiveLegs } from '../components/Legs.jsx'
 
 // Une borne par rubrique du menu : un court texte et un lien vers la page détaillée.
 const BORNES = [
@@ -37,19 +38,6 @@ const BORNES = [
     texte: "Venir un soir de séance au stade Léo Lagrange ou écrire au club : on vous met en relation avec le bon groupe.",
     to: '/contact', lien: 'Nous contacter' },
 ]
-
-// Borne kilométrique : calotte colorée « KM » et numéro de la rubrique.
-function Borne({ n }) {
-  return (
-    <svg className="borne" viewBox="0 0 64 88" role="img" aria-label={`Kilomètre ${n}`}>
-      <path className="borne-body" d="M8 82 V32 Q8 6 32 6 Q56 6 56 32 V82 Z" />
-      <path className="borne-cap" d="M8 32 Q8 6 32 6 Q56 6 56 32 Z" />
-      <text className="borne-km" x="32" y="26">KM</text>
-      <text className="borne-n" x="32" y="64">{String(n).padStart(2, '0')}</text>
-      <line className="borne-ground" x1="2" y1="82" x2="62" y2="82" />
-    </svg>
-  )
-}
 
 export default function Home() {
   const lineRef = useRef(null)
@@ -89,24 +77,7 @@ export default function Home() {
     }
   }, [])
 
-  useEffect(() => {
-    const legs = document.querySelectorAll('.leg')
-    if (!('IntersectionObserver' in window) || legs.length === 0) return
-
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            legs.forEach((l) => l.classList.remove('is-active'))
-            entry.target.classList.add('is-active')
-          }
-        })
-      },
-      { rootMargin: '-45% 0px -45% 0px' },
-    )
-    legs.forEach((l) => obs.observe(l))
-    return () => obs.disconnect()
-  }, [])
+  useActiveLegs()
 
   return (
     <main id="top">
