@@ -10,8 +10,8 @@ export default function Footer() {
     <footer>
       <div className="shell foot">
         <Link to="/espace-adherent">Espace adhérent</Link>
-        <Link to="/#foulees">Les Foulées du 12ème</Link>
-        <Link to="/#contact">Contact</Link>
+        <a href="http://foulees.samparis12.org/" target="_blank" rel="noreferrer">Les Foulées du 12ème</a>
+        <Link to="/contact">Contact</Link>
         <Link to="/a-propos">À propos</Link>
         <span className="sep" />
         {partner && (

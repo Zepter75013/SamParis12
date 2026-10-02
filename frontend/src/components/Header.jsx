@@ -9,8 +9,7 @@ const GROUPS = [
       { to: '/le-club', label: 'Qui sommes-nous' },
       { to: '/histoire', label: 'Histoire du club' },
       { to: '/horaires', label: 'Horaires et lieux' },
-      { to: '/#terrain', label: 'Notre terrain de jeu' },
-      { to: '/#disciplines', label: 'Les disciplines' },
+      { to: '/terrain', label: 'Notre terrain de jeu' },
       { to: '/marche-nordique', label: 'Marche nordique' },
     ],
   },
@@ -20,15 +19,22 @@ const GROUPS = [
       { to: '/nos-courses', label: 'Nos courses' },
       { to: '/nos-resultats', label: 'Nos résultats' },
       { to: '/nos-performances', label: 'Nos performances' },
+      { to: '/nous-y-etions', label: 'Nous y étions' },
     ],
   },
 ]
 
 const DIRECT = [
-  { to: '/#foulees', label: 'Les Foulées' },
-  { to: '/#adhesion', label: 'Adhésion' },
-  { to: '/#contact', label: 'Contact' },
+  { to: '/adhesion', label: 'Adhésion' },
+  { to: '/contact', label: 'Contact' },
+  { href: 'http://foulees.samparis12.org/', label: 'Les Foulées' },
 ]
+
+function NavLink({ item, onClick }) {
+  return item.href
+    ? <a href={item.href} target="_blank" rel="noreferrer" onClick={onClick}>{item.label}</a>
+    : <Link to={item.to} onClick={onClick}>{item.label}</Link>
+}
 
 export default function Header() {
   const [open, setOpen] = useState(false)
@@ -52,7 +58,7 @@ export default function Header() {
               </div>
             </div>
           ))}
-          {DIRECT.map((it) => <Link key={it.to} to={it.to}>{it.label}</Link>)}
+          {DIRECT.map((it) => <NavLink key={it.label} item={it} />)}
         </nav>
         <div className="nav-actions">
           <Link to="/espace-adherent" className="btn-adherent-nav">
@@ -95,7 +101,7 @@ export default function Header() {
           </div>
         ))}
         {DIRECT.map((it) => (
-          <Link key={it.to} to={it.to} onClick={() => setOpen(false)}>{it.label}</Link>
+          <NavLink key={it.label} item={it} onClick={() => setOpen(false)} />
         ))}
         <Link to="/espace-adherent" onClick={() => setOpen(false)} className="btn-adherent-nav">
           <span className="dot-status" />

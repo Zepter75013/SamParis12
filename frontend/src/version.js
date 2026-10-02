@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.10.1'
+export const APP_VERSION = '1.11.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.11.0',
+    date: '2 octobre 2026',
+    notes: "Accueil refondu en 11 bornes kilométriques numérotées, une par rubrique du menu du site actuel (Qui sommes-nous, Histoire, Marche nordique, Horaires et lieux, Terrain de jeu, Adhésion, Nos courses, Nos résultats, Nos performances, Nous y étions, Contact), chacune avec un court texte et un lien vers sa page. Nouvelles pages Notre terrain de jeu, Adhésion, Contact et Nous y étions ; menu mis à jour.",
+  },
   {
     version: '1.10.1',
     date: '2 octobre 2026',

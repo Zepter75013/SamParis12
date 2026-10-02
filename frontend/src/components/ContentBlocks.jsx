@@ -13,11 +13,12 @@ export default function ContentBlocks({ blocks }) {
             </ul>
           )
         }
+        const lines = b.lines.map((l, j) => (
+          <span key={j}>{j > 0 && <br />}{l}</span>
+        ))
         return (
           <p key={i}>
-            {b.lines.map((l, j) => (
-              <span key={j}>{j > 0 && <br />}{l}</span>
-            ))}
+            {b.href ? <a href={b.href} target="_blank" rel="noreferrer">{lines}</a> : lines}
           </p>
         )
       })}

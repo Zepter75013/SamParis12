@@ -385,6 +385,139 @@ export const SITE = {
    ]
   }
  ],
+ "terrain": [
+  {
+   "t": "h2",
+   "text": "Notre terrain de jeu : le Bois de Vincennes"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Amis provinciaux, qui vous imaginez parfois ​que la vie à Paris est un enfer, détrompez-vous !"
+   ]
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Le Paradis de la course à pied se trouve à 100% sur le sol parisien : c'est le Bois de Vincennes."
+   ]
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Voici quelques-uns de nos parcours d'entraînement favoris"
+   ]
+  },
+  {
+   "t": "h2",
+   "text": "Stade Léo Lagrange"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "C'est le point de RV pour toutes nos séances d'entraînement, et c'est aussi le lieu des séances de fractionné qui sont la clef de l'amélioration des performances"
+   ]
+  },
+  {
+   "t": "h2",
+   "text": "Circuit Michel Jazy"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Ce circuit a été tracé dit-on par Michel Jazy : 2300 mètres, sur terrain souple et entièrement boisé."
+   ]
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Voir la vidéo (durée : 5'36\")"
+   ],
+   "href": "https://www.samparis12.org/video/CircuitMichelJazy.mp4"
+  },
+  {
+   "t": "h2",
+   "text": "Butte aux Canons"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Le Bois de Vincennes a longtemps été un terrain d'entraînement militaire (ce qui lui a valu de rester préservé). La Butte aux Canons est un monticule artificiel (hauteur : une quinzaine de mètres) qui servait de cible pour les artilleurs. Idéal aujourd'hui pour le renforcement musculaire de nos trailers."
+   ]
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Voir la vidéo (durée : 1'28\")"
+   ],
+   "href": "https://www.samparis12.org/video/ButteAuxCanons.mp4"
+  },
+  {
+   "t": "h2",
+   "text": "Circuit Kiosque"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Nos entraîneurs nous y emmènent régulièrement pour enchaîner les tours de circuits (sans récupération). L'exercice s'arrête lorsque le premier a fait 8 tours (mais les autres terminent le tour qu'ils ont commencé). Longueur : 860 mètres."
+   ]
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Voir la vidéo (durée : 2'31\")"
+   ],
+   "href": "https://www.samparis12.org/video/CircuitKiosque.mp4"
+  },
+  {
+   "t": "h2",
+   "text": "Circuit Cross"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Les trailers sont de plus en plus nombreux à la SAM. Chacun des tours du circuit de cross (2700m) comporte 80m de dénivelé"
+   ]
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Voir la vidéo (durée : 11'15\")"
+   ],
+   "href": "https://www.samparis12.org/video/CircuitCross.mp4"
+  },
+  {
+   "t": "h2",
+   "text": "Pour les débutants"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Ce parcours (en dehors de nos circuits habituels), permet un footing de 6,3km sur terrain plat, et entièrement (ou presque) sur terre et en zone boisée et ombragée."
+   ]
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Point de départ"
+   ],
+   "href": "https://www.google.fr/maps/@48.8297289,2.4202374,92m/data=!3m1!1e3?hl=fr"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Voir la carte"
+   ],
+   "href": "https://www.samparis12.org/Contenus/Galeries/a4rkh26PGlYANTKu/FootingDebutant.jpg"
+  },
+  {
+   "t": "p",
+   "lines": [
+    "Voir la vidéo (durée : 16'08\")"
+   ],
+   "href": "https://www.samparis12.org/video/FootingForestier.mp4"
+  }
+ ],
  "leClub": [
   {
    "t": "h2",
@@ -1918,6 +2051,1131 @@ export const SITE = {
    "meilleurRang": 2,
    "meilleurTotal": 652,
    "iso": "2026-09-27"
+  }
+ ],
+ "nousYetions": [
+  {
+   "titre": "16 juin 2022 - Relai de la SAM",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Cliquez"
+      },
+      {
+       "text": "ICI",
+       "href": "https://drive.google.com/drive/folders/1-DaaMJeaLvLU2H28sazyOFOSgUtFeovI?usp=sharing&fbclid=IwAR3Ago7QoicxrEcMHOZ6fjLb0m0pbU9auR8GB87-kBRShZfr3Ssjh6sRjKc"
+      },
+      {
+       "text": "pour voir les photos de Mendi"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "3 février 2019 - Régionaux de Cross",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Galerie d'Alain",
+       "href": "https://1drv.ms/a/s!AhoxBB6UvoOIhBxximgHpqghIXHv"
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Galerie d'Aymeric",
+       "href": "https://www.dropbox.com/sh/fft1bgv1z3wl08r/AADYiIkblCH94NKIsU3JkDf8a?dl=0"
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Galerie de Benjamin - Masters",
+       "href": "https://wazoo.smugmug.com/GaleriesdeBenjamin/Vétéran-Homme-SAM-Régionaux-Neuilly-sur-marne-2019/n-PQBgdW/i-sD784qn"
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Galerie de Benjamin - Féminines",
+       "href": "https://wazoo.smugmug.com/GaleriesdeBenjamin/Cross-Long-Femme-SAM-Régionaux-Neuilly-sur-marne-2019/n-Xw6BBd/i-CN5jGGH"
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Galerie de Benjamin - Hommes",
+       "href": "https://wazoo.smugmug.com/GaleriesdeBenjamin/Séniors-Homme-SAM-Régionaux-Neuilly-sur-marne-2019/n-DndcwP/i-pvWbg6f"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/Contenus/Galeries/DcLNCFw8Q4TOZ2zM/Cross%202019-9848.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "14 juin 2018 - Rétrospective 2017 - 2018",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Quelques photos de l'année 2017-2018 : Trail de Gavarny (Week-end du 9 juin 2018)"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/wp-content/uploads/2018/06/SAM-Paris-12-Gavarny-1.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Championnat Régional de cross (4 février 2018)"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/wp-content/uploads/2018/06/SAM-Paris-12-Regionaux-1024x685.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Week-End des 130 ans de la SAM en Normandie"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/wp-content/uploads/2018/06/SAM-Paris-12-Week-End-130-ans.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "20 juin 2017 - Retour en images sur le 1er semestre 2017",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Voici un retour en images sur les principales courses de la SAM Paris 12 au 1er semestre 2017 Maxi Race à Annecy - Mai 2017"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/wp-content/uploads/2017/06/maxi_race-1024x768.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Marathon de Paris - Avril 2017"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/wp-content/uploads/2017/06/marathon_paris.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "10km de Vincennes - Février 2017"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/wp-content/uploads/2017/06/10Vincennes.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Championnat de cross départementaux - Janvier 2017"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "https://www.samparis12.org/wp-content/uploads/2017/06/cross-depart-1024x678.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "27 décembre 2016 - Joyeuses Fêtes",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Joyeuses fêtes à tous les coureurs de la SAM. Reposez vous bien, l'année 2017 s'annonce sportive Parmi les courses de cette fin d'année 2016"
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Corrida d'Issy les Moulineaux - 11/12/2016"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/12/issy.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "C'est allé vite à Issy sous un beau ciel bleu. Marc, 2e Master2 ! RP pour Abdi, Jean, Marylou, Julien, Méline, Lionel, Caroline, pardon si j'en oublie. Merci aux lièvres Jallal et Joachim."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "SainteLyon - 03/12/2016"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/12/saintexpress.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Bravo aux noctambules de la SaintéLyon et de la Saintexpress"
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Cross de Chaville - 27/11/2016"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/12/chaville-2.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Toujours une super ambiance avec le classique Cross de chaville. A noter la belle victoire de Svetlana. Victoire par équipe chez les hommes et chez les femmes. What else ?"
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Semi-marathon de Boulogne - 20/11/2016"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/12/boulogne-3.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Bravo à tous les courageux du Semi de Boulogne, venus nombreux malgré un fort vent. Après l'effort..."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Ekiden - 06/11/2016"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/12/ekiden"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Bravo à tous les participants de l'Ekiden de Paris . 3 équipes qualifiées et beaucoup de belles perfs collectives et aussi individuelles, certain(e)s ayant explosé leur temps. Bon l'organisation un peu défaillante a pu nous jouer des tours mais il faut retenir le beau temps, la bonne ambiance et les sourires à l'arrivée."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "29 octobre 2016 - Le mois d'Octobre 2016 riche en performances à la SAM6 jours de FranceSemi de VincennesLes TempliersLa Diagonale des Fous10km de Montereau",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Une pluie de performance s'est abattue sur la SAM Paris 12 en cette fin du mois d'octobre 2016."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Pascal Coindeau, notre champion des 24h, a achevé les 6 jours de France avec 594km au compteur. Bravo Pascal"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/files_mf/1477771738PascalCoindeau.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "21 athletes de la SAM étaient au départ du Semi de Vincennes. Ils étaient comme chez eux, avec des passages connus pendant les entrainements : les Rosiers ou l'hippodrome. A noter la belle performance de Marc en 1h15'18 (3ieme V1)"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/files_mf/1477771666SemiVincennes.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "6 coureurs de la SAM se trouvaient en Ardeche pour les templiers (73km)."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Alexis boucle sa diagonale des fous en 46h18'56. Incroyable, Bravo."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/files_mf/1477771827AlexisDiag.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Côté vitesse, la SAM n'est pas en reste avec le 10km de Montereau. Quelques records personnels ont été battus, notament avec Svetlana qui finit en 38\"02."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/files_mf/1477771599Montereau.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "20 juillet 2016 - Tour du Mont Blanc",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Autour du 14 juillet, la SAM a pris ses quartiers d'été à Chamonix. 70 coureurs environ sont partis faire les 170km autour du Mont Blanc. Les étapes pouvaient aller jusqu'à 50km et 3000m de dénivellé positif, avec des nuits en refuge à Chapieux, puis Bonatti et enfin Trient."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/09/tmb.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "26 juin 2016 - Le Relais de la SAM",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Le 26 juin a été une belle occasion de terminer cette saison complète avec le Relais de la SAM Le principe : des équipes de 3 coureurs de tout niveau, un tour des rosiers chacun et un tour tous ensemble. La course s'est terminée. Une bonne manière de finir l'année avant de se reposer pendant l'été."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/09/relais.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "4 juin 2016 - La SAM à l'assaut du JURA",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Au début on devait partir à 4. On s'est finalement retrouvé à 74. Un grand merci à toutes et à tous pour ces magnifiques 2 jours. Super ambiance, super groupe, très bonne course, bains de boue, bus à 2 étages, les joueurs de Uno et de tarot, la voix de Maxime...Du plaisir. Pour nous les entraîneurs, ça fait plaisir de vous entraîner, y compris dans ces courses un peu folle pour des parisiens."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/09/jura.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Les guerriers du 72 :"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/09/guerriers.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "6 avril 2016 - LE Marathon de Paris",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Il y avait plus de 80 finishers de la SAM au dernier Marathon de Paris, une cinquantaine de supporters sur le parcours qui ont fait beaucoup de bruit et 5 photographes qui ont pris plus de 1000 photos.."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Le gel \"coup de fouet\" de la SAM"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/09/pompom.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "We are finishers !"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/09/arc.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "21 février 2016 - La SAM presque à domicile aux foulées de Charenton",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Le 21 février est à garder dans les tablettes du club : 122 coureurs de la SAM PARIS 12 étaient engagés aux foulées Charentonnaises. Aucun club n'a fait mieux. Bravo aux féminines qui finissent 1ère,2ème, 3ème, 4ème et 6ème et à tous les coureurs qui ont porté haut les couleurs de la SAM."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "[caption id=\"\" align=\"aligncenter\" width=\"720\"]"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/09/charenton.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Bravo les filles[/caption]"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "3 janvier 2016 - Entrainement Cross pour la SAM, Athlétic Coeur de Fond et CS Ternes",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "En ce dimanche d'Epiphanie 2016, les coureurs de la SAM avaient leur traditionnel rendez vous avec ceux d'Athlétic Coeur de Fond et du CS Ternes. Une fois regroupés devant le Parc Floral, les coureurs se scindaient en deux groupes, l'un dirigé par Jean Jacques d'ACF et Sylvain du CS Ternes et l'autre par les entraîneurs de la SAM et Christian d'ACF Après un long échauffement, le groupe de Jean Jacque entamait un 6'/4' - 5'/3' - 4'/2' allure cross, sur un terrain souple et rendu glissant par les dernières pluies, pour finir joyeusement par un relais mixte. Les autres coureurs enchaînaient une pyramide 1'/2'/3'/4'/5'/4'/3'/2'/1'. Les plus courageux se retrouvaient ensuite pour un pot au stade Léo Lagrange."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2016/01/Entrainement%20cross%202016.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "15 décembre 2015 - La nuit entre Saint Etienne et Lyon",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Une quinzaine de coureurs de la SAM, chaussures de trail aux pieds, lampes frontales positionnées, le courage au cœur, ont rejoint Lyon depuis Saint Etienne ou Sainte Catherine dans la nuit du 5 au 6 décembre. Tous finsishers ! A noter les bonnes performance de Tonio 87ème sur 2568 concurrents à la Saintexpress et surtout coach Laurent 14ème et 3ème V1 de la même course."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2015/12/Saintexpress.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "15 décembre 2015 - La SAM a récompensé ses meilleurs coureurs 2015",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Jeudi 10 décembre 2015, 120 de nos coureurs étaient présents ou représentés pour l'assemblée générale annuelle. Après avoir écouté Claude lire le rapport de l'année écoulée, entendu Daniel faire le bilan sportif et voté le bilan financier 2015 et le projet de budget 2016 présentés par Patrice, tous ont applaudi nos quatre coureurs récompensés pour leur brillante saison, ponctuée de nombreux podiums. Sur la photo, Antoine meilleur SEH, Sandrine VEF, Chrystelle SEF et Emmanuel pour les VEH. Le quatuor est complèté par Sébastien qui a remporté le Trophée de l'Amitié décerné par les membres du Bureau."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2015/12/AG%202015.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Un pot de l'amitié a ponctué cette belle soirée."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "31 août 2015 - La SAM prend de la hauteur",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Après la reconnaissance du Tour du Mont Blanc en juillet, les coureurs de la SAM ont continué à gravir les montagnes et à cavaler dans les descentes. Antoine et Christelle ont fini 1er au relais de l'ultratrail du Beaufortin; Claude et Laurent V étaient du côté de la Plagne pour la 6000D ; Adèle au trail de l'Ubaye Salomaon ; Sylvain et Flavie au Matterhorn Ultracs ; Cristel, Hélène, Marylou, Emmanuelle, Stéphane, Laurent L, Atem, Claude et Alain se sont retrouvés au départ des crêtes vosgiennes (voir photo ci-dessous) Marylou a fini 3ème de sa catégorie ; tout comme Chrystelle 3ème au scratch à l'échapée belle avec Antoine sur la distance de 85km. Ce Week-end avaient lieu les courses autour du Mont Blanc. Le Club était présent avec Pascal sur l'OCC et Romain sur la TDS. Ce sont donc plus de 1.000km et 25.000m de dénivelé positifs qui ont été avalés en montagne par les coureurs de la SAM au mois d'août."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2015/08/cretes%20vosgiennes.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "5 août 2015 - 49 coureurs de la SAM autour du Mont Blanc",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Cette année encore, sous la houlette de Claude, près d'une cinquantaine de coureurs sont partis faire le Tour du Mont Blanc en 4 jours. Plus de vingt ont suivi l'intégralité du parcours de l'UTMB soit plus de 160km et 9600m de dénivelé positif. Pour les autres des étapes plus courtes allant de 20 à 40km par jour. Le soir tout le monde se retrouvait fatigué mais heureux d'être là dans les gîtes : Chapieux, Bonatti et Trient. Une seule petite blessure (entorse à une cheville) a contraint un des participants à repartir à Chamonix le troisième jour. Joie et bonne humeur pendant ces 4 jours marqués par un soleil omniprésent et des vues superbes sur le massif du Mont Blanc. On remettra cela en 2016."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2015/07/Départ%20Tour%20du%20Mont%20Blanc.JPG"
+    }
+   ]
+  },
+  {
+   "titre": "17 février 2015 - La SAM en force aux Foulées de Charenton",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Quarante quatre de nos coureurs étaient à Charenton au départ du 15 km. Une nouvelle fois, des podiums : Chrystelle finit troisième féminine, Fred premier V4 et Sylvie renoue avec les premières places : 3ème V2 après son long arrêt."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2015/02/Charenton.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "2 novembre 2014 - 13 Samiens chez l'oncle SAM",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Treize de nous coureurs étaient à New-York au départ du marathon 2014. Ils sont tous arrivés. Pour certains c'était leur premier marathon comme coach Laurent qui termine en moins de 3 heures : 2h58mn. A noter les 3h05 de Sébastien, 3h20 de Marylou, 3h21 de Sandrine. Bravo à tous. Bonne récupération, et à bientôt parmi nous."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/10/New%20York.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "1 novembre 2014 - Joseph, Chrystelle, Fred, Marlène et Antoine sont montés sur des podiums",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Encore de beaux résultats pour les coureurs de la SAM : Joseph termine troisième V4 au championnat de France semi-marathon à St Denis. Chrystelle et Fred finissent première senior femme et premier V4 homme au challenge Paris Running Tour. Ce challenge se déroule sur 15 épreuves 10km dans Paris. Ils terminent avec beaucoup d'avance sur leurs seconds. Marlène et Antoine sont deuxièmes dans leur catégorie V2 femme et Senior homme. Bravo à ces 4 coureurs qui ont porté haut les couleurs rouge et blanc de la SAM en 2014."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "23 juillet 2014 - 30 coureurs de la SAM ont fait le Tour du Mont Blanc",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Entre le 11 et le 14 juillet, notre président Claude faisait découvrir à trente membres du Club, le parcours prestigieux de l'UTMB. La première étape a emmené les coureurs de Chamonix aux Chapieux en passant par les cols de Voza et du Bonhomme dans 15cm de neige. Le lendemain, 40km seulement au programme, par le col de Seigne, l'arête Favre, avant un repos bien mérité au refuge Bonatti. Dimanche 12 juillet nouvelle étape de 50km en passant par le point culminant de ce périple : le grand col Ferret (2537m) et les montées vers Champex Lac et Bovine. Une rapide descente sur Trient pour arriver avant la finale de la coupe du monde. Le 14 juillet nous avons fait notre défilé en passant par Catogne, la Tête aux Vents pour arriver à Chamonix. Quelques petits bobos sans gravité et un périple de 165km et 9600m D+ pour les plus endurants. 140 km et 7500m D+ pour la plupart des coureurs. Beaucoup d'images dans la tête, une ambiance de fête pendant 4 jours. Un seul regret : le manque de soleil et des nuages et du brouillard qui ont souvent caché les plus hauts sommets. Beaucoup reviendront l'an prochain."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/07/mont%20blanc.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "2 juillet 2014 - C'est le temps des trails, les podiums sont toujours là",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Dimanche 29 juin, 7 de nos coureurs se sont élancés sur les 23 km de l'Oxytrail. Moins de 2 heures après, Frédéric P, Julien, Thomas, Jean Christophe H, Diane, Marie et Jérôme H étaient arrivés et ont ainsi contribué à la victoire de la SAM par équipe. Merci à Jérome qui est resté au pied du podium pour prendre la photo. Bravo à Marie et Diane qui finirent 3èmes et 4èmes de leurs catégories. Coach Laurent s'est aligné sur le 13km, il a fini 11ème de la course et 4ème de sa catégorie."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/07/Podium%20oxytrail.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "14 avril 2014 - Encore un champion de France à la SAM : Fred Trebeau",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Après Pascal champion de France V2 des 24 heures le Week End dernier, c'est au tour de Fred de faire honneur à notre Club : champion de France V4 du 10 km à Valenciennes en 41mn05. Ainsi un coureur de la SAM est champion de France sur la plus petite des courses hors stade : 10km et un autre sur la plus longue : 24 heures."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Le Podium des V4."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/04/Podium%20Fred.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "6 avril 2014 - Un coureur de la SAM champion de France : Pascal Coindeau",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "En ce Week End de marathon de Paris, Pascal avait décidé de déserter les foules qui arpentaient les 42km du bitume parisien. Il était à Portet-sur Garonne en Haute Garonne pour participer au championnat de France des 24heures. Pascal a été l'auteur d'une course régulière, grappillant petit à petit les places au classement pour terminer 10ème au classement scratch et surtout 1er V2 en courant 206,8km soit une vitesse moyenne de 8,6km/h."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Le Podium des V2."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/04/Photo%20podium%20Pascal%20V3.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Pascal en course."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/04/Cdf%2024H%20V2.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "5 mars 2014 - Des podiums, des podiums,des podiums !!!",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Après la saison de cross, nos coureurs continuent sur route. Les trois \"classiques\" de début d'année dans l'est parisien nous ont apporté de nouveaux podiums : 10km de Vincennes, 15km de Charenton et semi marathon de Paris. A Vincennes : belles 2ème place de Svetlana en SF et de Joseph en V4. A Charenton : 1ère place de Sylvie en V2, de Georges en V2 et de Joseph en V3 A Paris : sur le semi international Sylvie 1ère en V2, Fred et Joseph 1er et 3ème en V4. A noter la 6ème place de Georges en V1 et Claudie en V3. D'autres finissent dans les 20 premiers de leur catégorie : Svetlana, Sandrine, Fredéric, Claude."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "L'équipe de la Sam (55 coureurs) avant le départ du semi marathon."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/03/Semi.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "27 janvier 2014 - Coup double aux championnats de cross",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "15 de nos coureurs étaient présents en janvier aux championnats départementaux de cross à Clamart et aux régionaux Ile de France Est à Sucy en Brie. Points communs à ces deux compétitions : la boue et les victoires de nos féminines. Dans 15 jours ce seront donc nos 6 féminines qui seront présentes aux Championnats Ile de France avec Frédéric et Sébastien qualifiés en individuels."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Nos féminines à l'arrivée apprenant leur victoire."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/01/Cross%20Sucy.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "4 janvier 2014 - Nos coureurs à la SaintExpress",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Le 7 décembre 2013 à 23 heures, quatorze coureurs de la SAM étaient au départ de la SaintExpress. 45 km à courir et marcher à la lumière des frontales dans des chemins parfois très boueux. Beaucoup découvraient ce type de course et, malgré quelques chutes spectaculaires, tous nos coureurs partis du village de Ste Catherine ont atteint le Palais des Sports de Gerland dans des temps forts honorables (entre 4h30 et 7h). A noter une place dans les 100 premiers de Laurent V, la 134ème place de Sylvain K et surtout la 2ème place de Claudie chez les V3F."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Photo d'une partie du groupe avant le départ."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2014/01/Saintexpress.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "24 novembre 2013 - Les braqueuses de la SAM sont de retour à Chaville",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "26 coureurs de la Sam étaient présents au cross long de Chaville ce week-end. Quelques-uns découvraient à cette occasion la discipline du cross. Température fraîche (5°) mais soleil présent par intermittence. Il y a deux ans, nos féminines terminaient premières par équipe, l'an dernier c'était au tour des hommes. Revenche cette année ? avec un espoir secret d'un doublé. Malheureusement, malgré les efforts de Laurent L, Jean R, Jallal, Laurent V, Georges et tous les autres, ils dûrent s'incliner devant une très forte équipe du XVème Athlétic Club. Pas de problèmes pour les féminines qui remportent haut la main le classement par équipe et 4 podiums : Marylou et Frances 1ère et 2ème chez les seniors, Sandrine et Marie Laure font deux et trois. A noter que Rkeya, pour son premier cross termine au pied du podium de SEF pour quelques secondes. En photo, toutes nos féminines qui sont montées sur le podium..."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2013/11/WP_000212-B.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "28 avril 2013 - Hold Up de la SAM à Draveil sur le 10km",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Ce dimanche 28 avril, 24 de nos coureurs ont participé à la 39éme édition de la Ballade des Chênes d'Antan à Draveil. Ce sont 8 coupes que nos coureurs ont ramenées sur les classements scratchs ou par catégorie : Svetlana et Marylou premières féminines, Gilma, Fred , Georges, Claude L, classement par équipe sur 4 hommes et 3 féminines (SAM emporte les deux premières places. A noter également les nombreuses places d'honneur au scratch : Sébastien 4ème au scratch ou par catégorie : Fred B, Jean, Giuliana, Claude et Marlène sur semi. Une bien belle journée malgré le froid, un excellent accueil par les organisateurs et les bénévoles et un buffet top à l'arrivée. A noter la la présence de Jean-Jacques Godard président de la LIFA agréablement surpris de la bonne humeur de notre Club."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "17 mars 2013 - Nos coureurs étaient à l'écotrail de Paris",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Quatorze coureurs de la SAM étaient au départ de l'écotrail de Paris ce samedi 16 mars 2013. Trois étaient au départ du 32km : Alexandra et Marine accompagnaient Lionnel et Jean Christophe au départ de Meudon. Devant le Château de Versailles, c'est Emmanuel, Georges, Frédéric, Charly, Laurent, Claude et Jean Claude qui se sont élancés pour 50 km. Les plus courageux furent Pascal, Jean Jacques, Nicolas et Fabien qui s'étaient donnés rendez-vous à St Quentin en Yvelines pour une balade de 80 km dans les forêts de l'ouest parisien. Ils eurent droit à une grosse averse sur les dernières heures de course. Malgré la boue omniprésente sur le parcours, tous nos coureurs sont arrivés au pied de la Tour Eiffel dans les délais impartis. A noter l'excellente deuxième place par équipe de la SAM (derrière l'EFS Reims) sur plus de 40 Clubs classés :"
+      },
+      {
+       "text": "Résultats par Club",
+       "href": "http://www.traildeparis.com/page/218/Clubs.html"
+      },
+      {
+       "text": "Bravo à tous."
+      },
+      {
+       "text": "<",
+       "href": "http://www.samparis12.org/wp-content/uploads/2013/03/ld_147568152.jpg"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2013/03/ld_14756852.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "20 janvier 2013 - Il n'y a pas que la neige qui a envahi l'Ice Trail : la SAM était en nombre",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Ce 20 janvier 2013, 24 de nos coureurs étaient inscrits à l'Ice Trail en forêt de Carnelle principalement sur le 15km. Première difficulté : s'y rendre. Avec les chutes de neige de la nuit, pas facile d'atteindre le départ à St Martin du Tertre dans le Val d'Oise. Les organisateurs ont bloqué tous les véhicules (sauf les 4x4) à 2km du stade. Départ de la course avec quelques minutes de retard. Plusiers d'entre nous avaient ajouté des chaînes (YackTrack) sous les chaussures. Laurent V avait mêmes mis ses chaussures à pointes de cross. Il finira 13ème et premier du Club. Laurent L termine derrière lui et deuxième V1. Il se rappellera de son premier trail et de son premier podium."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2013/01/Podium-féminin-Ice-Trail-15km1-300x225.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Marylou et Sandrine finissent deuxième et troisième féminines."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Claude et Claudie font premiers en V3H et V3F."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Beaucoup de bons souvenirs pour tous et principalement pour ceux dont c'était le premier trail."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2013/01/Ice-Trail-300x225.jpg"
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2013/01/Ice-taril-1-300x224.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "25 novembre 2012 - Des podiums dès le premier cross : Chaville 2012",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "En 2011, les féminines avaient terminé premières par équipe au cross de Chaville. Cette année elles avaint décidé de se reposer.... Nos masculins ont pris le relais : beau tir groupé de Emmanuel (21ème), Laurent L (22), Laurent V (28), Laurent D (30) et Georges (33), ils terminent 1er par équipe. A quand une équipe composée uniquement de Laurent ?"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/11/DSCN4517-V1-300x225.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Podium également pour notre V2 Giuliana qui finit première de sa catégorie troisième vétéranne."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/11/DSCN4514-V1-224x300.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Bonne journée pour les 15 coureurs de la SAM présents à Chaville."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "28 octobre 2012 - Sortie du Club à Reims le 21 octobre",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Trente de nos coureurs étaient inscrits au différentes courses des épreuves proposées par RATJ (Reims A Toutes Jambes) 10km, semi et marathon. Avec les accompagnateurs, nous étions 50 à arpenter les rues de Reims dès samedi matin, visites de la cathédrale, de la basilique St Rémi, des différentes places et hôtels de la Ville."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/10/2012-10-21-08.53.41-800x600.jpg"
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Après les courses, visite des caves Pommery suivie d'une dégustation bien méritée après les efforts du matin."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/10/P1110494_1-300x225.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "27 octobre 2012 - Deux de nos coureurs au championnat de France de semi à Nancy",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Dimanche 7 octobre Sylvie et Fred étaient à Nancy pour le championnat de France de semi-marathon. Sylvie a terminé 39ème de sa catégorie en 1h34mn 24 et Fred 30ème V3 en 1h34mn14. Bravo à vous deux."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/10/V__2647.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "7 octobre 2012 - Entre 10 et 100 km ce dernier Week End de septembre",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Une trentaine de coureurs de la SAM ont profité du beau temps de ce Week End pour s'exprimer sur les 100 Km de Millau (Patrick), le marathon de Berlin (Laurent), les 10 km du parc du Luxembourg (où Amanda et Svetlana ont fait un doublé au classement féminin en 40mn 26) et sur les 16km entre Paris et Versailles. Il faut noter les excellentes performances de Laurent, Pascal et Marylou qui ont mis moins d'une heure 10 pour courir de la Tour Eiffel au Château de Versailles en passant par la fameuse côte des Gardes. Bravo aux 29 finishers de ce Week End, la forme est déjà là en ce début de saison."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/10/bandeau-PV.png"
+    }
+   ]
+  },
+  {
+   "titre": "25 septembre 2012 - La Sam sur les podiums de la Course des Chasseurs de Temps",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "On ne voyait que du rouge et blanc sur les podiums de la Course des Chasseurs de Temps à Vincennes. Olivier 3ème V1, Fred 1er V3 et Sylvie 1ère V1 ont fait honneur aux couleurs de la SAM sur le 14km, quant à Marlène, elle finit 2ème V2 à la Féminine sur 7km. En tout 4 podiums pour 7 participants !"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "2 juillet 2012 - Encore un dimanche en rouge et blanc",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Onze de nos coureurs étaient aux Foulées France des Iles ce dimanche 1er juillet dans le Bois de Vincennes. Honneur aux féminines avec la 1ère place de Svletana en senior, la deuxième de Sylvie en V1. Avec Marylou qui s'est intercalée, elles terminent 2ème, 6ème et 7ème au scratch. Nouvelle performance de Fred qui termine 4ème V3. Plus loin et plus haut à Chamonix, Claude bouclait le cross du Mont Blanc (23km) en 3h40 sous une forte chaleur. Le lendemain température plus propice à la course pour Jean-Charles qui boucle le marathon en 6h33 et Ingrid très valeureuse qui termine en moins de 7h30."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/07/Jean-Charles.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "18 juin 2012 - Dimanche de rêve pour la SAM",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Six équipes étaient présentes au relais Marathon du Val de Marne. L'équipe masculine 1 termine à la neuvième place dans un temps de 2h41mn36 pour boucler le 42km192. L'équipe féminine réalise un bel exploit en gagnant en 3h0mn 26sec. Sous l'impulsion de leur capitaine de route Sylvie, Marie Laure qui avait repris l'entraînement sur piste après l'écotrail de Paris, Svetlana et Marylou bien remises après leurs performances sur le marathon de Paris ont porté haut les couleurs du Club. Un pique nique sous le soleil enfin revenu a permis de fêter cette belle victoire."
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/06/IMG_5689.jpg"
+    }
+   ]
+  },
+  {
+   "titre": "21 mai 2012 - Week-End aux quatre coins de la France",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Dimanche 13 mai, il y avait moins de monde que d’habitude à l’entrainement. Beaucoup d’entre nous étions présents sur diverses courses aux quatre coins de notre pays."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "En région parisienne, trois de nos féminines se sont distinguées en montant sur le podium : Sylvie 1ère V1 en 42:17 et Svetlana 2ème SF en 41:08 aux 10km Handicap International. Elles étaient accompagnées de Laurent et Anne. Joël était sur le 5km de l'Anorgend dans le bois de Vincennes : 1er VH1."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Une dizaine de coureurs ont pris l'air à Milly la Forêt au trail de l'aqueduc, ils ont pu admirer Sandrine sur le podium : 2ème V1."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Pascal et Ronan ont respiré l'air iodé le long des côtes du côte du Mont St Michel et son célèbre marathon... Emmanuel et Claude ont préféré les odeurs de sapin du côté de Besançon sur les 45km du trail des forts (et il fallait être costaud... pour monter la dernière côte)."
+      }
+     ]
+    },
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Enfin Claudie, Arnaud, Patrick et Jean Paul ont pris de la hauteur sur le viaduc de Millau."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "26 avril 2012 - Ecotrail de Paris 24 mars",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Avec la création d’une nouvelle épreuve sur 30km, quelques coureurs de la SAM se sont lancés dans l’aventure d’un trail. Gilma, Claudie, Giuliana et Eric s’y étaient donné rendez-vous et bouclèrent la distance sans trop de difficultés. Course plus longue et néanmoins bouclée à plus de 10km/h pour Marie Laure sur les 50km entre le château de Versailles et le pied de la tour Eiffel. Bruno arrivera quelques minutes plus tard fatigué mais heureux d’avoir bouclé un grand trail. Nos deux vétérans Alain et Claude souffrirent de la chaleur sur les 80km entre la base de loisirs de St Quentin en Yvelines et le premier étage de la Tour Eiffel. Moins de 11heures pour Alain qui se lançait pour la première fois dans l’aventure, 20mn de plus pour notre Président dont s’était la cinquième participation en autant d’éditions. Bravo à tous et bonne récupération."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "titre": "26 avril 2012 - Marathon de Paris",
+   "items": [
+    {
+     "t": "p",
+     "segs": [
+      {
+       "text": "Le 15 avril, vingt-deux de nos coureurs étaient sur la ligne départ du dernier marathon de Paris, tous sont allés jusqu’au bout après 2h48mn de course pour Frédéric et 4h45pour Yoyo. Le froid n’a pas empêché nos deux gazelles Marylou et Svetlana de descendre largement sous les 3h30. Pour huit d’entre eux c’était une grande première sur cette distance mythique avec un seul objectif : terminer et devenir marathonien. Le plan d’entraînements concocté par Daniel, Patrice et Christophe a porté ses fruits, presque tous les coureurs ont amélioré leur temps sur la distance. Plus d’une trentaine de coureurs de la SAM s’étaient massés le long du parcours pour encourager leurs collègues et même les accompagner sur quelques kilomètres. C’est cela l’esprit Club. Pendant ce temps du côté d’Aix en Provence, Emmanuel bouclait en 56ème position le trail de la Ste Victoire : 7h40 pour faire les 59km et 2700 de dénivelé +. Moins de chance pour notre Vice-Président Jean Paul à Boston, sous la canicule : 35°C et victime d’une insolation, il a pu quand même terminer à une vitesse moyenne égale à celle de son dernier 100km de Millau. Allez Jean Paul, remets toi vite et bonnes vacances au Etats Unis !"
+      }
+     ]
+    },
+    {
+     "t": "img",
+     "src": "http://www.samparis12.org/wp-content/uploads/2012/04/marathon-2012.jpg"
+    }
+   ]
   }
  ],
  "instantane": "2 octobre 2026"

@@ -413,29 +413,6 @@ header {
   text-align: center;
   padding-block: 0.4rem;
 }
-.leg__marker i {
-  display: block;
-  font-family: var(--font-mono);
-  font-style: normal;
-  font-size: 0.6rem;
-  letter-spacing: 0.16em;
-  color: var(--stone);
-}
-.leg__marker b {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 2rem;
-  line-height: 1;
-  color: var(--ink);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  padding: 0.35rem 0;
-  margin-top: 0.3rem;
-  transition: color 0.2s, border-color 0.2s;
-}
-.leg.is-active .leg__marker b { color: var(--vermilion); border-color: var(--vermilion); }
-
 .leg__body { max-width: var(--measure); min-width: 0; }
 .leg__body h2 {
   font-size: clamp(1.7rem, 3.6vw, 2.6rem);
@@ -633,19 +610,11 @@ footer {
   .leg__marker {
     width: auto;
     display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
+    align-items: flex-end;
     background: none;
     padding: 0;
   }
-  .leg__marker b {
-    border: 0;
-    background: none;
-    padding: 0;
-    font-size: 1.5rem;
-    color: var(--vermilion);
-  }
-  .leg__marker i { font-size: 0.66rem; }
+  .leg__marker .borne { width: 40px; margin: 0; }
 
   .disc, .contact-grid { grid-template-columns: 1fr; }
 }
@@ -667,6 +636,26 @@ footer {
 .nav-links .nav-menu a:hover { background: var(--surface-2); }
 .drawer-group { display: flex; flex-direction: column; }
 .drawer-title { font-size: 0.68rem; letter-spacing: 0.16em; color: var(--stone); padding: 0.9rem 0 0.2rem; }
+
+/* Borne kilométrique des sections de l'accueil */
+.borne { display: block; width: 62px; height: auto; margin: 0 auto; overflow: visible; }
+.borne-body { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.borne-cap { fill: var(--stone); transition: fill 0.2s; }
+.leg.is-active .borne-cap { fill: var(--vermilion); }
+.borne text { font-family: var(--font-display); text-anchor: middle; }
+.borne .borne-km { fill: #fff; font-size: 11px; letter-spacing: 0.12em; font-weight: 600; }
+.borne .borne-n { fill: var(--ink); font-size: 24px; font-weight: 700; }
+.borne-ground { stroke: var(--line); stroke-width: 2; }
+
+/* Menu resserré entre le seuil mobile et les grands écrans */
+.nav-links a, .nav-group__btn { white-space: nowrap; }
+@media (min-width: 861px) and (max-width: 1100px) {
+  .nav { gap: 1rem; }
+  .nav-links { gap: 1rem; font-size: 0.7rem; letter-spacing: 0.03em; }
+  .nav-actions { padding-left: 0.8rem; margin-left: 0; }
+  .btn-adherent-nav { padding: 0.5rem 0.7rem; font-size: 0.66rem; }
+  .brand .tagline { display: none; }
+}
 
 /* Liens « en savoir plus » des sections de l'accueil */
 .more-links { display: flex; flex-wrap: wrap; gap: 0.4rem 1.5rem; margin: 1rem 0 0; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.04em; }
@@ -713,3 +702,9 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0s !important; transition-duration: 0s !important; }
 }
+
+.journal-entry { border: 1px solid var(--line); background: var(--surface); padding: 1.2rem 1.4rem; margin-top: 1rem; max-width: 70ch; }
+.journal-entry h2 { font-size: 1.3rem; text-transform: uppercase; margin-bottom: 0.7rem; }
+.journal-entry p { margin: 0 0 0.7rem; line-height: 1.6; }
+.journal-entry a { color: var(--vermilion); }
+.journal-entry img { display: block; max-width: 100%; height: auto; margin: 0.6rem 0; }

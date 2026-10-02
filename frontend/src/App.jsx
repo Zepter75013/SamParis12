@@ -11,6 +11,7 @@ import APropos from './pages/APropos.jsx'
 import {
   HistoirePage, HorairesPage, MarcheNordiquePage, LeClubPage,
   NosCoursesPage, NosResultatsPage, NosPerformancesPage,
+  TerrainPage, AdhesionPage, ContactPage, NousYetionsPage,
 } from './pages/Content.jsx'
 
 function PublicLayout({ children }) {
@@ -50,6 +51,10 @@ export default function App() {
         <Route path="/histoire" element={<PublicLayout><HistoirePage /></PublicLayout>} />
         <Route path="/horaires" element={<PublicLayout><HorairesPage /></PublicLayout>} />
         <Route path="/marche-nordique" element={<PublicLayout><MarcheNordiquePage /></PublicLayout>} />
+        <Route path="/terrain" element={<PublicLayout><TerrainPage /></PublicLayout>} />
+        <Route path="/adhesion" element={<PublicLayout><AdhesionPage /></PublicLayout>} />
+        <Route path="/contact" element={<PublicLayout><ContactPage /></PublicLayout>} />
+        <Route path="/nous-y-etions" element={<PublicLayout><NousYetionsPage /></PublicLayout>} />
         <Route path="/nos-courses" element={<PublicLayout><NosCoursesPage /></PublicLayout>} />
         <Route path="/nos-resultats" element={<PublicLayout><NosResultatsPage /></PublicLayout>} />
         <Route path="/nos-performances" element={<PublicLayout><NosPerformancesPage /></PublicLayout>} />
