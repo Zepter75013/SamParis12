@@ -72,22 +72,24 @@ export function Runner() {
     <div className="runner" ref={ref} aria-hidden="true">
       <svg viewBox="0 0 40 56" width="40" height="56">
         <defs>
-          <clipPath id="runner-torso"><path d="M15 14 L27 14 L26 33 L16 33 Z" /></clipPath>
+          <clipPath id="runner-torso"><path d="M14 14 L28 14 L27 33 L15 33 Z" /></clipPath>
         </defs>
         <ellipse className="runner-shadow" cx="20" cy="54" rx="11" ry="2" />
         <g className="runner-body">
-          <g className="runner-arm runner-arm--b"><path d="M21 17 L14 26 L17 33" /></g>
+          <g className="runner-arm runner-arm--b"><path d="M20 17 L13 26 L16 33" /><path className="runner-sleeve" d="M20 17 L16.8 21" /><path className="runner-cuff" d="M16.9 20.8 L16.1 21.8" /></g>
           <g className="runner-leg runner-leg--b"><path d="M20 35 L18 45 L21 53" /><path className="runner-shoe" d="M19 53 H25" /></g>
-          <path className="runner-torso" d="M15 14 L27 14 L26 33 L16 33 Z" />
+          <path className="runner-torso" d="M14 14 L28 14 L27 33 L15 33 Z" />
           <g clipPath="url(#runner-torso)">
-            <path className="runner-stripe" d="M10 20 L32 12 L32 17 L10 25 Z" />
-            <path className="runner-stripe" d="M10 28 L32 20 L32 25 L10 33 Z" />
+            <path className="runner-stripe" d="M12 22 L30 21 L30 24.2 L12 25.2 Z" />
+            <path className="runner-stripe" d="M12 26.6 L30 25.6 L30 28.8 L12 29.8 Z" />
+            <path className="runner-stripe" d="M12 31.2 L30 30.2 L30 33.4 L12 34.4 Z" />
           </g>
-          <path className="runner-shorts" d="M16 33 H26 L27 40 H15 Z" />
+          <path className="runner-collar" d="M17 14.2 Q22 18 27 14.2" />
+          <path className="runner-shorts" d="M15 33 H27 L28 40.5 H14 Z" />
           <circle className="runner-skin" cx="22" cy="8" r="5.2" />
-          <path className="runner-hair" d="M16.8 8 Q17 2.8 22 2.8 Q27 2.8 27.2 7 Q23 5.2 16.8 8 Z" />
-          <g className="runner-leg runner-leg--a"><path d="M22 35 L26 45 L22 53" /><path className="runner-shoe" d="M21 53 H27" /></g>
-          <g className="runner-arm runner-arm--a"><path d="M23 17 L30 25 L27 31" /></g>
+          <path className="runner-hair" d="M16.8 8.4 Q16.4 2.6 22 2.6 Q27.8 2.6 27.2 7.6 Q23 4.6 16.8 8.4 Z" />
+          <g className="runner-leg runner-leg--a"><path d="M23 35 L27 45 L23 53" /><path className="runner-shoe" d="M22 53 H28" /></g>
+          <g className="runner-arm runner-arm--a"><path d="M24 17 L31 25 L28 31" /><path className="runner-sleeve" d="M24 17 L27.4 21" /><path className="runner-cuff" d="M27.2 20.8 L28 21.8" /></g>
         </g>
       </svg>
     </div>

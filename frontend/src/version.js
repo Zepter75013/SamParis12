@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.15.0'
+export const APP_VERSION = '1.15.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.15.1',
+    date: '3 octobre 2026',
+    notes: "Le petit coureur porte désormais le vrai maillot de la SAM Paris 12 : blanc, rayures rouges horizontales sur le bas du torse, col et manches liserés de rouge, short noir.",
+  },
   {
     version: '1.15.0',
     date: '3 octobre 2026',

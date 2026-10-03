@@ -812,6 +812,9 @@ footer {
   .runner-skin { fill: #f1c7a1; }
   .runner-hair { fill: #3a2a1d; }
   .runner-arm path, .runner-leg path:first-child { fill: none; stroke: #f1c7a1; stroke-width: 3.6; }
+  .runner-arm path.runner-sleeve { stroke: #fff; stroke-width: 5.2; }
+  .runner-arm path.runner-cuff { stroke: var(--vermilion); stroke-width: 5.4; }
+  .runner-collar { fill: none; stroke: var(--vermilion); stroke-width: 1.4; }
   .runner-shoe { fill: none; stroke: var(--vermilion); stroke-width: 3; }
   .runner-body { transform-origin: 21px 30px; }
   .runner-arm, .runner-leg { transform-origin: 22px 34px; }
