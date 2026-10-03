@@ -797,3 +797,32 @@ footer {
   .hero .shell { padding-block: 1.4rem 2.4rem; }
   .hero__text, .page-hero__text { max-width: none; }
 }
+
+/* ---------- Coureur en maillot SAM qui suit la route de borne en borne (bureau uniquement) ---------- */
+.runner { display: none; }
+@media (min-width: 861px) {
+  .runner { display: block; position: absolute; left: 0; top: 0; width: 40px; height: 56px; z-index: 3; pointer-events: none; will-change: transform; }
+  .runner svg { display: block; overflow: visible; transition: transform 0.25s; }
+  .runner.is-left svg { transform: scaleX(-1); }
+  .runner svg path, .runner svg circle { stroke-linecap: round; stroke-linejoin: round; }
+  .runner-shadow { fill: rgba(0, 0, 0, 0.18); }
+  .runner-torso { fill: #fff; stroke: #d9d3cb; stroke-width: 0.8; }
+  .runner-stripe { fill: var(--vermilion); }
+  .runner-shorts { fill: #1c1917; }
+  .runner-skin { fill: #f1c7a1; }
+  .runner-hair { fill: #3a2a1d; }
+  .runner-arm path, .runner-leg path:first-child { fill: none; stroke: #f1c7a1; stroke-width: 3.6; }
+  .runner-shoe { fill: none; stroke: var(--vermilion); stroke-width: 3; }
+  .runner-body { transform-origin: 21px 30px; }
+  .runner-arm, .runner-leg { transform-origin: 22px 34px; }
+  .runner-arm { transform-origin: 22px 17px; }
+  .runner.is-running .runner-body { animation: runBob 0.36s ease-in-out infinite; }
+  .runner.is-running .runner-leg--a, .runner.is-running .runner-arm--b { animation: runSwingA 0.36s ease-in-out infinite alternate; }
+  .runner.is-running .runner-leg--b, .runner.is-running .runner-arm--a { animation: runSwingB 0.36s ease-in-out infinite alternate; }
+  @keyframes runBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+  @keyframes runSwingA { from { transform: rotate(-30deg); } to { transform: rotate(30deg); } }
+  @keyframes runSwingB { from { transform: rotate(30deg); } to { transform: rotate(-30deg); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .runner * { animation: none !important; }
+}

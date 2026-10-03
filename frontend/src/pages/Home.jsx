@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Borne, useActiveLegs } from '../components/Legs.jsx'
+import { Borne, Runner, useActiveLegs } from '../components/Legs.jsx'
 import { HeroSlides } from '../components/HeroSlides.jsx'
 import { BORNES } from '../data/rubriques.js'
 import { api } from '../lib/api.js'
@@ -64,6 +64,7 @@ export default function Home() {
 
       <div className="shell legs">
         <div className="course-line" aria-hidden="true" />
+        <Runner />
 
         {BORNES.map((b, i) => (
           <section className="leg" id={b.id} key={b.id}>

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 // Borne kilométrique : calotte colorée « KM » et numéro de la rubrique.
 export function Borne({ n }) {
@@ -10,6 +10,87 @@ export function Borne({ n }) {
       <text className="borne-n" x="32" y="64">{String(n).padStart(2, '0')}</text>
       <line className="borne-ground" x1="2" y1="82" x2="62" y2="82" />
     </svg>
+  )
+}
+
+// Petit coureur en maillot SAM (blanc à rayures rouges) qui court de borne en borne quand on fait défiler.
+// Il suit la route : tout droit le long d'une borne, puis une courbe vers la suivante.
+export function Runner() {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    const box = el && el.parentElement
+    if (!box) return undefined
+    let raf = 0
+    let stopTimer = 0
+    let faceLeft = false
+    let last = null
+
+    const place = () => {
+      raf = 0
+      const markers = [...box.querySelectorAll('.leg__marker')]
+      const legs = [...box.querySelectorAll('.leg')]
+      if (markers.length < 2 || el.offsetParent === null) return
+      const c = box.getBoundingClientRect()
+      const cx = markers.map((m) => { const r = m.getBoundingClientRect(); return r.left + r.width / 2 - c.left })
+      const cy = markers.map((m) => { const r = m.getBoundingClientRect(); return r.top + r.height / 2 - c.top })
+      const y = Math.min(Math.max(window.innerHeight * 0.5 - c.top, cy[0]), cy[cy.length - 1])
+      let i = 0
+      while (i < cy.length - 2 && y > cy[i + 1]) i += 1
+      const bottom = legs[i].getBoundingClientRect().bottom - c.top
+      const t = Math.min(Math.max((y - (bottom - 40)) / 80, 0), 1)
+      const x = cx[i] + (cx[i + 1] - cx[i]) * (t * t * (3 - 2 * t))
+      if (last !== null && Math.abs(x - last) > 0.4) faceLeft = x < last
+      last = x
+      el.style.transform = `translate(${x - 20}px, ${y - 54}px)`
+      el.classList.toggle('is-left', faceLeft)
+    }
+
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(place)
+      el.classList.add('is-running')
+      clearTimeout(stopTimer)
+      stopTimer = setTimeout(() => el.classList.remove('is-running'), 180)
+    }
+    const onResize = () => { if (!raf) raf = requestAnimationFrame(place) }
+
+    place()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onResize)
+    const late = setTimeout(place, 600) // une fois polices et photos en place
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
+      clearTimeout(stopTimer)
+      clearTimeout(late)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
+
+  return (
+    <div className="runner" ref={ref} aria-hidden="true">
+      <svg viewBox="0 0 40 56" width="40" height="56">
+        <defs>
+          <clipPath id="runner-torso"><path d="M15 14 L27 14 L26 33 L16 33 Z" /></clipPath>
+        </defs>
+        <ellipse className="runner-shadow" cx="20" cy="54" rx="11" ry="2" />
+        <g className="runner-body">
+          <g className="runner-arm runner-arm--b"><path d="M21 17 L14 26 L17 33" /></g>
+          <g className="runner-leg runner-leg--b"><path d="M20 35 L18 45 L21 53" /><path className="runner-shoe" d="M19 53 H25" /></g>
+          <path className="runner-torso" d="M15 14 L27 14 L26 33 L16 33 Z" />
+          <g clipPath="url(#runner-torso)">
+            <path className="runner-stripe" d="M10 20 L32 12 L32 17 L10 25 Z" />
+            <path className="runner-stripe" d="M10 28 L32 20 L32 25 L10 33 Z" />
+          </g>
+          <path className="runner-shorts" d="M16 33 H26 L27 40 H15 Z" />
+          <circle className="runner-skin" cx="22" cy="8" r="5.2" />
+          <path className="runner-hair" d="M16.8 8 Q17 2.8 22 2.8 Q27 2.8 27.2 7 Q23 5.2 16.8 8 Z" />
+          <g className="runner-leg runner-leg--a"><path d="M22 35 L26 45 L22 53" /><path className="runner-shoe" d="M21 53 H27" /></g>
+          <g className="runner-arm runner-arm--a"><path d="M23 17 L30 25 L27 31" /></g>
+        </g>
+      </svg>
+    </div>
   )
 }
 
@@ -42,6 +123,7 @@ export function Legs({ sections }) {
   return (
     <div className="shell legs legs--page">
       <div className="course-line" aria-hidden="true" />
+      <Runner />
       {sections.map((s, i) => (
         <section className="leg" id={s.id} key={s.id ?? s.title ?? i}>
           <div className="leg__marker"><Borne n={i + 1} /></div>
