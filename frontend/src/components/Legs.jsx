@@ -35,7 +35,17 @@ export function Runner() {
       const c = box.getBoundingClientRect()
       const cx = markers.map((m) => { const r = m.getBoundingClientRect(); return r.left + r.width / 2 - c.left })
       const cy = markers.map((m) => { const r = m.getBoundingClientRect(); return r.top + r.height / 2 - c.top })
-      const y = Math.min(Math.max(window.innerHeight * 0.5 - c.top, cy[0]), cy[cy.length - 1])
+      // Repère de lecture : le milieu de l'écran, qui descend vers la dernière borne quand on arrive en bas de page,
+      // pour que le coureur l'atteigne même si la page ne peut pas défiler davantage.
+      const vh = window.innerHeight
+      const maxScroll = document.documentElement.scrollHeight - vh
+      let frac = 0.5
+      if (maxScroll > 0) {
+        const fEnd = Math.min(Math.max((c.top + window.scrollY + cy[cy.length - 1] - maxScroll) / vh, 0.5), 0.92)
+        const w = Math.min(Math.max((window.scrollY - (maxScroll - vh)) / vh, 0), 1)
+        frac = 0.5 + (fEnd - 0.5) * (w * w * (3 - 2 * w))
+      }
+      const y = Math.min(Math.max(vh * frac - c.top, cy[0]), cy[cy.length - 1])
       let i = 0
       while (i < cy.length - 2 && y > cy[i + 1]) i += 1
       const bottom = legs[i].getBoundingClientRect().bottom - c.top
