@@ -614,7 +614,7 @@ footer {
     background: none;
     padding: 0;
   }
-  .leg__marker .borne { width: 52px; margin: 0; }
+  .leg__marker .borne { width: 44px; margin: 0; }
 
   .disc, .contact-grid { grid-template-columns: 1fr; }
 }
@@ -638,7 +638,7 @@ footer {
 .drawer-title { font-size: 0.68rem; letter-spacing: 0.16em; color: var(--stone); padding: 0.9rem 0 0.2rem; }
 
 /* Borne kilométrique des sections de l'accueil */
-.borne { display: block; width: 76px; height: auto; margin: 0 auto; overflow: visible; }
+.borne { display: block; width: 58px; height: auto; margin: 0 auto; overflow: visible; }
 .borne-panel { fill: #fff; stroke: var(--line); stroke-width: 0.8; }
 .borne-bar { fill: #b8b2ab; }
 .borne-red { fill: var(--stone); transition: fill 0.25s; }
@@ -711,7 +711,7 @@ footer {
   .leg__marker { position: relative; z-index: 1; }
   .leg::before, .leg::after { content: ''; position: absolute; pointer-events: none; z-index: 0; }
   .leg::before {
-    left: 37px; top: 146px; bottom: 40px; width: 0;
+    left: 37px; top: 118px; bottom: 40px; width: 0;
     border-left: 2px dashed color-mix(in srgb, var(--vermilion) 45%, transparent);
   }
   .leg::after {
