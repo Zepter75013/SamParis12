@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.15.2'
+export const APP_VERSION = '1.16.0'
 
 export const CHANGELOG = [
+  {
+    version: '1.16.0',
+    date: '4 octobre 2026',
+    notes: "Les bornes kilométriques reprennent le kakemono du club : bandes rouges en diagonale, « N Km » en grand, logo SAM et « SAM PARIS 12 ». Grisées par défaut, elles passent aux couleurs du club quand on arrive à leur hauteur.",
+  },
   {
     version: '1.15.2',
     date: '3 octobre 2026',

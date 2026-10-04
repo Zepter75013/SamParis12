@@ -1,14 +1,36 @@
 import { useEffect, useRef } from 'react'
 
-// Borne kilométrique : calotte colorée « KM » et numéro de la rubrique.
+// Borne kilométrique : kakemono du club (bandes en diagonale, « N Km », logo, « SAM PARIS 12 »).
+// Grisé tant qu'il n'est pas la borne en cours, aux couleurs du club quand il l'est.
 export function Borne({ n }) {
+  const bande = (
+    <>
+      <path className="borne-red" d="M0 0 H38 L0 22 Z" />
+      <path className="borne-red" d="M0 27 L47 0 H51 L0 31.4 Z" />
+      <path className="borne-red" d="M0 34.4 L56.6 0 H59 L0 36.4 Z" />
+    </>
+  )
   return (
-    <svg className="borne" viewBox="0 0 64 88" role="img" aria-label={`Kilomètre ${n}`}>
-      <path className="borne-body" d="M8 82 V32 Q8 6 32 6 Q56 6 56 32 V82 Z" />
-      <path className="borne-cap" d="M8 32 Q8 6 32 6 Q56 6 56 32 Z" />
-      <text className="borne-km" x="32" y="26">KM</text>
-      <text className="borne-n" x="32" y="64">{String(n).padStart(2, '0')}</text>
-      <line className="borne-ground" x1="2" y1="82" x2="62" y2="82" />
+    <svg className="borne" viewBox="0 0 100 158" role="img" aria-label={`Kilomètre ${n}`}>
+      <defs>
+        <clipPath id="borne-clip"><rect x="2" y="5" width="96" height="141" /></clipPath>
+      </defs>
+      <rect className="borne-bar" x="0" y="0" width="100" height="5" rx="1.5" />
+      <rect className="borne-panel" x="2" y="5" width="96" height="141" />
+      <g clipPath="url(#borne-clip)">
+        <g transform="translate(2 5)">{bande}</g>
+        <g transform="translate(98 146) rotate(180) scale(0.72)">{bande}</g>
+      </g>
+      <text className="borne-num" x="50" y="68">
+        <tspan className="borne-n">{n}</tspan>
+        <tspan className="borne-unit" dx="3">Km</tspan>
+      </text>
+      <image className="borne-logo" href="/logo.png" x="29" y="76" width="42" height="37.5" />
+      <rect className="borne-red" x="22" y="119" width="56" height="2" />
+      <text className="borne-club" x="50" y="135" textLength="62" lengthAdjust="spacingAndGlyphs">SAM PARIS 12</text>
+      <rect className="borne-bar" x="0" y="146" width="100" height="6" rx="1.5" />
+      <rect className="borne-bar" x="22" y="152" width="14" height="4" rx="1" />
+      <rect className="borne-bar" x="64" y="152" width="14" height="4" rx="1" />
     </svg>
   )
 }

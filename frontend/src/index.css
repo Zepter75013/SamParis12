@@ -614,7 +614,7 @@ footer {
     background: none;
     padding: 0;
   }
-  .leg__marker .borne { width: 40px; margin: 0; }
+  .leg__marker .borne { width: 52px; margin: 0; }
 
   .disc, .contact-grid { grid-template-columns: 1fr; }
 }
@@ -638,14 +638,19 @@ footer {
 .drawer-title { font-size: 0.68rem; letter-spacing: 0.16em; color: var(--stone); padding: 0.9rem 0 0.2rem; }
 
 /* Borne kilométrique des sections de l'accueil */
-.borne { display: block; width: 62px; height: auto; margin: 0 auto; overflow: visible; }
-.borne-body { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
-.borne-cap { fill: var(--stone); transition: fill 0.2s; }
-.leg.is-active .borne-cap { fill: var(--vermilion); }
-.borne text { font-family: var(--font-display); text-anchor: middle; }
-.borne .borne-km { fill: #fff; font-size: 11px; letter-spacing: 0.12em; font-weight: 600; }
-.borne .borne-n { fill: var(--ink); font-size: 24px; font-weight: 700; }
-.borne-ground { stroke: var(--line); stroke-width: 2; }
+.borne { display: block; width: 76px; height: auto; margin: 0 auto; overflow: visible; }
+.borne-panel { fill: #fff; stroke: var(--line); stroke-width: 0.8; }
+.borne-bar { fill: #b8b2ab; }
+.borne-red { fill: var(--stone); transition: fill 0.25s; }
+.leg.is-active .borne-red { fill: #e10600; }
+.borne text { text-anchor: middle; font-family: var(--font-display); fill: var(--stone); transition: fill 0.25s; }
+.leg.is-active .borne text { fill: #e10600; }
+.borne-num { font-weight: 800; }
+.borne-n { font-size: 58px; letter-spacing: -1px; }
+.borne-unit { font-size: 27px; }
+.borne-club { font-size: 12px; font-weight: 800; font-style: italic; }
+.borne-logo { filter: grayscale(1) opacity(0.55); transition: filter 0.25s; }
+.leg.is-active .borne-logo { filter: none; }
 
 /* Menu resserré entre le seuil mobile et les grands écrans */
 .nav-links a, .nav-group__btn { white-space: nowrap; }
@@ -706,7 +711,7 @@ footer {
   .leg__marker { position: relative; z-index: 1; }
   .leg::before, .leg::after { content: ''; position: absolute; pointer-events: none; z-index: 0; }
   .leg::before {
-    left: 37px; top: 104px; bottom: 40px; width: 0;
+    left: 37px; top: 146px; bottom: 40px; width: 0;
     border-left: 2px dashed color-mix(in srgb, var(--vermilion) 45%, transparent);
   }
   .leg::after {
