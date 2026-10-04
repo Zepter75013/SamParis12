@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Route, Routes, useLocation } from 'react-router-dom'
 import Header from './components/Header.jsx'
 import Footer from './components/Footer.jsx'
+import EasterEgg from './components/EasterEgg.jsx'
 import Home from './pages/Home.jsx'
 import NotFound from './pages/NotFound.jsx'
 import Login from './pages/adherent/Login.jsx'
@@ -45,6 +46,7 @@ export default function App() {
   return (
     <>
       <ScrollManager />
+      <EasterEgg />
       <Routes>
         <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
         <Route path="/le-club" element={<PublicLayout><LeClubPage /></PublicLayout>} />
