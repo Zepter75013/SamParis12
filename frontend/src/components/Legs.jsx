@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Borne kilométrique : kakemono du club (bandes en diagonale, « N Km », logo, « SAM PARIS 12 »).
 // Grisé tant qu'il n'est pas la borne en cours, aux couleurs du club quand il l'est.
@@ -37,8 +37,19 @@ export function Borne({ n }) {
 
 // Petit coureur en maillot SAM (blanc à rayures rouges) qui court de borne en borne quand on fait défiler.
 // Il suit la route : tout droit le long d'une borne, puis une courbe vers la suivante.
+const PEAUX = ['#f1c7a1', '#8a5a3c'] // claire, foncée
+const CHEVEUX_CLAIRS = ['#3a2a1d', '#d9b36a', '#1c1917', '#8a3b1d']
+
+// Au hasard à chaque visite : homme ou femme, peau claire ou foncée.
+function tirerCoureur() {
+  const pick = (a) => a[Math.floor(Math.random() * a.length)]
+  const foncee = Math.random() < 0.5
+  return { femme: Math.random() < 0.5, peau: PEAUX[foncee ? 1 : 0], cheveux: foncee ? '#1a1512' : pick(CHEVEUX_CLAIRS) }
+}
+
 export function Runner() {
   const ref = useRef(null)
+  const [look] = useState(tirerCoureur)
 
   useEffect(() => {
     const el = ref.current
@@ -105,7 +116,12 @@ export function Runner() {
   }, [])
 
   return (
-    <div className="runner" ref={ref} aria-hidden="true">
+    <div
+      className={`runner${look.femme ? ' is-woman' : ''}`}
+      ref={ref}
+      style={{ '--skin': look.peau, '--hair': look.cheveux }}
+      aria-hidden="true"
+    >
       <svg viewBox="0 0 40 56" width="60" height="84">
         <defs>
           <clipPath id="runner-torso"><path d="M14 14 L28 14 L27 33 L15 33 Z" /></clipPath>
@@ -129,6 +145,7 @@ export function Runner() {
           </g>
           <path className="runner-collar" d="M17 14.2 Q22 18 27 14.2" />
           <path className="runner-shorts" d="M15 33 H27 L28 40.5 H14 Z" />
+          {look.femme && <path className="runner-hair runner-pony" d="M17.4 4.4 Q9.6 2.6 10.6 11.4 Q10.9 14.6 12.6 15.6 Q13.4 9.6 17 7.4 Z" />}
           <circle className="runner-skin" cx="22" cy="8" r="5.2" />
           <path className="runner-hair" d="M16.8 8.4 Q16.4 2.6 22 2.6 Q27.8 2.6 27.2 7.6 Q23 4.6 16.8 8.4 Z" />
           <g className="runner-leg runner-leg--a"><path d="M23 35 L27 45 L23 53" /><path className="runner-shoe" d="M22 53 H28" /></g>

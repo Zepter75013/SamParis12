@@ -822,9 +822,13 @@ footer {
   .runner-torso { fill: #fff; stroke: #d9d3cb; stroke-width: 0.8; }
   .runner-stripe { fill: var(--vermilion); }
   .runner-shorts { fill: #1c1917; }
-  .runner-skin { fill: #f1c7a1; }
-  .runner-hair { fill: #3a2a1d; }
-  .runner-arm path, .runner-leg path:first-child { fill: none; stroke: #f1c7a1; stroke-width: 3.6; }
+  .runner { --skin: #f1c7a1; --hair: #3a2a1d; }
+  .runner-skin { fill: var(--skin); }
+  .runner-hair { fill: var(--hair); }
+  .runner-pony { transform-origin: 17px 5px; }
+  .runner.is-running .runner-pony { animation: ponySwing 0.36s ease-in-out infinite alternate; }
+  @keyframes ponySwing { from { transform: rotate(-9deg); } to { transform: rotate(10deg); } }
+  .runner-arm path, .runner-leg path:first-child { fill: none; stroke: var(--skin); stroke-width: 3.6; }
   .runner-arm path.runner-sleeve { stroke: #fff; stroke-width: 5.2; }
   .runner-arm path.runner-cuff { stroke: var(--vermilion); stroke-width: 5.4; }
   .runner-collar { fill: none; stroke: var(--vermilion); stroke-width: 1.4; }
