@@ -75,7 +75,11 @@ export function Runner() {
       const x = cx[i] + (cx[i + 1] - cx[i]) * (t * t * (3 - 2 * t))
       if (last !== null && Math.abs(x - last) > 0.4) faceLeft = x < last
       last = x
-      el.style.transform = `translate(${x - 20}px, ${y - 54}px)`
+      // À hauteur d'une borne, le coureur se range à sa droite pour ne pas la cacher.
+      const near = Math.min(...cy.map((v) => Math.abs(y - v)))
+      const k = Math.min(Math.max(near / 80, 0), 1)
+      const side = 46 * (1 - k * k * (3 - 2 * k))
+      el.style.transform = `translate(${x + side - 30}px, ${y - 81}px)`
       el.classList.toggle('is-left', faceLeft)
     }
 
@@ -102,12 +106,17 @@ export function Runner() {
 
   return (
     <div className="runner" ref={ref} aria-hidden="true">
-      <svg viewBox="0 0 40 56" width="40" height="56">
+      <svg viewBox="0 0 40 56" width="60" height="84">
         <defs>
           <clipPath id="runner-torso"><path d="M14 14 L28 14 L27 33 L15 33 Z" /></clipPath>
         </defs>
         <ellipse className="runner-shadow" cx="20" cy="54" rx="11" ry="2" />
         <g className="runner-body">
+          <g className="runner-flame">
+            <path className="runner-pole" d="M13 31 L7 -20" />
+            <path className="runner-flag" d="M7.4 -19 L-6 -17.5 L-6.5 3.5 L9.8 3.5 Z" />
+            <text className="runner-flag-text" x="-4.6" y="-5" textLength="12" lengthAdjust="spacingAndGlyphs">SAM</text>
+          </g>
           <g className="runner-arm runner-arm--b"><path d="M20 17 L13 26 L16 33" /><path className="runner-sleeve" d="M20 17 L16.8 21" /><path className="runner-cuff" d="M16.9 20.8 L16.1 21.8" /></g>
           <g className="runner-leg runner-leg--b"><path d="M20 35 L18 45 L21 53" /><path className="runner-shoe" d="M19 53 H25" /></g>
           <path className="runner-torso" d="M14 14 L28 14 L27 33 L15 33 Z" />

@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.16.1'
+export const APP_VERSION = '1.16.2'
 
 export const CHANGELOG = [
+  {
+    version: '1.16.2',
+    date: '4 octobre 2026',
+    notes: "Le petit coureur est plus grand et porte la flamme des meneurs d'allure (fanion SAM sur une hampe dans le dos). À chaque borne, il se range à côté pour ne pas la cacher.",
+  },
   {
     version: '1.16.1',
     date: '4 octobre 2026',
