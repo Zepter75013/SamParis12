@@ -78,7 +78,7 @@ export function Runner() {
       // À hauteur d'une borne, le coureur se range à sa droite pour ne pas la cacher.
       const near = Math.min(...cy.map((v) => Math.abs(y - v)))
       const k = Math.min(Math.max(near / 80, 0), 1)
-      const side = 46 * (1 - k * k * (3 - 2 * k))
+      const side = 52 * (1 - k * k * (3 - 2 * k))
       el.style.transform = `translate(${x + side - 30}px, ${y - 81}px)`
       el.classList.toggle('is-left', faceLeft)
     }
@@ -113,9 +113,10 @@ export function Runner() {
         <ellipse className="runner-shadow" cx="20" cy="54" rx="11" ry="2" />
         <g className="runner-body">
           <g className="runner-flame">
-            <path className="runner-pole" d="M13 31 L7 -20" />
-            <path className="runner-flag" d="M7.4 -19 L-6 -17.5 L-6.5 3.5 L9.8 3.5 Z" />
-            <text className="runner-flag-text" x="-4.6" y="-5" textLength="12" lengthAdjust="spacingAndGlyphs">SAM</text>
+            <path className="runner-pole" d="M12.6 34 L11 -4" />
+            <path className="runner-flag" d="M-8 -18 Q9 -19 11 -4 L11 22 L-7 25 Z" />
+            <path className="runner-binding" d="M-8 -18 Q9 -19 11 -4 L11 22" />
+            <text className="runner-flag-text" x="0.5" y="11" transform="rotate(-90 0.5 4)">60</text>
           </g>
           <g className="runner-arm runner-arm--b"><path d="M20 17 L13 26 L16 33" /><path className="runner-sleeve" d="M20 17 L16.8 21" /><path className="runner-cuff" d="M16.9 20.8 L16.1 21.8" /></g>
           <g className="runner-leg runner-leg--b"><path d="M20 35 L18 45 L21 53" /><path className="runner-shoe" d="M19 53 H25" /></g>
