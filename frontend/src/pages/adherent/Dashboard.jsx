@@ -5,6 +5,7 @@ import { getToken, setToken as persistToken, clearToken } from '../../lib/sessio
 import { getTheme, setTheme as applyThemeChoice } from '../../lib/theme.js'
 import PasswordField from '../../components/PasswordField.jsx'
 import AboutContent from '../../components/AboutContent.jsx'
+import { ord } from '../../components/Ord.jsx'
 
 const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
@@ -603,7 +604,7 @@ export default function Dashboard() {
                     <span style={{ color: 'var(--vermilion)', fontWeight: 'bold' }}>Comité d'Organisation</span>
                     <span style={{ color: 'var(--stone)' }}>5 Septembre 2026</span>
                   </div>
-                  <h4 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Bénévoles pour les Foulées du 12ème</h4>
+                  <h4 style={{ fontSize: '1.2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>{ord('Bénévoles pour les Foulées du 12ème')}</h4>
                   <p style={{ fontSize: '0.92rem', color: 'var(--ink-soft)', margin: '0.3rem 0 0' }}>
                     L'organisation des Foulées du 12ème recherche des signaleurs et des responsables ravitaillement pour l'édition du printemps. Inscrivez-vous dès maintenant via l'onglet Nos Courses.
                   </p>

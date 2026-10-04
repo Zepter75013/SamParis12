@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.17.0'
+export const APP_VERSION = '1.17.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.17.1',
+    date: '5 octobre 2026',
+    notes: "« 12e » s'écrit avec un e minuscule partout, y compris dans les titres en capitales. Bornes : 4 bandes rouges égales en haut et en bas, qui ne touchent plus « SAM PARIS 12 ».",
+  },
   {
     version: '1.17.0',
     date: '5 octobre 2026',

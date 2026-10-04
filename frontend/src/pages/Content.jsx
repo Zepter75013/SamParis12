@@ -5,6 +5,7 @@ import { bannerPhoto } from '../components/HeroSlides.jsx'
 import { SITE } from '../data/siteContent.js'
 import { api } from '../lib/api.js'
 import { useFetch } from '../lib/useFetch.js'
+import { ord } from '../components/Ord.jsx'
 
 // Gabarit commun : titre de page, introduction, puis un parcours de bornes
 // (une borne numérotée par section), comme sur l'accueil.
@@ -16,7 +17,7 @@ function Page({ eyebrow, title, intro, sections, note, status }) {
         <div className="shell">
           <div className="page-hero__text">
             <p className="eyebrow">{eyebrow}</p>
-            <h1>{title}</h1>
+            <h1>{ord(title)}</h1>
             {intro && <div className="prose">{intro}</div>}
             {status && <p className="note">{status}</p>}
           </div>

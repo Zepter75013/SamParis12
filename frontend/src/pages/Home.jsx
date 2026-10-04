@@ -4,6 +4,7 @@ import { HeroSlides } from '../components/HeroSlides.jsx'
 import { BORNES } from '../data/rubriques.js'
 import { api } from '../lib/api.js'
 import { useFetch } from '../lib/useFetch.js'
+import { ord } from '../components/Ord.jsx'
 
 export default function Home() {
   useActiveLegs()
@@ -18,7 +19,7 @@ export default function Home() {
         <div className="shell">
           <div className="hero__text">
           <p className="eyebrow">Club d'athlétisme affilié FFA · Porte de Charenton · Fondé en 1887</p>
-          <h1>On court le 12<sup>e</sup> depuis <em>1887</em></h1>
+          <h1>On court le 12<sup className="ord">e</sup> depuis <em>1887</em></h1>
           <p className="lead">
             Premier club d'athlétisme hors stade de Paris
             {stats ? `, avec ${stats.adherents} adhérents` : ''}
@@ -71,7 +72,7 @@ export default function Home() {
             <div className="leg__marker"><Borne n={i + 1} /></div>
             <div className="leg__body">
               <p className="eyebrow">{b.theme}</p>
-              <h2>{b.titre}</h2>
+              <h2>{ord(b.titre)}</h2>
               <p className="lead-note">{b.texte}</p>
               <p className="more-links">
                 <Link to={b.to}>{b.lien} →</Link>

@@ -846,3 +846,6 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .runner * { animation: none !important; }
 }
+
+/* « e » de 12e : toujours en minuscule, même dans les titres en capitales */
+.ord { text-transform: none; }

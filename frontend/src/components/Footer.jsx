@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { useFetch } from '../lib/useFetch.js'
+import { ord } from './Ord.jsx'
 
 export default function Footer() {
   const { data: partners } = useFetch(() => api.getPartners(), [])
@@ -10,7 +11,7 @@ export default function Footer() {
     <footer>
       <div className="shell foot">
         <Link to="/espace-adherent">Espace adhérent</Link>
-        <a href="http://foulees.samparis12.org/" target="_blank" rel="noreferrer">Les Foulées du 12ème</a>
+        <a href="http://foulees.samparis12.org/" target="_blank" rel="noreferrer">{ord('Les Foulées du 12ème')}</a>
         <Link to="/contact">Contact</Link>
         <Link to="/a-propos">À propos</Link>
         <span className="sep" />

@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
+import { ord } from './Ord.jsx'
 
 // Borne kilométrique : kakemono du club (bandes en diagonale, « N Km », logo, « SAM PARIS 12 »).
 // Grisé tant qu'il n'est pas la borne en cours, aux couleurs du club quand il l'est.
 export function Borne({ n }) {
-  const bande = (
-    <>
-      <path className="borne-red" d="M0 0 H38 L0 22 Z" />
-      <path className="borne-red" d="M0 27 L47 0 H51 L0 31.4 Z" />
-      <path className="borne-red" d="M0 34.4 L56.6 0 H59 L0 36.4 Z" />
-    </>
-  )
+  // 4 bandes diagonales égales (même largeur, même écart), assez courtes pour ne pas toucher le texte du bas.
+  const bandes = [0, 1, 2, 3].map((k) => {
+    const c1 = 2 + 4.8 * k
+    const c2 = c1 + 2.4
+    return `M0 ${c1} L${(c1 / 0.6).toFixed(1)} 0 L${(c2 / 0.6).toFixed(1)} 0 L0 ${c2} Z`
+  })
+  const bande = bandes.map((d) => <path key={d} className="borne-red" d={d} />)
   return (
     <svg className="borne" viewBox="0 0 100 158" role="img" aria-label={`Kilomètre ${n}`}>
       <defs>
@@ -19,7 +20,7 @@ export function Borne({ n }) {
       <rect className="borne-panel" x="2" y="5" width="96" height="141" />
       <g clipPath="url(#borne-clip)">
         <g transform="translate(2 5)">{bande}</g>
-        <g transform="translate(98 146) rotate(180) scale(0.72)">{bande}</g>
+        <g transform="translate(98 146) rotate(180)">{bande}</g>
       </g>
       <text className="borne-num" x="50" y="68">
         <tspan className="borne-n">{n}</tspan>
@@ -27,7 +28,7 @@ export function Borne({ n }) {
       </text>
       <image className="borne-logo" href="/logo.png" x="29" y="76" width="42" height="37.5" />
       <rect className="borne-red" x="22" y="119" width="56" height="2" />
-      <text className="borne-club" x="50" y="135" textLength="62" lengthAdjust="spacingAndGlyphs">SAM PARIS 12</text>
+      <text className="borne-club" x="50" y="135" textLength="60" lengthAdjust="spacingAndGlyphs">SAM PARIS 12</text>
       <rect className="borne-bar" x="0" y="146" width="100" height="6" rx="1.5" />
       <rect className="borne-bar" x="22" y="152" width="14" height="4" rx="1" />
       <rect className="borne-bar" x="64" y="152" width="14" height="4" rx="1" />
@@ -191,7 +192,7 @@ export function Legs({ sections }) {
           <div className="leg__marker"><Borne n={i + 1} /></div>
           <div className={`leg__body${s.wide ? ' leg__body--wide' : ''}`}>
             {s.eyebrow && <p className="eyebrow">{s.eyebrow}</p>}
-            {s.title && <h2>{s.title}</h2>}
+            {s.title && <h2>{ord(s.title)}</h2>}
             {s.children}
           </div>
         </section>
