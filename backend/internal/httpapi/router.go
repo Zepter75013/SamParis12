@@ -8,6 +8,7 @@ import (
 	"samparis12/backend/internal/contact"
 	"samparis12/backend/internal/document"
 	"samparis12/backend/internal/event"
+	"samparis12/backend/internal/game"
 	"samparis12/backend/internal/group"
 	"samparis12/backend/internal/mailer"
 	"samparis12/backend/internal/member"
@@ -32,6 +33,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	memberHandler := member.NewHandler(member.NewRepository(db), memberMailer, authService, cfg.FrontendURL)
 	raceHandler := race.NewHandler(race.NewRepository(db), member.NewRepository(db))
 	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
+	gameHandler := game.NewHandler(game.NewRepository(db))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -85,6 +87,10 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/public/results", raceHandler.PublicResults)
 	mux.HandleFunc("GET /api/public/records", raceHandler.PublicRecords)
 	mux.HandleFunc("GET /api/public/stats", memberHandler.PublicStats)
+
+	// Mini-jeu « SAM Run » : classement réservé aux adhérents connectés.
+	mux.HandleFunc("GET /api/game/leaderboard", authService.RequireAuth(gameHandler.Leaderboard))
+	mux.HandleFunc("POST /api/game/score", authService.RequireAuth(gameHandler.SubmitScore))
 
 	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
 	mux.HandleFunc("POST /api/documents", authService.RequireAuth(documentHandler.Upload))

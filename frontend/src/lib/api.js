@@ -81,6 +81,9 @@ export const api = {
     request(`/members/${memberId}/upcoming-races`, { token }),
   getClubRecords: (token) => request('/records', { token }),
 
+  getGameLeaderboard: (token) => request('/game/leaderboard', { token }),
+  postGameScore: (token, meters) => request('/game/score', { method: 'POST', token, body: JSON.stringify({ meters }) }),
+
   listDocuments: (token) => request('/documents', { token }),
   uploadDocument: (token, formData) => request('/documents', { method: 'POST', token, body: formData }),
 }

@@ -900,3 +900,28 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .game__flash.is-on { animation: none; opacity: 1; }
 }
+
+/* Mini-jeu : oiseaux, boost, classement, victoire */
+.game-bird__wing { transform-origin: 20px 11px; animation: birdFlap 0.28s ease-in-out infinite alternate; }
+@keyframes birdFlap { from { transform: scaleY(1); } to { transform: scaleY(-0.7); } }
+.runner--game { transform-origin: 50% 94%; }
+.runner--game.is-boost .runner-flag { fill: #f4b400; }
+.game__stage { height: 340px; }
+.game__panel { gap: 0.35rem; padding: 2.6rem 1rem 0.8rem; overflow: auto; }
+.game__panel b { font-size: 1.7rem; }
+.game__panel span { font-size: 0.95rem; max-width: 34rem; }
+.game__board { width: min(22rem, 100%); margin-top: 0.3rem; padding: 0.5rem 0.8rem; background: #fff; border: 1px solid #d9d3cb; text-align: left; font-size: 0.85rem; }
+.game__board b { display: block; font: 700 0.8rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: #6b625a; margin: 0; }
+.game__board ol { list-style: none; margin: 0.3rem 0 0; padding: 0; }
+.game__board li { display: flex; gap: 0.6rem; align-items: baseline; padding: 0.12rem 0.3rem; }
+.game__board li i { font: 800 0.95rem var(--font-display); font-style: normal; width: 1.2rem; color: #e10600; }
+.game__board li span { flex: 1; }
+.game__board li em { font: 700 0.95rem var(--font-display); font-style: normal; }
+.game__board li.is-me { background: #fbe9e7; font-weight: 600; }
+.game__panel--win b { font-size: 2rem; }
+.game__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 0.8rem; }
+.game__btn { font: 700 0.95rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; padding: 0.6rem 1.1rem; border: 1px solid #1c1917; background: #fff; color: #1c1917; cursor: pointer; }
+.game__btn:hover { background: #1c1917; color: #fff; }
+.game__btn--solid { background: #e10600; border-color: #e10600; color: #fff; }
+.game__btn--solid:hover { background: #b80500; border-color: #b80500; }
+@media (max-width: 520px) { .game__stage { height: 360px; } }
