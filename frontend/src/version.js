@@ -1,9 +1,14 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
 // Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
 // mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.19.0'
+export const APP_VERSION = '1.19.1'
 
 export const CHANGELOG = [
+  {
+    version: '1.19.1',
+    date: '4 octobre 2026',
+    notes: "Sur téléphone, la page ne déborde plus de l'écran : elle était deux fois trop large (et donc dézoomée) à cause du menu mobile rangé hors de l'écran. Toucher à côté du menu ouvert le referme désormais.",
+  },
   {
     version: '1.19.0',
     date: '5 octobre 2026',

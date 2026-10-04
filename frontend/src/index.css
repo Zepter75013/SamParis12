@@ -113,6 +113,9 @@ header {
   background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
+  /* Le backdrop-filter rattache au bandeau le tiroir du menu mobile (position fixe) : rangé fermé à droite,
+     il élargissait toute la page sur téléphone (710 px au lieu de 390, page dézoomée). */
+  overflow-x: clip;
 }
 
 .nav {
@@ -564,7 +567,8 @@ footer {
     background: rgba(0, 0, 0, 0.5);
     z-index: 40;
   }
-  .nav-backdrop.open { display: block; }
+  /* Même cause : le fond sombre ne couvrait que le bandeau ; il couvre tout l'écran pour refermer le menu. */
+  .nav-backdrop.open { display: block; bottom: auto; right: auto; width: 100vw; height: 100dvh; }
 
   .nav-drawer {
     position: fixed;
