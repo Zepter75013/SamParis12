@@ -1,0 +1,4 @@
+samparis12.juliotte-app.fr {
+	encode gzip
+	reverse_proxy frontend:80
+}
