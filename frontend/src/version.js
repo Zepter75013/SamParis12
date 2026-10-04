@@ -11,22 +11,22 @@ export const CHANGELOG = [
   },
   {
     version: '1.19.0',
-    date: '5 octobre 2026',
+    date: '4 octobre 2026',
     notes: "Le secret du site s'enrichit : gels et gourdes à ramasser, oiseaux à éviter en se baissant, félicitations du club à 5 km et classement des adhérents (nécessite la migration 0017).",
   },
   {
     version: '1.18.0',
-    date: '5 octobre 2026',
+    date: '4 octobre 2026',
     notes: "Un petit secret s'est glissé sur le site : un mini-jeu avec le coureur de la SAM. À toi de le trouver !",
   },
   {
     version: '1.17.1',
-    date: '5 octobre 2026',
+    date: '4 octobre 2026',
     notes: "« 12e » s'écrit avec un e minuscule partout, y compris dans les titres en capitales. Bornes : 4 bandes rouges égales en haut et en bas, qui ne touchent plus « SAM PARIS 12 ».",
   },
   {
     version: '1.17.0',
-    date: '5 octobre 2026',
+    date: '4 octobre 2026',
     notes: "Le petit coureur est tiré au hasard à chaque visite : homme ou femme (queue-de-cheval), peau claire ou foncée, avec des cheveux assortis.",
   },
   {
