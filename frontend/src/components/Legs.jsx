@@ -116,7 +116,8 @@ export function Runner() {
             <path className="runner-pole" d="M12.6 34 L11 -4" />
             <path className="runner-flag" d="M-8 -18 Q9 -19 11 -4 L11 22 L-7 25 Z" />
             <path className="runner-binding" d="M-8 -18 Q9 -19 11 -4 L11 22" />
-            <text className="runner-flag-text" x="0.5" y="11" transform="rotate(-90 0.5 4)">60</text>
+            <text className="runner-flag-text" x="1.5" y="2" transform="rotate(-90 1.5 -4)">50</text>
+            <text className="runner-flag-min" x="1.5" y="17.2" transform="rotate(-90 1.5 14)">min</text>
           </g>
           <g className="runner-arm runner-arm--b"><path d="M20 17 L13 26 L16 33" /><path className="runner-sleeve" d="M20 17 L16.8 21" /><path className="runner-cuff" d="M16.9 20.8 L16.1 21.8" /></g>
           <g className="runner-leg runner-leg--b"><path d="M20 35 L18 45 L21 53" /><path className="runner-shoe" d="M19 53 H25" /></g>

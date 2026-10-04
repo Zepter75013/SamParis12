@@ -814,6 +814,7 @@ footer {
   .runner-flag { fill: #e10600; stroke: none; }
   .runner-binding { fill: none; stroke: #1c1917; stroke-width: 1.8; stroke-linecap: butt; }
   .runner-flag-text { fill: #fff; font: 800 17px var(--font-display); text-anchor: middle; }
+  .runner-flag-min { fill: #fff; font: 700 9px var(--font-display); text-anchor: middle; letter-spacing: 0.04em; }
   .runner-flame { transform-origin: 13px 31px; }
   .runner.is-running .runner-flame { animation: flameSway 0.72s ease-in-out infinite alternate; }
   @keyframes flameSway { from { transform: rotate(-2.5deg); } to { transform: rotate(3deg); } }
