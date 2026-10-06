@@ -1006,6 +1006,9 @@ footer {
 .chat-replybar b { color: var(--c-accent); font-size: 0.76rem; }
 .chat-replybar span { color: var(--c-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-replybar button { border: 0; background: none; }
+.chat-replybar--edit div { border-left-color: #d4a017; }
+.chat-replybar--edit b { color: #b07f00; }
+.chat-meta em { font-style: italic; margin-right: 0.1rem; }
 .chat-emojis { display: flex; flex-wrap: wrap; gap: 0.1rem; padding: 0.4rem 0.6rem; background: var(--c-head); border-top: 1px solid var(--c-line); max-height: 8rem; overflow-y: auto; }
 .chat-emojis button { border: 0; background: none; font-size: 1.35rem; padding: 0.15rem 0.25rem; border-radius: 6px; }
 .chat-emojis button:hover { background: var(--c-sel); }

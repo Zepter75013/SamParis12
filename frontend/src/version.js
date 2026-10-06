@@ -5,6 +5,11 @@ export const APP_VERSION = '1.19.1'
 
 export const CHANGELOG = [
   {
+    version: '1.21.0',
+    date: '6 octobre 2026',
+    notes: "Messagerie : un message peut être modifié ou supprimé par son auteur tant qu'aucune autre personne ne l'a lu (mention « modifié », coches bleues dès qu'il est lu). Le droit de créer des salons suit désormais strictement la case de Fonctionnalités, même pour un SuperAdmin (migration 0019).",
+  },
+  {
     version: '1.20.0',
     date: '6 octobre 2026',
     notes: "Nouvel onglet Messagerie dans l'espace adhérent, façon WhatsApp : salons par groupe (Tous, Running, Marche nordique, Bureau), messages privés, réponses, coches de lecture, messages non lus et temps réel. La création de salons se règle dans Fonctionnalités (migration 0018).",

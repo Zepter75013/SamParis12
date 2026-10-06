@@ -17,8 +17,9 @@ const (
 )
 
 var (
-	ErrForbidden = errors.New("accès refusé")
-	ErrNotFound  = errors.New("introuvable")
+	ErrForbidden   = errors.New("accès refusé")
+	ErrNotFound    = errors.New("introuvable")
+	ErrAlreadyRead = errors.New("ce message a déjà été lu : il ne peut plus être modifié ni supprimé")
 )
 
 // Person : l'adhérent qui fait la requête (rechargé en base à chaque appel : groupe, bureau et droits peuvent changer).
@@ -30,7 +31,7 @@ type Person struct {
 	Groupe      string
 	IsBureau    bool
 	IsSuper     bool
-	CanCreate   bool // droit « créer des salons » ou SuperAdmin
+	CanCreate   bool // droit « Créer des salons de discussion » coché dans Fonctionnalités (explicite, même pour un SuperAdmin)
 	AnyBureauOK bool
 }
 
@@ -67,6 +68,7 @@ type Message struct {
 	PhotoURL  string    `json:"photoUrl"`
 	Texte     string    `json:"texte"`
 	Deleted   bool      `json:"deleted"`
+	Edited    bool      `json:"edited"`
 	Reply     *Reply    `json:"reply"`
 	CreatedAt time.Time `json:"createdAt"`
 }
@@ -88,7 +90,7 @@ func (r *Repository) Person(id int64) (*Person, error) {
 	if err != nil {
 		return nil, err
 	}
-	p.CanCreate = droit || p.IsSuper
+	p.CanCreate = droit
 	return &p, nil
 }
 
@@ -227,7 +229,7 @@ func (r *Repository) Rooms(p *Person) ([]Room, error) {
 				_ = r.db.QueryRow(`SELECT CONCAT(prenom, ' ', nom), photo_path FROM members WHERE id = ?`, room.OtherID).Scan(&room.Nom, &room.PhotoURL)
 			}
 		}
-		room.CanAdd = t.rr.kind == "custom" && (p.IsSuper || t.rr.createdBy == p.ID)
+		room.CanAdd = t.rr.kind == "custom" && t.rr.createdBy == p.ID
 		var l Last
 		err = r.db.QueryRow(`
 			SELECT m.id, CONCAT(s.prenom, ' ', s.nom), m.body, m.created_at
@@ -254,7 +256,7 @@ func shorten(s string) string {
 
 const messageSelect = `
 	SELECT m.id, m.room_id, m.sender_id, CONCAT(s.prenom, ' ', s.nom), s.photo_path,
-	       m.body, m.deleted_at IS NOT NULL, m.created_at,
+	       m.body, m.deleted_at IS NOT NULL, m.edited_at IS NOT NULL, m.created_at,
 	       q.id, CONCAT(qs.prenom, ' ', qs.nom), q.body, q.deleted_at IS NOT NULL
 	FROM chat_messages m
 	JOIN members s ON s.id = m.sender_id
@@ -266,7 +268,7 @@ func scanMessage(scan func(...any) error) (*Message, error) {
 	var qID sql.NullInt64
 	var qAuteur, qTexte sql.NullString
 	var qDeleted sql.NullBool
-	if err := scan(&m.ID, &m.RoomID, &m.SenderID, &m.Auteur, &m.PhotoURL, &m.Texte, &m.Deleted, &m.CreatedAt,
+	if err := scan(&m.ID, &m.RoomID, &m.SenderID, &m.Auteur, &m.PhotoURL, &m.Texte, &m.Deleted, &m.Edited, &m.CreatedAt,
 		&qID, &qAuteur, &qTexte, &qDeleted); err != nil {
 		return nil, err
 	}
@@ -355,13 +357,56 @@ func (r *Repository) MarkRead(roomID, memberID, upTo int64) error {
 	return err
 }
 
-// DeleteMessage : suppression logique, par l'auteur ou par le bureau (modération).
+// readByOthers : au moins un autre adhérent a-t-il lu ce message ?
+func (r *Repository) readByOthers(m *Message) (bool, error) {
+	var one int
+	err := r.db.QueryRow(`SELECT 1 FROM chat_reads WHERE room_id = ? AND member_id <> ? AND last_read_id >= ? LIMIT 1`,
+		m.RoomID, m.SenderID, m.ID).Scan(&one)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	return err == nil, err
+}
+
+// EditMessage : l'auteur peut corriger son message tant que personne d'autre ne l'a lu.
+func (r *Repository) EditMessage(id int64, p *Person, body string) (*Message, error) {
+	body = strings.TrimSpace(body)
+	if body == "" || len([]rune(body)) > maxBody {
+		return nil, fmt.Errorf("message vide ou trop long (%d caractères maximum)", maxBody)
+	}
+	m, err := r.Message(id)
+	if err != nil {
+		return nil, err
+	}
+	if m.SenderID != p.ID || m.Deleted {
+		return nil, ErrForbidden
+	}
+	if read, err := r.readByOthers(m); err != nil {
+		return nil, err
+	} else if read {
+		return nil, ErrAlreadyRead
+	}
+	if _, err := r.db.Exec(`UPDATE chat_messages SET body = ?, edited_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL`, body, id); err != nil {
+		return nil, err
+	}
+	return r.Message(id)
+}
+
+// DeleteMessage : suppression logique. L'auteur ne peut supprimer que tant que personne d'autre n'a lu le message ;
+// le bureau peut supprimer n'importe quel message (modération).
 func (r *Repository) DeleteMessage(id int64, p *Person) (*Message, error) {
 	m, err := r.Message(id)
 	if err != nil {
 		return nil, err
 	}
-	if m.SenderID != p.ID && !p.IsBureau {
+	switch {
+	case m.SenderID == p.ID:
+		if read, err := r.readByOthers(m); err != nil {
+			return nil, err
+		} else if read && !p.IsBureau {
+			return nil, ErrAlreadyRead
+		}
+	case !p.IsBureau:
 		return nil, ErrForbidden
 	}
 	if _, err := r.db.Exec(`UPDATE chat_messages SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL`, id); err != nil {

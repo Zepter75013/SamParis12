@@ -39,13 +39,17 @@ const couleurDe = (id) => COULEURS[Math.abs(id) % COULEURS.length]
 function Coches({ message, room, otherRead }) {
   if (message.failed) return <span className="chat-tick chat-tick--err" title="Non envoyé">!</span>
   if (message.pending) return <span className="chat-tick">🕓</span>
-  const lu = room.kind === 'dm' && message.id <= otherRead
-  return <span className={`chat-tick${lu ? ' is-read' : ''}`} title={lu ? 'Lu' : 'Envoyé'}>{room.kind === 'dm' ? '✓✓' : '✓'}</span>
+  // ✓ envoyé · ✓✓ bleu : lu par au moins une autre personne (dans un message privé : par l'autre adhérent)
+  const lu = message.id <= otherRead
+  return <span className={`chat-tick${lu ? ' is-read' : ''}`} title={lu ? (room.kind === 'dm' ? 'Lu' : 'Lu par au moins une personne') : 'Envoyé'}>{lu ? '✓✓' : '✓'}</span>
 }
 
-function Bulle({ message, room, me, otherRead, onReply, onDelete, showAuteur }) {
+function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, showAuteur }) {
   const mine = message.senderId === me.id
-  const canDelete = !message.deleted && !message.pending && (mine || me.isBureau)
+  const actif = !message.deleted && !message.pending && !message.failed
+  // l'auteur peut modifier / supprimer tant que personne d'autre n'a lu ; le bureau peut toujours supprimer (modération)
+  const modifiable = mine && actif && message.id > otherRead
+  const canDelete = actif && (modifiable || me.isBureau)
   return (
     <div className={`chat-row${mine ? ' is-mine' : ''}`}>
       <div className={`chat-bubble${mine ? ' is-mine' : ''}${message.deleted ? ' is-deleted' : ''}`} tabIndex={0}>
@@ -62,12 +66,14 @@ function Bulle({ message, room, me, otherRead, onReply, onDelete, showAuteur }) 
           ? <span className="chat-body">🚫 Message supprimé</span>
           : <span className="chat-body">{message.texte}</span>}
         <span className="chat-meta">
+          {message.edited && !message.deleted && <em>modifié</em>}
           {heure(message.createdAt)}
           {mine && !message.deleted && <Coches message={message} room={room} otherRead={otherRead} />}
         </span>
         {!message.deleted && !message.pending && !message.failed && (
           <span className="chat-actions">
             <button type="button" title="Répondre" onClick={() => onReply(message)}>↩</button>
+            {modifiable && <button type="button" title="Modifier" onClick={() => onEdit(message)}>✏️</button>}
             {canDelete && <button type="button" title="Supprimer" onClick={() => onDelete(message)}>🗑</button>}
           </span>
         )}
@@ -209,6 +215,7 @@ function Conversation({ chat, room, token, me, members, onBack }) {
   const conv = chat.convs[room.id] || { messages: [], participants: [], otherRead: 0, more: false, loading: false, loaded: false }
   const [texte, setTexte] = useState('')
   const [reply, setReply] = useState(null)
+  const [editing, setEditing] = useState(null)
   const [emoji, setEmoji] = useState(false)
   const [infos, setInfos] = useState(false)
   const [err, setErr] = useState('')
@@ -229,7 +236,15 @@ function Conversation({ chat, room, token, me, members, onBack }) {
     prevH.current = z.scrollHeight
   }, [conv.messages])
 
-  useEffect(() => { bas.current = true; setReply(null); setTexte(''); setErr(''); input.current?.focus() }, [room.id])
+  useEffect(() => { bas.current = true; setReply(null); setEditing(null); setTexte(''); setErr(''); input.current?.focus() }, [room.id])
+
+  // la zone de saisie s'ajuste au texte, y compris quand on le remplit (modification d'un message)
+  useLayoutEffect(() => {
+    const t = input.current
+    if (!t) return
+    t.style.height = 'auto'
+    t.style.height = `${Math.min(t.scrollHeight, 120)}px`
+  }, [texte])
 
   function onScroll() {
     const z = zone.current
@@ -237,9 +252,33 @@ function Conversation({ chat, room, token, me, members, onBack }) {
     if (z.scrollTop < 60 && conv.more && !conv.loading) { prevH.current = z.scrollHeight; chat.loadMore(room.id) }
   }
 
+  function commencerEdition(m) {
+    setEditing(m)
+    setReply(null)
+    setEmoji(false)
+    setTexte(m.texte)
+    setErr('')
+    input.current?.focus()
+  }
+  function annulerEdition() {
+    setEditing(null)
+    setTexte('')
+  }
+
   async function envoyer() {
     const t = texte.trim()
     if (!t) return
+    if (editing) {
+      try {
+        await chat.edit(room.id, editing.id, t)
+        annulerEdition()
+      } catch (e) {
+        setErr(e.message)
+        if (e.status === 409) annulerEdition() // déjà lu : on sort du mode modification
+      }
+      input.current?.focus()
+      return
+    }
     setTexte('')
     const r = reply
     setReply(null)
@@ -250,6 +289,7 @@ function Conversation({ chat, room, token, me, members, onBack }) {
   }
   function onKey(e) {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); envoyer() }
+    if (e.key === 'Escape' && editing) { e.preventDefault(); e.stopPropagation(); annulerEdition() }
   }
   async function supprimer(m) {
     if (!window.confirm('Supprimer ce message pour tout le monde ?')) return
@@ -289,10 +329,16 @@ function Conversation({ chat, room, token, me, members, onBack }) {
         {items.map((it) => (it.sep
           ? <div key={it.key} className="chat-day"><span>{it.sep}</span></div>
           : <Bulle key={it.key} message={it.m} room={room} me={me} otherRead={conv.otherRead} showAuteur={it.showAuteur}
-              onReply={(m) => { setReply(m); input.current?.focus() }} onDelete={supprimer} />))}
+              onReply={(m) => { setReply(m); setEditing(null); input.current?.focus() }} onEdit={commencerEdition} onDelete={supprimer} />))}
       </div>
 
       {err && <p className="chat-error chat-error--bar">{err} <button type="button" onClick={() => setErr('')}>✕</button></p>}
+      {editing && (
+        <div className="chat-replybar chat-replybar--edit">
+          <div><b>Modifier le message</b><span>{editing.texte}</span></div>
+          <button type="button" onClick={annulerEdition} aria-label="Annuler la modification">✕</button>
+        </div>
+      )}
       {reply && (
         <div className="chat-replybar">
           <div><b>{reply.auteur || 'Toi'}</b><span>{reply.texte}</span></div>
@@ -311,11 +357,11 @@ function Conversation({ chat, room, token, me, members, onBack }) {
           rows={1}
           value={texte}
           maxLength={2000}
-          placeholder="Écris un message"
-          onChange={(e) => { setTexte(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px` }}
+          placeholder={editing ? 'Modifie ton message' : 'Écris un message'}
+          onChange={(e) => setTexte(e.target.value)}
           onKeyDown={onKey}
         />
-        <button type="button" className="chat-send" onClick={envoyer} disabled={!texte.trim()} aria-label="Envoyer">➤</button>
+        <button type="button" className="chat-send" onClick={envoyer} disabled={!texte.trim()} aria-label={editing ? 'Enregistrer la modification' : 'Envoyer'}>{editing ? '✓' : '➤'}</button>
       </div>
 
       {infos && <Participants room={room} conv={conv} token={token} members={members} me={me} chat={chat} onClose={() => setInfos(false)} />}

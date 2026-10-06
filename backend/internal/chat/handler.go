@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -76,6 +77,8 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) *Person {
 
 func (h *Handler) fail(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, ErrAlreadyRead):
+		httpx.Error(w, http.StatusConflict, err.Error())
 	case errors.Is(err, ErrForbidden):
 		httpx.Error(w, http.StatusForbidden, "accès refusé")
 	case errors.Is(err, ErrNotFound):
@@ -187,9 +190,7 @@ func (h *Handler) Messages(w http.ResponseWriter, r *http.Request) {
 			h.fail(w, err)
 			return
 		}
-		if rr.kind == "dm" {
-			resp.OtherRead = h.repo.OtherRead(rr.id, p.ID)
-		}
+		resp.OtherRead = h.repo.OtherRead(rr.id, p.ID)
 	}
 	httpx.JSON(w, http.StatusOK, resp)
 }
@@ -242,12 +243,40 @@ func (h *Handler) Read(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, err)
 		return
 	}
-	if rr.kind == "dm" {
-		if ids, err := h.repo.MemberIDs(rr); err == nil {
-			h.hub.publish(ids, "read", map[string]any{"roomId": rr.id, "memberId": p.ID, "upTo": in.UpTo})
-		}
+	if ids, err := h.repo.MemberIDs(rr); err == nil {
+		h.hub.publish(ids, "read", map[string]any{"roomId": rr.id, "memberId": p.ID, "upTo": in.UpTo})
 	}
 	httpx.JSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
+	p := h.me(w, r)
+	if p == nil {
+		return
+	}
+	var in struct {
+		Texte string `json:"texte"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&in); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	msg, err := h.repo.EditMessage(pathID(r, "id"), p, in.Texte)
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "message vide") {
+			httpx.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		h.fail(w, err)
+		return
+	}
+	rr, err := h.repo.loadRoom(msg.RoomID)
+	if err == nil {
+		if ids, err := h.repo.MemberIDs(rr); err == nil {
+			h.hub.publish(ids, "edit", map[string]any{"roomId": rr.id, "message": msg})
+		}
+	}
+	httpx.JSON(w, http.StatusOK, msg)
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {

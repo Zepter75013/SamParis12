@@ -91,6 +91,7 @@ export const api = {
   chatSend: (token, roomId, texte, replyTo) =>
     request(`/chat/rooms/${roomId}/messages`, { method: 'POST', token, body: JSON.stringify({ texte, replyTo: replyTo || 0 }) }),
   chatRead: (token, roomId, upTo) => request(`/chat/rooms/${roomId}/read`, { method: 'POST', token, body: JSON.stringify({ upTo }) }),
+  chatEdit: (token, messageId, texte) => request(`/chat/messages/${messageId}`, { method: 'PUT', token, body: JSON.stringify({ texte }) }),
   chatDelete: (token, messageId) => request(`/chat/messages/${messageId}`, { method: 'DELETE', token }),
   chatOpenDM: (token, memberId) => request('/chat/dm', { method: 'POST', token, body: JSON.stringify({ memberId }) }),
   chatCreateRoom: (token, nom, memberIds) => request('/chat/rooms', { method: 'POST', token, body: JSON.stringify({ nom, memberIds }) }),

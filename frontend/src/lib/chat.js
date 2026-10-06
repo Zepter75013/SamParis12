@@ -122,6 +122,9 @@ export function useChat(token, meId) {
           : r)))
       } else if (event === 'read') {
         if (data.memberId !== meId) patchConv(data.roomId, (c) => ({ ...c, otherRead: Math.max(c.otherRead || 0, data.upTo) }))
+      } else if (event === 'edit') {
+        patchConv(data.roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === data.message.id ? data.message : m)) }))
+        refreshRooms().catch(() => {})
       } else if (event === 'delete') {
         patchConv(data.roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === data.messageId ? { ...m, deleted: true, texte: '' } : m)) }))
         refreshRooms().catch(() => {})
@@ -192,7 +195,14 @@ export function useChat(token, meId) {
     await api.chatDelete(token, messageId)
   }, [token])
 
+  // Modifier un message : possible tant qu'aucun autre adhérent ne l'a lu (le serveur refuse sinon).
+  const edit = useCallback(async (roomId, messageId, texte) => {
+    const msg = await api.chatEdit(token, messageId, texte)
+    patchConv(roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === msg.id ? msg : m)) }))
+    refreshRooms().catch(() => {})
+  }, [token, patchConv, refreshRooms])
+
   const unreadTotal = rooms.reduce((n, r) => n + (r.unread || 0), 0)
 
-  return { rooms, canCreate, loaded, convs, openId, openRoom, loadMore, send, remove, refreshRooms, unreadTotal, setPanelOpen, online }
+  return { rooms, canCreate, loaded, convs, openId, openRoom, loadMore, send, remove, edit, refreshRooms, unreadTotal, setPanelOpen, online }
 }

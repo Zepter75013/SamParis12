@@ -103,6 +103,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("POST /api/chat/rooms/{id}/messages", authService.RequireAuth(chatHandler.Send))
 	mux.HandleFunc("POST /api/chat/rooms/{id}/read", authService.RequireAuth(chatHandler.Read))
 	mux.HandleFunc("POST /api/chat/rooms/{id}/members", authService.RequireAuth(chatHandler.AddMembers))
+	mux.HandleFunc("PUT /api/chat/messages/{id}", authService.RequireAuth(chatHandler.Edit))
 	mux.HandleFunc("DELETE /api/chat/messages/{id}", authService.RequireAuth(chatHandler.Delete))
 
 	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
