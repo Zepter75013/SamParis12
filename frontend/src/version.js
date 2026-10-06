@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.37.2',
+    date: '7 octobre 2026',
+    notes: "Mon activité (Strava) : les dates de la période « Dates » se saisissent directement au clavier (JJ/MM/AAAA, les barres obliques s'ajoutent toutes seules, avec contrôle des dates impossibles ou futures) ou se choisissent dans un calendrier qui s'ouvre avec un bouton bien visible à droite de chaque champ.",
+  },
+  {
     version: '1.37.1',
     date: '7 octobre 2026',
     notes: "Mon activité (Strava) : le graphique des kilomètres par sport retrouve l'effet 3D (épaisseur, dessus et côté) comme les autres graphiques de l'application.",

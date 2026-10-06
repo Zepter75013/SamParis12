@@ -1371,6 +1371,30 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 }
 @media (prefers-reduced-motion: reduce) { .mdetail__rideau, .mdetail.is-open .mdetail__rideau { transition: none; } }
 
+/* ---- Champ date (saisie JJ/MM/AAAA + calendrier) ---- */
+.champ-date { position: relative; display: flex; flex-direction: column; gap: 0.25rem; }
+.champ-date__label { font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.champ-date__groupe { display: flex; }
+.champ-date__saisie { min-width: 0 !important; width: 9.5rem; border-radius: var(--radius-btn) 0 0 var(--radius-btn); font-variant-numeric: tabular-nums; }
+.champ-date__saisie[aria-invalid='true'] { border-color: #b91c1c; }
+.champ-date__bouton { display: grid; place-items: center; width: 2.8rem; border: 1px solid var(--line); border-left: 0; border-radius: 0 var(--radius-btn) var(--radius-btn) 0; background: var(--surface-2); color: var(--vermilion); cursor: pointer; }
+.champ-date__bouton:hover, .champ-date__bouton[aria-expanded='true'] { background: var(--vermilion); color: #fff; }
+.champ-date__erreur { color: #b91c1c; font-size: 0.78rem; max-width: 13rem; }
+.champ-date__pop { position: absolute; z-index: 70; top: 100%; left: 0; margin-top: 0.35rem; width: 18.5rem; max-width: calc(100vw - 2rem); padding: 0.8rem; border: 1px solid var(--line); border-radius: var(--radius-btn); background: var(--surface); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22); }
+.champ-date__tete { display: flex; gap: 0.35rem; align-items: center; margin-bottom: 0.6rem; }
+.champ-date__tete button { width: 2rem; height: 2rem; flex: none; border: 1px solid var(--line); border-radius: var(--radius-btn); background: var(--surface-2); color: var(--ink); font-size: 1.1rem; cursor: pointer; }
+.champ-date__tete select { flex: 1; min-width: 0; padding: 0.35rem 0.3rem; border: 1px solid var(--line); border-radius: var(--radius-btn); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.85rem; text-transform: capitalize; }
+.champ-date__grille { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.champ-date__jour { padding: 0.2rem 0; font: 600 0.68rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: var(--stone); }
+.champ-date__case { aspect-ratio: 1; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--ink); font: inherit; font-size: 0.88rem; cursor: pointer; }
+.champ-date__case:hover:not(:disabled) { background: var(--surface-2); border-color: var(--vermilion); }
+.champ-date__case:disabled { color: var(--stone); opacity: 0.35; cursor: default; }
+.champ-date__case.is-aujourdhui { border-color: var(--vermilion); }
+.champ-date__case.is-on { background: var(--vermilion); color: #fff; font-weight: 700; }
+.champ-date__pied { display: flex; justify-content: space-between; margin-top: 0.6rem; }
+.champ-date__pied button { border: 0; background: none; color: var(--vermilion); font: 600 0.8rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.champ-date__pied button:disabled { opacity: 0.4; cursor: default; }
+
 /* ---- Mon activité (Strava) ---- */
 .strava-accueil ul { margin: 0 0 0.8rem; padding-left: 1.2rem; line-height: 1.6; }
 .strava-btn { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1.5rem; border: 0; border-radius: var(--radius-btn); background: #fc4c02; color: #fff; font: 700 0.85rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }

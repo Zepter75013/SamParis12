@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
 import Bascule from '../../components/Bascule.jsx'
+import ChampDate from '../../components/ChampDate.jsx'
 
 // « Mon activité » : l'adhérent relie son compte Strava et consulte ses propres activités. Conformément aux règles de
 // l'API Strava, ces données ne sont visibles que de lui : aucun autre adhérent (ni le bureau) n'y a accès.
@@ -412,8 +413,8 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                   <div className="strava-periode__nav">
                     {mode === 'dates' ? (
                       <>
-                        <label>Du<input className="roles-input" type="date" max={iso(new Date())} value={debut} onChange={(e) => setDebut(e.target.value)} /></label>
-                        <label>Au<input className="roles-input" type="date" max={iso(new Date())} min={debut || undefined} value={fin} onChange={(e) => setFin(e.target.value)} /></label>
+                        <ChampDate label="Du" valeur={debut} onChange={setDebut} max={fin || iso(new Date())} />
+                        <ChampDate label="Au" valeur={fin} onChange={setFin} min={debut || undefined} max={iso(new Date())} />
                       </>
                     ) : (
                       <>
