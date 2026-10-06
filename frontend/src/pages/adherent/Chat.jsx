@@ -66,7 +66,7 @@ function Coches({ message, room, otherRead }) {
   return <span className={`chat-tick${lu ? ' is-read' : ''}`} title={lu ? (room.kind === 'dm' ? 'Lu' : 'Lu par au moins une personne') : 'Envoyé'}>{lu ? '✓✓' : '✓'}</span>
 }
 
-function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, onVote, onRsvp, onOpenImage, showAuteur }) {
+function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, onVote, onRsvp, onOpenImage, onBroken, showAuteur }) {
   const mine = message.senderId === me.id
   const actif = !message.deleted && !message.pending && !message.failed
   // l'auteur peut modifier / supprimer tant que personne d'autre n'a lu ; le bureau peut toujours supprimer (modération)
@@ -87,7 +87,7 @@ function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, onVote
         )}
         {message.deleted ? <span className="chat-body">🚫 Message supprimé</span> : (
           <>
-            {message.kind === 'media' && <Attachments items={message.attachments || []} onOpenImage={onOpenImage} />}
+            {message.kind === 'media' && <Attachments items={message.attachments || []} onOpenImage={onOpenImage} onBroken={onBroken} />}
             {message.kind === 'poll' && message.poll && <PollCard message={message} onVote={onVote} />}
             {message.kind === 'event' && message.event && <EventCard message={message} onRsvp={onRsvp} />}
             {message.texte && <span className="chat-body">{message.texte}</span>}
@@ -348,6 +348,15 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
     setTexte('')
   }
 
+  // Un fichier ne se charge pas (lien expiré après une longue ouverture de l'application) : on recharge la
+  // conversation pour obtenir des liens à jour, au plus une fois toutes les 30 secondes.
+  const dernierRechargement = useRef(0)
+  function recharger() {
+    if (Date.now() - dernierRechargement.current < 30000) return
+    dernierRechargement.current = Date.now()
+    chat.openRoom(room.id)
+  }
+
   // ---- pièces jointes en attente ----
   const fichiersRef = useRef([])
   fichiersRef.current = fichiers
@@ -497,7 +506,8 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
               onReply={(m) => { setReply(m); setEditing(null); input.current?.focus() }} onEdit={commencerEdition} onDelete={supprimer}
               onVote={(m, ids) => chat.vote(room.id, m.id, ids).catch((e) => setErr(e.message))}
               onRsvp={(m, rep) => chat.rsvp(room.id, m.id, rep).catch((e) => setErr(e.message))}
-              onOpenImage={(images, index) => setVisionneuse({ images, index })} />))}
+              onOpenImage={(images, index) => setVisionneuse({ images, index })}
+              onBroken={recharger} />))}
       </div>
 
       {err && <p className="chat-error chat-error--bar">{err} <button type="button" onClick={() => setErr('')}>✕</button></p>}

@@ -21,3 +21,19 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {})
   })
 }
+
+// Au retour dans l'application (téléphone, PWA), on vérifie qu'une version plus récente n'est pas disponible
+// et on recharge le cas échéant : plus de vieille version bloquée dans l'application installée.
+if (import.meta.env.PROD) {
+  const verifierMiseAJour = async () => {
+    try {
+      const html = await (await fetch('/', { cache: 'no-store' })).text()
+      const neuve = html.match(/src="(\/assets\/index-[^"]+\.js)"/)
+      const actuelle = document.querySelector('script[type="module"][src*="/assets/index-"]')
+      if (neuve && actuelle && actuelle.getAttribute('src') !== neuve[1]) window.location.reload()
+    } catch { /* hors ligne : on garde la version actuelle */ }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') verifierMiseAJour()
+  })
+}

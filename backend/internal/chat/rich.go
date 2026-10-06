@@ -12,13 +12,13 @@ import (
 )
 
 // ---- Liens signés : les fichiers de la messagerie sont privés ; l'API remet à chaque adhérent autorisé un lien
-// valable quelques heures (les balises <img> et <video> ne peuvent pas envoyer d'en-tête d'authentification). ----
+// valable une semaine (les balises <img> et <video> ne peuvent pas envoyer d'en-tête d'authentification). ----
 
 type Signer struct{ secret []byte }
 
 func NewSigner(secret string) *Signer { return &Signer{secret: []byte("chat-files:" + secret)} }
 
-const linkTTL = 12 * time.Hour
+const linkTTL = 7 * 24 * time.Hour
 
 func (s *Signer) sign(id, exp int64) string {
 	mac := hmac.New(sha256.New, s.secret)

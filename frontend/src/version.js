@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.25.1',
+    date: '6 octobre 2026',
+    notes: "Messagerie : photos plus robustes (affichage fiable sur iPhone, lien valable une semaine, rechargement automatique si une photo ne se charge pas). L'application vérifie à chaque retour qu'une nouvelle version n'est pas disponible et se recharge toute seule.",
+  },
+  {
     version: '1.25.0',
     date: '6 octobre 2026',
     notes: "Messagerie : la touche Entrée fait un retour à la ligne, seule la flèche envoie le message. Nouveau bouton + comme dans WhatsApp : photos et vidéos, documents, sondages et événements (réponse Je viens / Peut-être / Non, ajout à l'agenda). Nouvelle migration 0022 et nouveau dossier chat-files à ne pas supprimer lors des déploiements.",

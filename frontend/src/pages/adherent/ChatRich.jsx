@@ -71,7 +71,14 @@ export function AttachMenu({ onPick, onClose }) {
 }
 
 // ---- Pièces jointes d'un message ----
-export function Attachments({ items, onOpenImage }) {
+// Une photo : si elle ne se charge pas (lien expiré, réseau), on le dit et on redemande les liens à jour.
+function Photo({ a, onBroken }) {
+  const [ko, setKo] = useState(false)
+  if (ko) return <span className="chat-photo-ko" onClick={(e) => { e.stopPropagation(); setKo(false) }}>🖼️ Photo indisponible<small>Touche pour réessayer</small></span>
+  return <img src={chatFileUrl(a.url)} alt={a.nom} decoding="async" onError={() => { setKo(true); onBroken?.() }} />
+}
+
+export function Attachments({ items, onOpenImage, onBroken }) {
   const images = items.filter((a) => a.kind === 'image')
   const videos = items.filter((a) => a.kind === 'video')
   const fichiers = items.filter((a) => a.kind === 'file')
@@ -81,15 +88,23 @@ export function Attachments({ items, onOpenImage }) {
       {images.length > 0 && (
         <div className={`chat-grid chat-grid--${Math.min(montres.length, 4)}`}>
           {montres.map((a, i) => (
-            <button type="button" key={a.id} className="chat-grid__cell" onClick={() => onOpenImage(images, i)} aria-label={`Ouvrir ${a.nom}`}>
-              <img src={chatFileUrl(a.url)} alt={a.nom} loading="lazy" />
+            <div
+              key={a.id}
+              role="button"
+              tabIndex={0}
+              className="chat-grid__cell"
+              aria-label={`Ouvrir ${a.nom}`}
+              onClick={() => onOpenImage(images, i)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenImage(images, i) } }}
+            >
+              <Photo key={a.url} a={a} onBroken={onBroken} />
               {i === 3 && images.length > 4 && <span className="chat-grid__more">+{images.length - 4}</span>}
-            </button>
+            </div>
           ))}
         </div>
       )}
       {videos.map((a) => (
-        <video key={a.id} className="chat-video" controls playsInline preload="metadata" src={chatFileUrl(a.url)} />
+        <video key={a.id} className="chat-video" controls playsInline preload="metadata" src={chatFileUrl(a.url)} onError={onBroken} />
       ))}
       {fichiers.map((a) => (
         <a key={a.id} className="chat-file" href={chatFileUrl(a.url)} target="_blank" rel="noreferrer" download={a.nom}>
