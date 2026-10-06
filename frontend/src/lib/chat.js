@@ -1,6 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, chatStreamUrl } from './api.js'
 
+// Aperçu d'un message dans la liste des discussions.
+export function apercu(m) {
+  if (m.kind === 'poll') return `📊 ${m.poll?.question || 'Sondage'}`
+  if (m.kind === 'event') return `📅 ${m.event?.titre || 'Événement'}`
+  if (m.kind === 'media') {
+    const first = m.attachments?.[0]
+    const icon = first?.kind === 'image' ? '📷' : first?.kind === 'video' ? '🎥' : '📄'
+    return `${icon} ${m.texte || (first?.kind === 'image' ? 'Photo' : first?.kind === 'video' ? 'Vidéo' : 'Document')}`
+  }
+  return m.texte
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
 function parseFrame(frame) {
@@ -118,10 +130,15 @@ export function useChat(token, meId) {
         if (!known) { refreshRooms().catch(() => {}); return }
         const seen = openRef.current === roomId && panelRef.current && document.visibilityState === 'visible'
         setRooms((rs) => rs.map((r) => (r.id === roomId
-          ? { ...r, last: { id: message.id, auteur: message.auteur, texte: message.texte, createdAt: message.createdAt }, unread: message.senderId === meId || seen ? r.unread : r.unread + 1 }
+          ? { ...r, last: { id: message.id, auteur: message.auteur, texte: apercu(message), createdAt: message.createdAt }, unread: message.senderId === meId || seen ? r.unread : r.unread + 1 }
           : r)))
       } else if (event === 'read') {
         if (data.memberId !== meId) patchConv(data.roomId, (c) => ({ ...c, otherRead: Math.max(c.otherRead || 0, data.upTo) }))
+      } else if (event === 'poll') {
+        // les compteurs viennent du serveur ; mes propres choix restent ceux que j'ai faits ici
+        patchConv(data.roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === data.messageId && m.poll ? { ...m, poll: { ...data.poll, mine: m.poll.mine || [] } } : m)) }))
+      } else if (event === 'event') {
+        patchConv(data.roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === data.messageId && m.event ? { ...m, event: { ...data.event, mine: m.event.mine || '' } } : m)) }))
       } else if (event === 'edit') {
         patchConv(data.roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === data.message.id ? data.message : m)) }))
         refreshRooms().catch(() => {})
@@ -175,7 +192,7 @@ export function useChat(token, meId) {
     const tempId = -(++tempSeq.current)
     const temp = {
       id: tempId, roomId, senderId: meId, auteur: '', photoUrl: '', texte, deleted: false, pending: true,
-      reply: reply ? { id: reply.id, auteur: reply.auteur, texte: reply.texte } : null, createdAt: new Date().toISOString(),
+      reply: reply ? { id: reply.id, auteur: reply.auteur, texte: apercu(reply) } : null, createdAt: new Date().toISOString(),
     }
     patchConv(roomId, (c) => ({ ...c, messages: [...c.messages, temp] }))
     try {
@@ -184,7 +201,7 @@ export function useChat(token, meId) {
         const without = c.messages.filter((m) => m.id !== tempId)
         return { ...c, messages: without.some((m) => m.id === msg.id) ? without : [...without, msg] }
       })
-      setRooms((rs) => rs.map((r) => (r.id === roomId ? { ...r, last: { id: msg.id, auteur: msg.auteur, texte: msg.texte, createdAt: msg.createdAt } } : r)))
+      setRooms((rs) => rs.map((r) => (r.id === roomId ? { ...r, last: { id: msg.id, auteur: msg.auteur, texte: apercu(msg), createdAt: msg.createdAt } } : r)))
     } catch (err) {
       patchConv(roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === tempId ? { ...m, pending: false, failed: true } : m)) }))
       throw err
@@ -194,6 +211,31 @@ export function useChat(token, meId) {
   const remove = useCallback(async (messageId) => {
     await api.chatDelete(token, messageId)
   }, [token])
+
+  // Ajoute un message reçu en réponse d'un envoi (sans doublon avec le flux temps réel).
+  const addSent = useCallback((roomId, msg) => {
+    patchConv(roomId, (c) => (c.messages.some((m) => m.id === msg.id) ? c : { ...c, messages: [...c.messages, msg] }))
+    setRooms((rs) => rs.map((r) => (r.id === roomId ? { ...r, last: { id: msg.id, auteur: msg.auteur, texte: apercu(msg), createdAt: msg.createdAt } } : r)))
+  }, [patchConv])
+
+  const sendMedia = useCallback(async (roomId, files, texte, reply) => {
+    addSent(roomId, await api.chatSendMedia(token, roomId, files, texte, reply ? reply.id : 0))
+  }, [token, addSent])
+  const sendPoll = useCallback(async (roomId, data) => {
+    addSent(roomId, await api.chatSendPoll(token, roomId, data))
+  }, [token, addSent])
+  const sendEvent = useCallback(async (roomId, data) => {
+    addSent(roomId, await api.chatSendEvent(token, roomId, data))
+  }, [token, addSent])
+
+  const vote = useCallback(async (roomId, messageId, optionIds) => {
+    const msg = await api.chatVote(token, messageId, optionIds)
+    patchConv(roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === msg.id ? { ...m, poll: msg.poll } : m)) }))
+  }, [token, patchConv])
+  const rsvp = useCallback(async (roomId, messageId, reponse) => {
+    const msg = await api.chatRsvp(token, messageId, reponse)
+    patchConv(roomId, (c) => ({ ...c, messages: c.messages.map((m) => (m.id === msg.id ? { ...m, event: msg.event } : m)) }))
+  }, [token, patchConv])
 
   // Modifier un message : possible tant qu'aucun autre adhérent ne l'a lu (le serveur refuse sinon).
   const edit = useCallback(async (roomId, messageId, texte) => {
@@ -219,5 +261,5 @@ export function useChat(token, meId) {
   // les discussions archivées ne comptent pas dans la pastille de l'onglet
   const unreadTotal = rooms.reduce((n, r) => n + (r.archived ? 0 : r.unread || 0), 0)
 
-  return { rooms, canCreate, loaded, convs, openId, openRoom, loadMore, send, remove, edit, archive, removeRoom, refreshRooms, unreadTotal, setPanelOpen, online }
+  return { rooms, canCreate, loaded, convs, openId, openRoom, loadMore, send, remove, edit, archive, removeRoom, sendMedia, sendPoll, sendEvent, vote, rsvp, refreshRooms, unreadTotal, setPanelOpen, online }
 }

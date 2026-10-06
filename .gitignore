@@ -18,6 +18,7 @@ backend/samparis12-backend
 # dépôt (public). Persistés sur le NAS via un volume Docker.
 /member-photos/
 /club-documents/
+/chat-files/
 backend/uploads/
 
 # Docker dev volumes are managed by Docker itself, nothing to ignore here.

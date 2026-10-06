@@ -19,6 +19,7 @@ const (
 var (
 	ErrForbidden   = errors.New("accès refusé")
 	ErrNotFound    = errors.New("introuvable")
+	ErrNotText     = errors.New("seuls les messages texte peuvent être modifiés")
 	ErrRoomDeleted = errors.New("cette discussion a été supprimée de ton écran : seul l'administrateur peut la réactiver")
 	ErrAlreadyRead = errors.New("ce message a déjà été lu : il ne peut plus être modifié ni supprimé")
 )
@@ -64,21 +65,30 @@ type Reply struct {
 }
 
 type Message struct {
-	ID        int64     `json:"id"`
-	RoomID    int64     `json:"roomId"`
-	SenderID  int64     `json:"senderId"`
-	Auteur    string    `json:"auteur"`
-	PhotoURL  string    `json:"photoUrl"`
-	Texte     string    `json:"texte"`
-	Deleted   bool      `json:"deleted"`
-	Edited    bool      `json:"edited"`
-	Reply     *Reply    `json:"reply"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID          int64        `json:"id"`
+	RoomID      int64        `json:"roomId"`
+	SenderID    int64        `json:"senderId"`
+	Auteur      string       `json:"auteur"`
+	PhotoURL    string       `json:"photoUrl"`
+	Texte       string       `json:"texte"`
+	Deleted     bool         `json:"deleted"`
+	Edited      bool         `json:"edited"`
+	Kind        string       `json:"kind"` // text | media | poll | event
+	Reply       *Reply       `json:"reply"`
+	Attachments []Attachment `json:"attachments"`
+	Poll        *Poll        `json:"poll"`
+	Event       *EventInfo   `json:"event"`
+	CreatedAt   time.Time    `json:"createdAt"`
 }
 
-type Repository struct{ db *sql.DB }
+type Repository struct {
+	db     *sql.DB
+	signer *Signer
+}
 
-func NewRepository(db *sql.DB) *Repository { return &Repository{db: db} }
+func NewRepository(db *sql.DB, secret string) *Repository {
+	return &Repository{db: db, signer: NewSigner(secret)}
+}
 
 func (r *Repository) Person(id int64) (*Person, error) {
 	var p Person
@@ -240,12 +250,20 @@ func (r *Repository) Rooms(p *Person) ([]Room, error) {
 		}
 		room.CanAdd = t.rr.kind == "custom" && t.rr.createdBy == p.ID
 		var l Last
+		var kind, question, titre string
+		var firstAtt sql.NullString
 		err = r.db.QueryRow(`
-			SELECT m.id, CONCAT(s.prenom, ' ', s.nom), m.body, m.created_at
-			FROM chat_messages m JOIN members s ON s.id = m.sender_id
+			SELECT m.id, CONCAT(s.prenom, ' ', s.nom), m.body, m.kind, m.created_at,
+			       COALESCE(p.question, ''), COALESCE(e.titre, ''),
+			       (SELECT a.kind FROM chat_attachments a WHERE a.message_id = m.id ORDER BY a.id LIMIT 1)
+			FROM chat_messages m
+			JOIN members s ON s.id = m.sender_id
+			LEFT JOIN chat_polls p ON p.message_id = m.id
+			LEFT JOIN chat_events e ON e.message_id = m.id
 			WHERE m.room_id = ? AND m.deleted_at IS NULL ORDER BY m.id DESC LIMIT 1`, t.rr.id).
-			Scan(&l.ID, &l.Auteur, &l.Texte, &l.CreatedAt)
+			Scan(&l.ID, &l.Auteur, &l.Texte, &kind, &l.CreatedAt, &question, &titre, &firstAtt)
 		if err == nil {
+			l.Texte = previewLabel(kind, l.Texte, question, titre, firstAtt.String)
 			room.Last = &l
 		} else if !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
@@ -265,27 +283,30 @@ func shorten(s string) string {
 
 const messageSelect = `
 	SELECT m.id, m.room_id, m.sender_id, CONCAT(s.prenom, ' ', s.nom), s.photo_path,
-	       m.body, m.deleted_at IS NOT NULL, m.edited_at IS NOT NULL, m.created_at,
-	       q.id, CONCAT(qs.prenom, ' ', qs.nom), q.body, q.deleted_at IS NOT NULL
+	       m.body, m.deleted_at IS NOT NULL, m.edited_at IS NOT NULL, m.created_at, m.kind,
+	       q.id, CONCAT(qs.prenom, ' ', qs.nom), q.body, q.deleted_at IS NOT NULL, q.kind, qp.question, qe.titre
 	FROM chat_messages m
 	JOIN members s ON s.id = m.sender_id
 	LEFT JOIN chat_messages q ON q.id = m.reply_to
-	LEFT JOIN members qs ON qs.id = q.sender_id`
+	LEFT JOIN members qs ON qs.id = q.sender_id
+	LEFT JOIN chat_polls qp ON qp.message_id = q.id
+	LEFT JOIN chat_events qe ON qe.message_id = q.id`
 
 func scanMessage(scan func(...any) error) (*Message, error) {
 	var m Message
 	var qID sql.NullInt64
-	var qAuteur, qTexte sql.NullString
+	var qAuteur, qTexte, qKind, qQuestion, qTitre sql.NullString
 	var qDeleted sql.NullBool
-	if err := scan(&m.ID, &m.RoomID, &m.SenderID, &m.Auteur, &m.PhotoURL, &m.Texte, &m.Deleted, &m.Edited, &m.CreatedAt,
-		&qID, &qAuteur, &qTexte, &qDeleted); err != nil {
+	if err := scan(&m.ID, &m.RoomID, &m.SenderID, &m.Auteur, &m.PhotoURL, &m.Texte, &m.Deleted, &m.Edited, &m.CreatedAt, &m.Kind,
+		&qID, &qAuteur, &qTexte, &qDeleted, &qKind, &qQuestion, &qTitre); err != nil {
 		return nil, err
 	}
+	m.Attachments = []Attachment{}
 	if m.Deleted {
 		m.Texte = ""
 	}
 	if qID.Valid {
-		m.Reply = &Reply{ID: qID.Int64, Auteur: qAuteur.String, Texte: shorten(qTexte.String)}
+		m.Reply = &Reply{ID: qID.Int64, Auteur: qAuteur.String, Texte: replyLabel(qKind.String, qTexte.String, qQuestion.String, qTitre.String)}
 		if qDeleted.Bool {
 			m.Reply.Texte = ""
 		}
@@ -293,8 +314,24 @@ func scanMessage(scan func(...any) error) (*Message, error) {
 	return &m, nil
 }
 
+// replyLabel : texte affiché dans la citation d'une réponse, selon le type du message cité.
+func replyLabel(kind, body, question, titre string) string {
+	switch kind {
+	case "poll":
+		return "📊 " + shorten(question)
+	case "event":
+		return "📅 " + shorten(titre)
+	case "media":
+		if body != "" {
+			return "📎 " + shorten(body)
+		}
+		return "📎 Pièce jointe"
+	}
+	return shorten(body)
+}
+
 // Messages : une page de messages (les plus récents d'abord côté SQL, renvoyés du plus ancien au plus récent).
-func (r *Repository) Messages(roomID, before int64) ([]Message, error) {
+func (r *Repository) Messages(roomID, before, viewer int64) ([]Message, error) {
 	q := messageSelect + ` WHERE m.room_id = ?`
 	args := []any{roomID}
 	if before > 0 {
@@ -319,7 +356,11 @@ func (r *Repository) Messages(roomID, before int64) ([]Message, error) {
 	for i, j := 0, len(out)-1; i < j; i, j = i+1, j-1 {
 		out[i], out[j] = out[j], out[i]
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	return out, r.enrich(out, viewer)
 }
 
 func (r *Repository) Message(id int64) (*Message, error) {
@@ -389,6 +430,9 @@ func (r *Repository) EditMessage(id int64, p *Person, body string) (*Message, er
 	}
 	if m.SenderID != p.ID || m.Deleted {
 		return nil, ErrForbidden
+	}
+	if m.Kind != "text" {
+		return nil, ErrNotText
 	}
 	if read, err := r.readByOthers(m); err != nil {
 		return nil, err

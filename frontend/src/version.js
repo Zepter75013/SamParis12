@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.25.0',
+    date: '6 octobre 2026',
+    notes: "Messagerie : la touche Entrée fait un retour à la ligne, seule la flèche envoie le message. Nouveau bouton + comme dans WhatsApp : photos et vidéos, documents, sondages et événements (réponse Je viens / Peut-être / Non, ajout à l'agenda). Nouvelle migration 0022 et nouveau dossier chat-files à ne pas supprimer lors des déploiements.",
+  },
+  {
     version: '1.24.2',
     date: '6 octobre 2026',
     notes: "iPhone / application installée : plus de zoom automatique à la saisie dans un champ (police 16 px) et plus de page plus large que l'écran (onglet Fonctionnalités). Les filles sont plus reconnaissables (jupe et grande queue-de-cheval), y compris les marcheuses.",

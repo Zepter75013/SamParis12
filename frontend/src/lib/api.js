@@ -21,6 +21,9 @@ async function request(path, { token, headers, ...options } = {}) {
 
 export const chatStreamUrl = () => `${BASE_URL}/chat/stream`
 
+// Lien d'une pièce jointe de la messagerie (l'API renvoie un chemin signé commençant par /api/).
+export const chatFileUrl = (u) => (u && u.startsWith('/') ? `${BASE_URL.replace(/\/api$/, '')}${u}` : u)
+
 export const api = {
   getPartners: () => request('/partners'),
   getPublicRaces: () => request('/public/races'),
@@ -95,6 +98,19 @@ export const api = {
   chatArchive: (token, roomId, archived) =>
     request(`/chat/rooms/${roomId}/archive`, { method: 'POST', token, body: JSON.stringify({ archived }) }),
   chatDeleteRoom: (token, roomId) => request(`/chat/rooms/${roomId}`, { method: 'DELETE', token }),
+  chatSendMedia: (token, roomId, files, texte, replyTo) => {
+    const form = new FormData()
+    files.forEach((f) => form.append('files', f, f.name))
+    if (texte) form.append('texte', texte)
+    if (replyTo) form.append('replyTo', String(replyTo))
+    return request(`/chat/rooms/${roomId}/attachments`, { method: 'POST', token, body: form })
+  },
+  chatSendPoll: (token, roomId, data) => request(`/chat/rooms/${roomId}/polls`, { method: 'POST', token, body: JSON.stringify(data) }),
+  chatSendEvent: (token, roomId, data) => request(`/chat/rooms/${roomId}/events`, { method: 'POST', token, body: JSON.stringify(data) }),
+  chatVote: (token, messageId, optionIds) =>
+    request(`/chat/messages/${messageId}/vote`, { method: 'POST', token, body: JSON.stringify({ optionIds }) }),
+  chatRsvp: (token, messageId, reponse) =>
+    request(`/chat/messages/${messageId}/rsvp`, { method: 'POST', token, body: JSON.stringify({ reponse }) }),
   chatDelete: (token, messageId) => request(`/chat/messages/${messageId}`, { method: 'DELETE', token }),
   chatOpenDM: (token, memberId) => request('/chat/dm', { method: 'POST', token, body: JSON.stringify({ memberId }) }),
   chatCreateRoom: (token, nom, memberIds) => request('/chat/rooms', { method: 'POST', token, body: JSON.stringify({ nom, memberIds }) }),

@@ -78,6 +78,8 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) *Person {
 
 func (h *Handler) fail(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, ErrNotText):
+		httpx.Error(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, ErrRoomDeleted):
 		httpx.Error(w, http.StatusConflict, err.Error())
 	case errors.Is(err, ErrAlreadyRead):
@@ -189,7 +191,7 @@ func (h *Handler) Messages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	before, _ := strconv.ParseInt(r.URL.Query().Get("before"), 10, 64)
-	msgs, err := h.repo.Messages(rr.id, before)
+	msgs, err := h.repo.Messages(rr.id, before, p.ID)
 	if err != nil {
 		h.fail(w, err)
 		return

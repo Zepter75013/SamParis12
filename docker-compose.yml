@@ -26,6 +26,7 @@ services:
     volumes:
       - ./member-photos:/app/uploads/photos
       - ./club-documents:/app/uploads/documents
+      - ./chat-files:/app/uploads/chat
     networks:
       - disques-network
 

@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { RunnerFigure } from '../../components/Legs.jsx'
+import { apercu } from '../../lib/chat.js'
+import { Modal, AttachMenu, Attachments, Lightbox, PollCard, EventCard, PollModal, EventModal, taille, iconeFichier } from './ChatRich.jsx'
 
 const EMOJIS = ['😀', '😂', '😅', '😍', '🥰', '😎', '🤩', '🙂', '😉', '🙏', '👍', '👏', '🙌', '💪', '🔥', '🎉', '❤️', '😢', '😮', '🤔',
   '🏃', '🏃‍♀️', '🚶', '🥇', '🏅', '🏆', '⏱️', '👟', '☀️', '🌧️', '💧', '🍌', '🍝', '🍻', '🚗', '📍', '✅', '❌', '⚠️', '👋']
@@ -34,6 +36,24 @@ function heureListe(iso) {
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })
 }
 
+// Photos volumineuses : réduites avant l'envoi (1920 px, JPEG) pour économiser les données mobiles.
+async function reduire(file) {
+  if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.size < 1_500_000) return file
+  try {
+    const bmp = await createImageBitmap(file)
+    const ratio = Math.min(1, 1920 / Math.max(bmp.width, bmp.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(bmp.width * ratio)
+    canvas.height = Math.round(bmp.height * ratio)
+    canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height)
+    const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg', 0.85))
+    if (!blob || blob.size >= file.size) return file
+    return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.jpg`, { type: 'image/jpeg' })
+  } catch {
+    return file
+  }
+}
+
 // couleur stable par auteur dans les salons (comme WhatsApp)
 const COULEURS = ['#c2410c', '#0f766e', '#7c3aed', '#be185d', '#1d4ed8', '#a16207', '#047857', '#b91c1c']
 const couleurDe = (id) => COULEURS[Math.abs(id) % COULEURS.length]
@@ -46,15 +66,16 @@ function Coches({ message, room, otherRead }) {
   return <span className={`chat-tick${lu ? ' is-read' : ''}`} title={lu ? (room.kind === 'dm' ? 'Lu' : 'Lu par au moins une personne') : 'Envoyé'}>{lu ? '✓✓' : '✓'}</span>
 }
 
-function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, showAuteur }) {
+function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, onVote, onRsvp, onOpenImage, showAuteur }) {
   const mine = message.senderId === me.id
   const actif = !message.deleted && !message.pending && !message.failed
   // l'auteur peut modifier / supprimer tant que personne d'autre n'a lu ; le bureau peut toujours supprimer (modération)
-  const modifiable = mine && actif && message.id > otherRead
-  const canDelete = actif && (modifiable || me.isBureau)
+  const modifiable = mine && actif && message.id > otherRead && (!message.kind || message.kind === 'text') // seuls les textes se modifient
+  const supprimable = mine && actif && message.id > otherRead
+  const canDelete = actif && (supprimable || me.isBureau)
   return (
     <div className={`chat-row${mine ? ' is-mine' : ''}`}>
-      <div className={`chat-bubble${mine ? ' is-mine' : ''}${message.deleted ? ' is-deleted' : ''}`} tabIndex={0}>
+      <div className={`chat-bubble${mine ? ' is-mine' : ''}${message.deleted ? ' is-deleted' : ''}${message.kind && message.kind !== 'text' && !message.deleted ? ' is-rich' : ''}`} tabIndex={0}>
         {!mine && showAuteur && room.kind !== 'dm' && (
           <b className="chat-author" style={{ color: couleurDe(message.senderId) }}>{message.auteur}</b>
         )}
@@ -64,9 +85,14 @@ function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, showAu
             <span>{message.reply.texte || '🚫 Message supprimé'}</span>
           </div>
         )}
-        {message.deleted
-          ? <span className="chat-body">🚫 Message supprimé</span>
-          : <span className="chat-body">{message.texte}</span>}
+        {message.deleted ? <span className="chat-body">🚫 Message supprimé</span> : (
+          <>
+            {message.kind === 'media' && <Attachments items={message.attachments || []} onOpenImage={onOpenImage} />}
+            {message.kind === 'poll' && message.poll && <PollCard message={message} onVote={onVote} />}
+            {message.kind === 'event' && message.event && <EventCard message={message} onRsvp={onRsvp} />}
+            {message.texte && <span className="chat-body">{message.texte}</span>}
+          </>
+        )}
         <span className="chat-meta">
           {message.edited && !message.deleted && <em>modifié</em>}
           {heure(message.createdAt)}
@@ -101,20 +127,6 @@ function Mini({ type, femme = false }) {
     <span className={`runner runner--mini ${marche ? 'runner--walk' : 'runner--run'}${femme ? ' is-woman' : ''}`} title={marche ? 'Marche nordique' : 'Running'} aria-hidden="true">
       <RunnerFigure look={femme ? LOOK_FEMME : LOOK_HOMME} flag={false} walk={marche} />
     </span>
-  )
-}
-
-function Modal({ titre, onClose, children }) {
-  return (
-    <div className="chat-modal" onClick={onClose}>
-      <div className="chat-modal__box" role="dialog" aria-modal="true" aria-label={titre} onClick={(e) => e.stopPropagation()}>
-        <div className="chat-modal__head">
-          <b>{titre}</b>
-          <button type="button" onClick={onClose} aria-label="Fermer">✕</button>
-        </div>
-        {children}
-      </div>
-    </div>
   )
 }
 
@@ -274,6 +286,14 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
   const [infos, setInfos] = useState(false)
   const [menu, setMenu] = useState(false)
   const [err, setErr] = useState('')
+  const [fichiers, setFichiers] = useState([]) // pièces jointes en attente d'envoi : { id, file, apercu }
+  const [pj, setPj] = useState(false) // menu d'ajout ouvert
+  const [modal, setModal] = useState(null) // 'sondage' | 'evenement'
+  const [envoi, setEnvoi] = useState(false)
+  const [visionneuse, setVisionneuse] = useState(null)
+  const inputMedias = useRef(null)
+  const inputFichiers = useRef(null)
+  const seq = useRef(0)
   const zone = useRef(null)
   const input = useRef(null)
   const bas = useRef(true)
@@ -299,7 +319,7 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
     return () => document.removeEventListener('mousedown', close)
   }, [menu])
 
-  useEffect(() => { bas.current = true; setReply(null); setEditing(null); setTexte(''); setErr(''); input.current?.focus() }, [room.id])
+  useEffect(() => { bas.current = true; setReply(null); setEditing(null); setTexte(''); setErr(''); setPj(false); setModal(null); viderFichiers(); input.current?.focus() }, [room.id])
 
   // la zone de saisie s'ajuste au texte, y compris quand on le remplit (modification d'un message)
   useLayoutEffect(() => {
@@ -328,10 +348,62 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
     setTexte('')
   }
 
+  // ---- pièces jointes en attente ----
+  const fichiersRef = useRef([])
+  fichiersRef.current = fichiers
+  useEffect(() => () => fichiersRef.current.forEach((f) => f.apercu && URL.revokeObjectURL(f.apercu)), [])
+
+  function ajouterFichiers(liste) {
+    const entrants = Array.from(liste || [])
+    if (entrants.length === 0) return
+    setErr('')
+    const suite = [...fichiers]
+    for (const f of entrants) {
+      if (suite.length >= 10) { setErr('10 fichiers au maximum par message'); break }
+      const max = f.type.startsWith('image/') ? 40 : f.type.startsWith('video/') ? 100 : 30
+      if (f.size > max * 1048576) { setErr(`« ${f.name} » dépasse ${max} Mo`); continue }
+      suite.push({ id: ++seq.current, file: f, apercu: f.type.startsWith('image/') ? URL.createObjectURL(f) : '' })
+    }
+    setFichiers(suite)
+  }
+  function retirerFichier(id) {
+    setFichiers((l) => {
+      l.filter((f) => f.id === id).forEach((f) => f.apercu && URL.revokeObjectURL(f.apercu))
+      return l.filter((f) => f.id !== id)
+    })
+  }
+  function viderFichiers() {
+    fichiersRef.current.forEach((f) => f.apercu && URL.revokeObjectURL(f.apercu))
+    setFichiers([])
+  }
+  function choisirAjout(k) {
+    setPj(false)
+    setEmoji(false)
+    if (k === 'fichier') inputFichiers.current?.click()
+    else if (k === 'photos') inputMedias.current?.click()
+    else setModal(k)
+  }
+  async function envoyerFichiers(t) {
+    setEnvoi(true)
+    setErr('')
+    try {
+      const liste = await Promise.all(fichiers.map((f) => reduire(f.file)))
+      await chat.sendMedia(room.id, liste, t, reply)
+      setTexte('')
+      setReply(null)
+      viderFichiers()
+      bas.current = true
+    } catch (e) {
+      setErr(e.message)
+    } finally {
+      setEnvoi(false)
+    }
+  }
+
   async function envoyer() {
     const t = texte.trim()
-    if (!t) return
     if (editing) {
+      if (!t) return
       try {
         await chat.edit(room.id, editing.id, t)
         annulerEdition()
@@ -342,6 +414,8 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
       input.current?.focus()
       return
     }
+    if (fichiers.length > 0) { await envoyerFichiers(t); return }
+    if (!t) return
     setTexte('')
     const r = reply
     setReply(null)
@@ -351,7 +425,8 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
     input.current?.focus()
   }
   function onKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); envoyer() }
+    // Entrée = retour à la ligne ; seule la flèche (ou Ctrl/Cmd + Entrée) envoie le message
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.nativeEvent.isComposing) { e.preventDefault(); envoyer() }
     if (e.key === 'Escape' && editing) { e.preventDefault(); e.stopPropagation(); annulerEdition() }
   }
   async function archiver() {
@@ -388,7 +463,11 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
     : (conv.participants.length ? conv.participants.slice(0, 6).map((p) => p.nom.split(' ')[0]).join(', ') + (conv.participants.length > 6 ? '…' : '') : `${room.members} participants`)
 
   return (
-    <section className="chat-conv">
+    <section
+      className="chat-conv"
+      onDragOver={(e) => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault() }}
+      onDrop={(e) => { if (e.dataTransfer?.files?.length) { e.preventDefault(); ajouterFichiers(e.dataTransfer.files) } }}
+    >
       <header className="chat-conv__head">
         <button type="button" className="chat-back" onClick={onBack} aria-label="Retour aux discussions">←</button>
         <Avatar photoUrl={room.photoUrl} nom={room.nom} groupe={room.kind !== 'dm'} />
@@ -415,7 +494,10 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
         {items.map((it) => (it.sep
           ? <div key={it.key} className="chat-day"><span>{it.sep}</span></div>
           : <Bulle key={it.key} message={it.m} room={room} me={me} otherRead={conv.otherRead} showAuteur={it.showAuteur}
-              onReply={(m) => { setReply(m); setEditing(null); input.current?.focus() }} onEdit={commencerEdition} onDelete={supprimer} />))}
+              onReply={(m) => { setReply(m); setEditing(null); input.current?.focus() }} onEdit={commencerEdition} onDelete={supprimer}
+              onVote={(m, ids) => chat.vote(room.id, m.id, ids).catch((e) => setErr(e.message))}
+              onRsvp={(m, rep) => chat.rsvp(room.id, m.id, rep).catch((e) => setErr(e.message))}
+              onOpenImage={(images, index) => setVisionneuse({ images, index })} />))}
       </div>
 
       {err && <p className="chat-error chat-error--bar">{err} <button type="button" onClick={() => setErr('')}>✕</button></p>}
@@ -427,7 +509,7 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
       )}
       {reply && (
         <div className="chat-replybar">
-          <div><b>{reply.auteur || 'Toi'}</b><span>{reply.texte}</span></div>
+          <div><b>{reply.auteur || 'Toi'}</b><span>{apercu(reply)}</span></div>
           <button type="button" onClick={() => setReply(null)} aria-label="Annuler la réponse">✕</button>
         </div>
       )}
@@ -436,19 +518,43 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
           {EMOJIS.map((e) => <button type="button" key={e} onClick={() => { setTexte((t) => t + e); input.current?.focus() }}>{e}</button>)}
         </div>
       )}
+      {pj && <AttachMenu onPick={choisirAjout} onClose={() => setPj(false)} />}
+      {fichiers.length > 0 && (
+        <div className="chat-tray">
+          {fichiers.map((f) => (
+            <div key={f.id} className={`chat-tray__item${f.apercu ? ' has-img' : ''}`}>
+              {f.apercu
+                ? <img src={f.apercu} alt={f.file.name} />
+                : <span className="chat-tray__doc"><i>{f.file.type.startsWith('video/') ? '🎥' : iconeFichier(f.file.name)}</i><b>{f.file.name}</b><small>{taille(f.file.size)}</small></span>}
+              <button type="button" onClick={() => retirerFichier(f.id)} aria-label={`Retirer ${f.file.name}`}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {envoi && <p className="chat-uploading">Envoi en cours…</p>}
       <div className="chat-composer">
-        <button type="button" className="chat-emoji-btn" onClick={() => setEmoji((v) => !v)} aria-label="Emojis">😊</button>
+        <button type="button" className="chat-emoji-btn" onClick={() => { setEmoji((v) => !v); setPj(false) }} aria-label="Emojis">😊</button>
+        {!editing && (
+          <button type="button" className="chat-attach-btn" onClick={() => { setPj((v) => !v); setEmoji(false) }} aria-label="Joindre un fichier, une photo, un sondage ou un événement" aria-expanded={pj}>＋</button>
+        )}
         <textarea
           ref={input}
           rows={1}
           value={texte}
           maxLength={2000}
-          placeholder={editing ? 'Modifie ton message' : 'Écris un message'}
+          placeholder={editing ? 'Modifie ton message' : fichiers.length ? 'Ajoute une légende…' : 'Écris un message'}
           onChange={(e) => setTexte(e.target.value)}
           onKeyDown={onKey}
+          onPaste={(e) => { const fs = Array.from(e.clipboardData?.files || []); if (fs.length) { e.preventDefault(); ajouterFichiers(fs) } }}
         />
-        <button type="button" className="chat-send" onClick={envoyer} disabled={!texte.trim()} aria-label={editing ? 'Enregistrer la modification' : 'Envoyer'}>{editing ? '✓' : '➤'}</button>
+        <button type="button" className="chat-send" onClick={envoyer} disabled={envoi || (!texte.trim() && fichiers.length === 0)} aria-label={editing ? 'Enregistrer la modification' : 'Envoyer'}>{editing ? '✓' : '➤'}</button>
       </div>
+      <input ref={inputMedias} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => { ajouterFichiers(e.target.files); e.target.value = '' }} />
+      <input ref={inputFichiers} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.txt,.csv,.rtf,.zip,.gpx,.tcx,.kml" multiple hidden onChange={(e) => { ajouterFichiers(e.target.files); e.target.value = '' }} />
+
+      {modal === 'sondage' && <PollModal onClose={() => setModal(null)} onSend={(d) => chat.sendPoll(room.id, { ...d, replyTo: reply ? reply.id : 0 }).then(() => { setReply(null); bas.current = true })} />}
+      {modal === 'evenement' && <EventModal onClose={() => setModal(null)} onSend={(d) => chat.sendEvent(room.id, { ...d, replyTo: reply ? reply.id : 0 }).then(() => { setReply(null); bas.current = true })} />}
+      {visionneuse && <Lightbox images={visionneuse.images} index={visionneuse.index} onClose={() => setVisionneuse(null)} />}
 
       {infos && <Participants room={room} conv={conv} token={token} members={members} me={me} chat={chat} onClose={() => setInfos(false)} />}
     </section>

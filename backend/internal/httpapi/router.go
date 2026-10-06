@@ -35,7 +35,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	raceHandler := race.NewHandler(race.NewRepository(db), member.NewRepository(db))
 	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
 	gameHandler := game.NewHandler(game.NewRepository(db))
-	chatHandler := chat.NewHandler(chat.NewRepository(db))
+	chatHandler := chat.NewHandler(chat.NewRepository(db, cfg.JWTSecret))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -101,6 +101,12 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("POST /api/chat/dm", authService.RequireAuth(chatHandler.OpenDM))
 	mux.HandleFunc("GET /api/chat/rooms/{id}/messages", authService.RequireAuth(chatHandler.Messages))
 	mux.HandleFunc("POST /api/chat/rooms/{id}/messages", authService.RequireAuth(chatHandler.Send))
+	mux.HandleFunc("POST /api/chat/rooms/{id}/attachments", authService.RequireAuth(chatHandler.SendMedia))
+	mux.HandleFunc("POST /api/chat/rooms/{id}/polls", authService.RequireAuth(chatHandler.SendPoll))
+	mux.HandleFunc("POST /api/chat/rooms/{id}/events", authService.RequireAuth(chatHandler.SendEvent))
+	mux.HandleFunc("POST /api/chat/messages/{id}/vote", authService.RequireAuth(chatHandler.Vote))
+	mux.HandleFunc("POST /api/chat/messages/{id}/rsvp", authService.RequireAuth(chatHandler.RSVP))
+	mux.HandleFunc("GET /api/chat/files/{id}", chatHandler.File) // lien signé : pas d'en-tête Authorization
 	mux.HandleFunc("POST /api/chat/rooms/{id}/read", authService.RequireAuth(chatHandler.Read))
 	mux.HandleFunc("POST /api/chat/rooms/{id}/archive", authService.RequireAuth(chatHandler.Archive))
 	mux.HandleFunc("DELETE /api/chat/rooms/{id}", authService.RequireAuth(chatHandler.DeleteRoom))
