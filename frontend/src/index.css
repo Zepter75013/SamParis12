@@ -1394,6 +1394,16 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .strava-periode__nav b { min-width: 12rem; text-align: center; text-transform: capitalize; }
 .strava-periode__nav label { display: flex; flex-direction: column; gap: 0.25rem; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
 .strava-periode__nav .btn { padding: 0.4rem 0.85rem; font-size: 1rem; }
+.strava-sports { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.strava-sport-puce { --c: var(--ink); display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.strava-sport-puce i { width: 0.8rem; height: 0.8rem; border-radius: 50%; background: var(--c); flex: none; }
+.strava-sport-puce:first-child i { display: none; }
+.strava-sport-puce small { color: var(--stone); font-size: 0.74rem; }
+.strava-sport-puce:hover { border-color: var(--c); }
+.strava-sport-puce.is-on { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--surface)); font-weight: 600; }
+.strava-ligne td:first-child { border-left: 5px solid var(--c); }
+.strava-ligne .strava-sport-nom { color: var(--c); font-weight: 600; }
+.strava-seg:hover { opacity: 0.8; }
 .strava-lien { color: #fc4c02; font-weight: 600; white-space: nowrap; }
 .strava-credit { margin: 1.4rem 0 0; color: var(--stone); font-size: 0.78rem; }
 

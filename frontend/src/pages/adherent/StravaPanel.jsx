@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
-import { Colonnes } from './StatsPanel.jsx'
 import Bascule from '../../components/Bascule.jsx'
 
 // « Mon activité » : l'adhérent relie son compte Strava et consulte ses propres activités. Conformément aux règles de
@@ -18,11 +17,60 @@ const SPORTS = {
 }
 const infoSport = (s) => SPORTS[s] || ['🏅', s || 'Activité', '']
 
-const FILTRES = [
-  { id: '', label: 'Toutes' },
-  { id: 'course', label: 'Course et marche', sports: ['Run', 'TrailRun', 'VirtualRun', 'Walk', 'Hike'] },
-  { id: 'velo', label: 'Vélo', sports: ['Ride', 'GravelRide', 'MountainBikeRide', 'EBikeRide', 'VirtualRide'] },
-]
+// Familles de sports : une couleur par famille (liste, graphique et filtres)
+const FAMILLES = {
+  course: { id: 'course', label: 'Course à pied', couleur: '#DE3327' },
+  trail: { id: 'trail', label: 'Trail', couleur: '#A0522D' },
+  marche: { id: 'marche', label: 'Marche et randonnée', couleur: '#2F7D6D' },
+  velo: { id: 'velo', label: 'Vélo', couleur: '#3B6FB6' },
+  natation: { id: 'natation', label: 'Natation', couleur: '#0E9AA7' },
+  renfo: { id: 'renfo', label: 'Renforcement et fitness', couleur: '#D99A1F' },
+  autre: { id: 'autre', label: 'Autres sports', couleur: '#78716C' },
+}
+const FAMILLE_DE = {
+  Run: 'course', VirtualRun: 'course', TrailRun: 'trail', Walk: 'marche', Hike: 'marche',
+  Ride: 'velo', GravelRide: 'velo', MountainBikeRide: 'velo', EBikeRide: 'velo', EMountainBikeRide: 'velo', VirtualRide: 'velo', Handcycle: 'velo', Velomobile: 'velo',
+  Swim: 'natation', WeightTraining: 'renfo', Workout: 'renfo', Yoga: 'renfo', Crossfit: 'renfo', HighIntensityIntervalTraining: 'renfo', Pilates: 'renfo',
+}
+const famille = (sport) => FAMILLES[FAMILLE_DE[sport]] || FAMILLES.autre
+const ORDRE_FAMILLES = Object.keys(FAMILLES)
+
+// Colonnes empilées : chaque colonne se décompose par famille de sport (une couleur chacune).
+function ColonnesEmpilees({ data, titre, libelle, familles }) {
+  const W = 640
+  const H = 180
+  const bas = 26
+  const haut = 14
+  const max = Math.max(1, ...data.map((d) => d.total))
+  const pas = W / Math.max(data.length, 1)
+  const larg = Math.max(2, Math.min(34, pas * 0.62))
+  const saut = Math.ceil((data.length * 56) / W)
+  return (
+    <section className="stats-bloc stats-bloc--large">
+      <h3>{titre}</h3>
+      <div className="stats-colonnes-wrap">
+        <svg className="stats-colonnes" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={titre}>
+          <line x1="0" x2={W} y1={H - bas} y2={H - bas} className="stats-axe" />
+          {data.map((d, i) => {
+            const x = i * pas + (pas - larg) / 2
+            let y = H - bas
+            return (
+              <g key={d.label}>
+                {familles.filter((f) => d.parts[f.id] > 0).map((f) => {
+                  const h = ((H - bas - haut) * d.parts[f.id]) / max
+                  y -= h
+                  return <rect key={f.id} x={x} y={y} width={larg} height={Math.max(h, 1)} fill={f.couleur} className="strava-seg"><title>{`${libelle(d.label)} · ${f.label} : ${nf.format(d.parts[f.id])} km`}</title></rect>
+                })}
+                {d.total > 0 && data.length <= 14 && <text x={x + larg / 2} y={y - 4} textAnchor="middle" className="stats-val">{nf.format(d.total)}</text>}
+                {i % saut === 0 && <text x={x + larg / 2} y={H - 8} textAnchor="middle" className="stats-lib">{libelle(d.label)}</text>}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+    </section>
+  )
+}
 
 const km = (m) => `${nf.format(m / 1000)} km`
 const duree = (s) => {
@@ -224,9 +272,21 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
     }
   }
 
-  const sportsFiltre = FILTRES.find((f) => f.id === filtre)?.sports
   const source = mode === 'recent' ? activites : (periodeActs || [])
-  const liste = useMemo(() => (sportsFiltre ? source.filter((a) => sportsFiltre.includes(a.sport)) : source), [source, sportsFiltre])
+
+  // Familles présentes dans la période (avec leurs totaux) : elles servent de légende et de filtres
+  const presentes = useMemo(() => {
+    const t = {}
+    source.forEach((a) => {
+      const f = famille(a.sport)
+      t[f.id] = t[f.id] || { ...f, n: 0, m: 0 }
+      t[f.id].n += 1
+      t[f.id].m += a.distanceM
+    })
+    return ORDRE_FAMILLES.filter((id) => t[id]).map((id) => t[id])
+  }, [source])
+  const filtreActif = presentes.some((f) => f.id === filtre) ? filtre : ''
+  const liste = useMemo(() => (filtreActif ? source.filter((a) => famille(a.sport).id === filtreActif) : source), [source, filtreActif])
 
   // Résumé de la période (ou des activités chargées)
   const resume = useMemo(() => {
@@ -245,11 +305,19 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
     else if (periode) ({ from, to } = periode)
     else return null
     const d = mode === 'recent' ? { gran: 'semaine', cles: Array.from({ length: 12 }, (_, i) => iso(addJours(lundiDe(new Date()), -77 + 7 * i))), cleDe: (j) => iso(lundiDe(parse(j))), libelle: jourMois } : decoupage(from, to)
-    const somme = Object.fromEntries(d.cles.map((c) => [c, 0]))
-    liste.forEach((a) => { const c = d.cleDe(a.debut.slice(0, 10)); if (c in somme) somme[c] += a.distanceM / 1000 })
+    const parts = Object.fromEntries(d.cles.map((c) => [c, {}]))
+    liste.forEach((a) => {
+      const c = d.cleDe(a.debut.slice(0, 10))
+      if (c in parts) { const f = famille(a.sport).id; parts[c][f] = (parts[c][f] || 0) + a.distanceM / 1000 }
+    })
     const titre = mode === 'recent' ? 'Kilomètres par semaine (12 dernières semaines)' : `Kilomètres par ${d.gran}`
-    return { titre, libelle: d.libelle, data: d.cles.map((c) => ({ label: c, n: Math.round(somme[c] * 10) / 10 })) }
+    const data = d.cles.map((c) => {
+      const p = Object.fromEntries(Object.entries(parts[c]).map(([k, v]) => [k, Math.round(v * 10) / 10]))
+      return { label: c, parts: p, total: Math.round(Object.values(p).reduce((x, y) => x + y, 0) * 10) / 10 }
+    })
+    return { titre, libelle: d.libelle, data }
   }, [mode, periode, liste])
+  const famillesGraph = useMemo(() => presentes.filter((f) => !filtreActif || f.id === filtreActif), [presentes, filtreActif])
 
   return (
     <div className="strava">
@@ -339,12 +407,13 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                     )}
                   </div>
                 )}
-                <div className="stats-filtre" style={{ marginBottom: 0 }}>
-                  <label>Activités affichées
-                    <select className="roles-select" value={filtre} onChange={(e) => setFiltre(e.target.value)}>
-                      {FILTRES.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-                    </select>
-                  </label>
+                <div className="strava-sports" role="group" aria-label="Sports affichés">
+                  <button type="button" className={`strava-sport-puce${!filtreActif ? ' is-on' : ''}`} onClick={() => setFiltre('')}>Tous les sports</button>
+                  {presentes.map((f) => (
+                    <button key={f.id} type="button" className={`strava-sport-puce${filtreActif === f.id ? ' is-on' : ''}`} style={{ '--c': f.couleur }} onClick={() => setFiltre(filtreActif === f.id ? '' : f.id)} aria-pressed={filtreActif === f.id}>
+                      <i aria-hidden="true" />{f.label}<small>{nf0.format(f.n)} · {km(f.m)}</small>
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -362,7 +431,7 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                     {resume.mAllure > 0 && <div className="stats-carte"><b>{allure(resume.mAllure / resume.sAllure)}</b><span>Allure moyenne</span><small>course et marche</small></div>}
                   </div>
                   {mode === 'recent' && <p className="stats-note" style={{ marginTop: '-0.6rem', marginBottom: '1rem' }}>Résumé des activités chargées ci-dessous. Choisis une période pour un bilan précis.</p>}
-                  {graphique && <Colonnes titre={graphique.titre} data={graphique.data} libelle={graphique.libelle} />}
+                  {graphique && <ColonnesEmpilees titre={graphique.titre} data={graphique.data} libelle={graphique.libelle} familles={famillesGraph} />}
                 </>
               )}
 
@@ -375,10 +444,11 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                       <tbody>
                         {liste.map((a) => {
                           const [ico, lib, mode] = infoSport(a.sport)
+                          const fam = famille(a.sport)
                           return (
-                            <tr key={a.id}>
+                            <tr key={a.id} className="strava-ligne" style={{ '--c': fam.couleur }}>
                               <td>{dateFr(a.debut)}</td>
-                              <td><span aria-hidden="true">{ico}</span> {a.nom}<small> · {lib}{a.prive ? ' · privée' : ''}</small></td>
+                              <td><span aria-hidden="true">{ico}</span> {a.nom}<small className="strava-sport-nom"> · {lib}{a.prive ? ' · privée' : ''}</small></td>
                               <td className="num">{a.distanceM ? km(a.distanceM) : '—'}</td>
                               <td className="num">{duree(a.dureeS)}</td>
                               <td className="num">{mode === 'allure' ? allure(a.vitesseMoy) : mode === 'vitesse' ? vitesse(a.vitesseMoy) : mode === 'nage' ? allure100(a.vitesseMoy) : '—'}</td>

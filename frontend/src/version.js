@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.37.0',
+    date: '7 octobre 2026',
+    notes: "Mon activité (Strava) : une couleur par sport (course à pied, trail, marche et randonnée, vélo, natation, renforcement, autres) dans la liste des activités, avec un liseré coloré, et dans le graphique des kilomètres, désormais en colonnes empilées par sport. Des pastilles colorées, avec le nombre de sorties et les kilomètres de chaque sport, servent de légende et de filtre en un clic.",
+  },
+  {
     version: '1.36.0',
     date: '7 octobre 2026',
     notes: "Mon activité (Strava) : choix de la période affichée par semaine, mois, année ou de date à date (avec flèches pour passer à la période précédente ou suivante). Chaque période affiche son bilan (sorties, distance, temps, dénivelé, allure moyenne), un graphique des kilomètres par jour, par semaine ou par mois selon sa durée, et la liste de ses activités, avec le filtre par sport.",
