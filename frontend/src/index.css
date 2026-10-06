@@ -1406,30 +1406,39 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 
 /* ---- Anniversaire dans le trombinoscope ---- */
 .trombi-carte { position: relative; overflow: hidden; }
-.trombi-carte--anniv { border-color: #e2b33c !important; background: linear-gradient(180deg, color-mix(in srgb, #f8e08a 24%, var(--surface)), var(--surface) 60%) !important; box-shadow: 0 0 0 2px rgba(226, 179, 60, 0.35), 0 8px 24px rgba(226, 179, 60, 0.22); }
+.trombi-carte--anniv { border-color: #e2b33c !important; background: linear-gradient(180deg, color-mix(in srgb, #f8e08a 20%, var(--surface)), var(--surface) 55%) !important; box-shadow: 0 0 0 2px rgba(226, 179, 60, 0.4), 0 10px 28px rgba(226, 179, 60, 0.28); }
 .anniv-voeux { margin-top: 0.3rem; font: 700 0.95rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: #b8860b; }
-.anniv-decor { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 0.5rem; height: 3.6rem; margin-bottom: 0.5rem; }
-.anniv-decor--grand { height: 5.6rem; gap: 1rem; margin-bottom: 0.4rem; }
-.anniv-svg { height: 100%; width: auto; overflow: visible; }
-.anniv-svg--bouteille { margin-bottom: 0; }
-.anniv-flamme { transform-box: fill-box; transform-origin: 50% 100%; animation: anniv-flamme 0.35s ease-in-out infinite alternate; }
-@keyframes anniv-flamme { from { transform: scale(1, 1) rotate(-5deg); } to { transform: scale(0.85, 1.18) rotate(5deg); } }
-.anniv-bulle { opacity: 0; animation: anniv-bulle 2.6s linear infinite; }
-@keyframes anniv-bulle { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 0.95; } 100% { transform: translateY(-26px); opacity: 0; } }
-.anniv-bouchon { transform-box: fill-box; transform-origin: 50% 50%; animation: anniv-bouchon 3.4s ease-out infinite; }
-@keyframes anniv-bouchon { 0%, 68% { transform: translateY(0) rotate(0); opacity: 1; } 80% { transform: translateY(-16px) rotate(24deg); opacity: 1; } 100% { transform: translateY(-34px) rotate(70deg); opacity: 0; } }
-.anniv-mousse { opacity: 0; animation: anniv-mousse 3.4s ease-out infinite; }
-.anniv-mousse--2 { animation-name: anniv-mousse2; }
-@keyframes anniv-mousse { 0%, 72% { opacity: 0; transform: translate(0, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-8px, -16px); } }
-@keyframes anniv-mousse2 { 0%, 72% { opacity: 0; transform: translate(0, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(8px, -18px); } }
-.anniv-bandeau { position: relative; overflow: hidden; margin: -2rem -2rem 1.2rem; padding: 1.2rem 1rem 1rem; text-align: center; background: linear-gradient(180deg, color-mix(in srgb, #f8e08a 30%, var(--surface)), var(--surface)); border-bottom: 1px solid color-mix(in srgb, #e2b33c 50%, var(--line)); }
-.anniv-bandeau b { display: block; font: 700 1.1rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: #b8860b; }
-.feu { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
-.feu__rafale { position: absolute; width: 0; height: 0; }
-.feu__rafale i { position: absolute; left: -1.5px; top: -5px; width: 3px; height: 10px; border-radius: 2px; background: var(--c); opacity: 0; animation: feu 3.6s ease-out infinite; animation-delay: var(--d); }
-@keyframes feu { 0% { opacity: 0; transform: rotate(var(--a)) translateY(-2px) scaleY(0.4); } 4% { opacity: 1; } 22% { opacity: 1; transform: rotate(var(--a)) translateY(-24px) scaleY(1); } 40%, 100% { opacity: 0; transform: rotate(var(--a)) translateY(-34px) scaleY(0.4); } }
-@media (max-width: 860px) { .anniv-bandeau { margin: -1.5rem -1.2rem 1.2rem; } }
-@media (prefers-reduced-motion: reduce) { .feu { display: none; } .anniv-flamme, .anniv-bulle, .anniv-bouchon, .anniv-mousse { animation: none; } .anniv-bulle { opacity: 0.8; } }
+
+/* Scène : ciel de nuit, feu d'artifice (canvas) et, au premier plan, gâteau, bouteille et flûte */
+.anniv-scene { position: relative; width: calc(100% + 3rem); height: 12.5rem; margin: -1.5rem -1.5rem 1rem; overflow: hidden; background: radial-gradient(120% 90% at 50% 100%, #3a2d6e 0%, #1a1747 45%, #0a0d2c 100%); }
+.anniv-scene::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 28%; background: linear-gradient(to top, rgba(255, 196, 110, 0.32), transparent); pointer-events: none; z-index: 1; }
+.anniv-scene--grande { width: calc(100% + 4rem); height: 16rem; margin: -2rem -2rem 0; }
+.anniv-etoile { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.8); animation: anniv-etoile 2.6s ease-in-out infinite; }
+@keyframes anniv-etoile { 0%, 100% { opacity: 0.25; transform: scale(0.7); } 50% { opacity: 1; transform: scale(1.25); } }
+.anniv-feu { position: absolute; inset: 0; width: 100%; height: 100%; }
+.anniv-table { position: absolute; left: 0; right: 0; bottom: 0.55rem; z-index: 2; display: flex; align-items: flex-end; justify-content: center; gap: 0.5rem; height: 56%; pointer-events: none; }
+.anniv-scene--grande .anniv-table { height: 58%; gap: 0.9rem; }
+.anniv-svg { height: 100%; width: auto; overflow: visible; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35)); }
+.anniv-svg--bouteille { height: 112%; }
+.anniv-svg--flute { height: 96%; }
+.anniv-flamme { transform-box: fill-box; transform-origin: 50% 100%; animation: anniv-flamme 0.32s ease-in-out infinite alternate; }
+@keyframes anniv-flamme { from { transform: scale(1, 1) rotate(-6deg); } to { transform: scale(0.82, 1.2) rotate(6deg); } }
+.anniv-lueur { transform-box: fill-box; transform-origin: 50% 50%; animation: anniv-lueur 0.9s ease-in-out infinite alternate; }
+@keyframes anniv-lueur { from { opacity: 0.55; transform: scale(0.9); } to { opacity: 1; transform: scale(1.12); } }
+.anniv-bulle { opacity: 0; animation: anniv-bulle 3s linear infinite; }
+@keyframes anniv-bulle { 0% { transform: translateY(0); opacity: 0; } 12% { opacity: 0.95; } 100% { transform: translateY(-50px); opacity: 0; } }
+.anniv-bouchon { transform-box: fill-box; transform-origin: 50% 50%; animation: anniv-bouchon 3.6s ease-out infinite; }
+@keyframes anniv-bouchon { 0%, 66% { transform: translateY(0) rotate(0); opacity: 1; } 76% { transform: translateY(-34px) rotate(26deg); opacity: 1; } 100% { transform: translateY(-110px) translateX(18px) rotate(160deg); opacity: 0; } }
+.anniv-goutte { opacity: 0; animation: anniv-goutte 3.6s ease-out infinite; }
+@keyframes anniv-goutte { 0%, 66% { opacity: 0; transform: translate(0, 0); } 72% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), -62px); } }
+.anniv-bandeau { position: relative; margin: 0 0 1.2rem; }
+.anniv-bandeau b { display: block; padding: 0.7rem 1rem; text-align: center; font: 700 1.1rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: #b8860b; background: linear-gradient(180deg, color-mix(in srgb, #f8e08a 30%, var(--surface)), var(--surface)); border-bottom: 1px solid color-mix(in srgb, #e2b33c 50%, var(--line)); margin: 0 -2rem; }
+.mdetail__fiche.anniv-actif > button[aria-label='Fermer'] { z-index: 6; background: rgba(255, 255, 255, 0.92) !important; }
+@media (max-width: 860px) {
+  .anniv-scene--grande { width: calc(100% + 2.4rem); margin: -1.5rem -1.2rem 0; height: 14rem; }
+  .anniv-bandeau b { margin: 0 -1.2rem; }
+}
+@media (prefers-reduced-motion: reduce) { .anniv-flamme, .anniv-lueur, .anniv-bulle, .anniv-bouchon, .anniv-goutte, .anniv-etoile { animation: none; } .anniv-bulle { opacity: 0.8; } .anniv-etoile { opacity: 0.8; } }
 
 /* ---- Champ date (saisie JJ/MM/AAAA + calendrier) ---- */
 .champ-date { position: relative; display: flex; flex-direction: column; gap: 0.25rem; }

@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.40.0',
+    date: '7 octobre 2026',
+    notes: "Anniversaires : nouvelle scène en grand sur la carte et la fiche de l'adhérent fêté. Un ciel étoilé avec un vrai feu d'artifice (fusées qui montent, explosions en sphères et en anneaux, étincelles scintillantes qui retombent, traînées lumineuses), et au premier plan un gâteau à trois étages avec ses bougies, une bouteille de champagne dont le bouchon saute avec sa gerbe de mousse, et une flûte pleine de bulles, redessinés avec reflets et dégradés.",
+  },
+  {
     version: '1.39.3',
     date: '7 octobre 2026',
     notes: "Fiche du bureau : la date de naissance affichée aux autres adhérents (trombinoscope) se saisit comme un champ date, au format JJ/MM/AAAA ou dans un calendrier (avec choix de l'année jusqu'en 1900). Une date déjà affichée sans année reste visible sous le champ, avec un lien pour ne plus l'afficher.",

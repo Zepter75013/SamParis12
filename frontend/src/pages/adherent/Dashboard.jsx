@@ -17,7 +17,7 @@ import CalculateurPanel from './CalculateurPanel.jsx'
 // L'aide (chapitres + moteur Markdown) est chargée à la demande : elle n'alourdit pas le reste de l'espace adhérent.
 const AidePanel = lazy(() => import('./AidePanel.jsx'))
 import Bascule from '../../components/Bascule.jsx'
-import { DecorAnniversaire, FeuArtifice } from '../../components/Anniversaire.jsx'
+import { ScenneAnniversaire } from '../../components/Anniversaire.jsx'
 import { dateComplete, estAnniversaireAujourdhui, formaterNaissance, jourAnniversaire, libelleJour } from '../../lib/anniversaire.js'
 import ChampDate from '../../components/ChampDate.jsx'
 import { useChat } from '../../lib/chat.js'
@@ -301,7 +301,7 @@ function MemberDetailModal({ member, token, onClose }) {
       onClick={onClose}
     >
       <div className={`mdetail${rideau ? ' is-open' : ''}`} onClick={(e) => e.stopPropagation()}>
-        <div className="mdetail__fiche">
+        <div className={`mdetail__fiche${member.anniversaire ? ' anniv-actif' : ''}`}>
           <button
             type="button"
             onClick={onClose}
@@ -313,8 +313,7 @@ function MemberDetailModal({ member, token, onClose }) {
 
           {member.anniversaire && (
             <div className="anniv-bandeau">
-              <FeuArtifice />
-              <DecorAnniversaire grand />
+              <ScenneAnniversaire grand />
               <b>Aujourd'hui, c'est l'anniversaire de {member.prenom} !</b>
             </div>
           )}
@@ -910,8 +909,7 @@ export default function Dashboard() {
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--vermilion)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--line)' }}
                 >
-                  {m.anniversaire && <FeuArtifice />}
-                  {m.anniversaire && <DecorAnniversaire />}
+                  {m.anniversaire && <ScenneAnniversaire />}
                   <div style={{ marginBottom: '0.8rem' }}>
                     <Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={60} />
                   </div>
