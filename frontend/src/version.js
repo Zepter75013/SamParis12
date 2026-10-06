@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.38.1',
+    date: '7 octobre 2026',
+    notes: "Tous les champs de saisie de l'application (zones de texte, menus déroulants, dates, recherche, connexion, formulaires et fenêtres) ont maintenant des angles arrondis, comme les boutons.",
+  },
+  {
     version: '1.38.0',
     date: '7 octobre 2026',
     notes: "Nouvel écran Calculateur d'allure : à partir d'une distance (raccourcis 5 km, 10 km, semi-marathon, marathon, ou saisie en mètres) et d'un chrono, il calcule la vitesse moyenne (km/h et m/s), l'allure au kilomètre et le temps de passage sur la distance de son choix (200 m, 400 m, 1 km…), avec les formules et une table d'équivalences. Le calcul se fait dans le navigateur.",
