@@ -136,6 +136,7 @@ export const api = {
 
   getStats: (token, section, params = {}) => request(`/stats/${section}?${new URLSearchParams(params).toString()}`, { token }),
   downloadFile,
+  logNavigation: (token, ecran) => request('/audit/navigation', { method: 'POST', body: JSON.stringify({ ecran }), token }),
   getAudit: (token, params) => request(`/audit?${new URLSearchParams(params).toString()}`, { token }),
 
   getRoles: (token) => request('/roles', { token }),

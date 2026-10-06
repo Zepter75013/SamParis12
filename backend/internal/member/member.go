@@ -621,7 +621,7 @@ func masque(s string) string {
 }
 
 func (h *Handler) journalConnexion(r *http.Request, memberID int64, saisie, detail string, ok bool, status int) {
-	e := audit.Entry{MemberID: memberID, Action: "Connexion", Detail: detail, Success: ok, Status: status, IP: audit.ClientIP(r)}
+	e := audit.Entry{MemberID: memberID, Action: "Connexion", Kind: audit.KindConnexion, Detail: detail, Success: ok, Status: status, IP: audit.ClientIP(r)}
 	if memberID == 0 {
 		e.Nom = "(identifiant inconnu)"
 		e.Detail = strings.TrimSpace("identifiant saisi : " + masque(saisie) + " " + detail)
@@ -722,7 +722,7 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 		codeHash, hashErr := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
 		if hashErr == nil {
 			_ = h.repo.InvalidateResetCodes(m.ID)
-			h.audit.Record(audit.Entry{MemberID: m.ID, Action: "Demande de code de réinitialisation du mot de passe", Success: true, Status: http.StatusNoContent, IP: audit.ClientIP(r)})
+			h.audit.Record(audit.Entry{MemberID: m.ID, Action: "Demande de code de réinitialisation du mot de passe", Kind: audit.KindConnexion, Success: true, Status: http.StatusNoContent, IP: audit.ClientIP(r)})
 			if err := h.repo.CreateResetCode(m.ID, string(codeHash), time.Now().Add(15*time.Minute)); err == nil {
 				if sendErr := h.mailer.SendCode(m.Email, code); sendErr != nil {
 					log.Printf("mailer: échec envoi code à %s : %v", m.Email, sendErr)
@@ -733,7 +733,7 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		log.Printf("mailer: demande de code pour %q — aucun compte trouvé avec cet identifiant", req.Email)
-		h.audit.Record(audit.Entry{Nom: "(identifiant inconnu)", Action: "Demande de code de réinitialisation du mot de passe", Detail: "identifiant saisi : " + masque(req.Email), Success: false, Status: http.StatusNoContent, IP: audit.ClientIP(r)})
+		h.audit.Record(audit.Entry{Nom: "(identifiant inconnu)", Action: "Demande de code de réinitialisation du mot de passe", Kind: audit.KindConnexion, Detail: "identifiant saisi : " + masque(req.Email), Success: false, Status: http.StatusNoContent, IP: audit.ClientIP(r)})
 	}
 	// Toujours 204, que l'email existe ou non, pour ne pas révéler les comptes existants.
 	httpx.JSON(w, http.StatusNoContent, nil)

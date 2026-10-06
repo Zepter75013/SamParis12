@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
@@ -391,6 +391,14 @@ export default function Dashboard() {
   const [aboutOpen, setAboutOpen] = useState(false)
 
   const [token, setAuthToken] = useState(() => getToken())
+
+  // Journal d'activité : l'ouverture d'un écran est signalée au serveur (une seule fois par changement d'écran).
+  const dernierEcran = useRef('')
+  useEffect(() => {
+    if (!token || dernierEcran.current === activeTab) return
+    dernierEcran.current = activeTab
+    api.logNavigation(token, activeTab).catch(() => {})
+  }, [activeTab, token])
   const [me, setMe] = useState(null)
   const [members, setMembers] = useState([])
   const [myUpcomingRaces, setMyUpcomingRaces] = useState([])

@@ -17,11 +17,19 @@ import (
 // Retention : durée de conservation du journal.
 const Retention = 365 * 24 * time.Hour
 
+// Types d'action du journal.
+const (
+	KindModification = "modification" // écrit en base
+	KindNavigation   = "navigation"   // consultation d'un écran ou d'une liste, export
+	KindConnexion    = "connexion"    // connexion, demande de code
+)
+
 type Entry struct {
 	MemberID int64 // 0 : aucun adhérent identifié
 	Nom      string
 	Role     string
 	Action   string
+	Kind     string // KindModification par défaut
 	Detail   string
 	Success  bool
 	Status   int
@@ -60,8 +68,11 @@ func (l *Logger) Record(e Entry) {
 	if e.MemberID > 0 {
 		member = e.MemberID
 	}
-	_, err := l.db.Exec(`INSERT INTO audit_log (member_id, nom, role, action, detail, success, status, ip) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		member, cut(e.Nom, 120), cut(e.Role, 60), cut(e.Action, 120), cut(e.Detail, 255), e.Success, e.Status, cut(e.IP, 45))
+	if e.Kind == "" {
+		e.Kind = KindModification
+	}
+	_, err := l.db.Exec(`INSERT INTO audit_log (member_id, nom, role, action, kind, detail, success, status, ip) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		member, cut(e.Nom, 120), cut(e.Role, 60), cut(e.Action, 120), e.Kind, cut(e.Detail, 255), e.Success, e.Status, cut(e.IP, 45))
 	if err != nil {
 		log.Printf("audit: %v", err)
 	}
@@ -191,7 +202,10 @@ func Wrap(next http.Handler, l *Logger, identify func(*http.Request) (int64, boo
 		if !ok || ro.action == "" {
 			return
 		}
-		e := Entry{Action: ro.action, Status: rec.status, Success: rec.status < 400, IP: ClientIP(r)}
+		e := Entry{Action: ro.action, Status: rec.status, Success: rec.status < 400, IP: ClientIP(r), Kind: KindModification}
+		if r.Method == http.MethodGet {
+			e.Kind = KindNavigation // une lecture ne modifie rien
+		}
 		if id, ok := identify(r); ok {
 			e.MemberID = id
 		}
@@ -272,6 +286,7 @@ type Row struct {
 	Nom       string    `json:"nom"`
 	Role      string    `json:"role"`
 	Action    string    `json:"action"`
+	Kind      string    `json:"type"`
 	Detail    string    `json:"detail"`
 	Success   bool      `json:"success"`
 	Status    int       `json:"status"`
@@ -282,6 +297,7 @@ type Filter struct {
 	Before int64
 	Q      string
 	Role   string
+	Kind   string // KindModification, KindNavigation, KindConnexion ou "" (tous)
 	OK     string // "1", "0" ou ""
 	From   string // AAAA-MM-JJ
 	To     string
@@ -311,6 +327,11 @@ func (l *Logger) List(f Filter) (*Page, error) {
 		where = append(where, "role = ?")
 		args = append(args, f.Role)
 	}
+	switch f.Kind {
+	case KindModification, KindNavigation, KindConnexion:
+		where = append(where, "kind = ?")
+		args = append(args, f.Kind)
+	}
 	switch f.OK {
 	case "1":
 		where = append(where, "success = TRUE")
@@ -332,7 +353,7 @@ func (l *Logger) List(f Filter) (*Page, error) {
 		pageWhere += " AND id < ?"
 		pageArgs = append(pageArgs, f.Before)
 	}
-	rows, err := l.db.Query(`SELECT id, created_at, nom, role, action, detail, success, status, ip FROM audit_log WHERE `+pageWhere+` ORDER BY id DESC LIMIT ?`,
+	rows, err := l.db.Query(`SELECT id, created_at, nom, role, action, kind, detail, success, status, ip FROM audit_log WHERE `+pageWhere+` ORDER BY id DESC LIMIT ?`,
 		append(pageArgs, f.Limit+1)...)
 	if err != nil {
 		return nil, err
@@ -341,7 +362,7 @@ func (l *Logger) List(f Filter) (*Page, error) {
 	p := &Page{Rows: []Row{}}
 	for rows.Next() {
 		var r Row
-		if err := rows.Scan(&r.ID, &r.CreatedAt, &r.Nom, &r.Role, &r.Action, &r.Detail, &r.Success, &r.Status, &r.IP); err != nil {
+		if err := rows.Scan(&r.ID, &r.CreatedAt, &r.Nom, &r.Role, &r.Action, &r.Kind, &r.Detail, &r.Success, &r.Status, &r.IP); err != nil {
 			return nil, err
 		}
 		p.Rows = append(p.Rows, r)
@@ -386,7 +407,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	before, _ := strconv.ParseInt(q.Get("before"), 10, 64)
 	limit, _ := strconv.Atoi(q.Get("limit"))
-	page, err := h.l.List(Filter{Before: before, Q: q.Get("q"), Role: q.Get("role"), OK: q.Get("ok"), From: q.Get("from"), To: q.Get("to"), Limit: limit})
+	page, err := h.l.List(Filter{Before: before, Q: q.Get("q"), Role: q.Get("role"), Kind: q.Get("type"), OK: q.Get("ok"), From: q.Get("from"), To: q.Get("to"), Limit: limit})
 	if err != nil {
 		http.Error(w, `{"error":"impossible de charger le journal"}`, http.StatusInternalServerError)
 		return
@@ -396,3 +417,29 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func jsonEncode(w http.ResponseWriter, v any) error { return json.NewEncoder(w).Encode(v) }
+
+// Écrans de l'espace adhérent dont l'ouverture est journalisée (identifiant envoyé par l'application → libellé).
+var ecrans = map[string]string{
+	"overview": "Tableau de bord", "chat": "Messagerie", "trombi": "Trombinoscope", "courses": "Nos Courses",
+	"resultats": "Résultats", "records": "Records du Club", "reseaute": "SAM Réseaute", "documents": "Plans & Documents",
+	"vieduclub": "Vie du Club", "admin": "Admin Club", "droitsBureau": "Rôles et droits", "stats": "Statistiques",
+	"journal": "Journal d'activité", "profil": "Mes informations",
+}
+
+// Navigation : l'application signale l'ouverture d'un écran (adhérent connecté, identifiant d'écran connu seulement).
+func (h *Handler) Navigation(w http.ResponseWriter, r *http.Request, memberID int64) {
+	var req struct {
+		Ecran string `json:"ecran"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<10)).Decode(&req); err != nil {
+		http.Error(w, `{"error":"requête invalide"}`, http.StatusBadRequest)
+		return
+	}
+	nom, ok := ecrans[req.Ecran]
+	if !ok {
+		http.Error(w, `{"error":"écran inconnu"}`, http.StatusBadRequest)
+		return
+	}
+	h.l.Record(Entry{MemberID: memberID, Action: "Ouverture de l'écran « " + nom + " »", Kind: KindNavigation, Success: true, Status: http.StatusNoContent, IP: ClientIP(r)})
+	w.WriteHeader(http.StatusNoContent)
+}

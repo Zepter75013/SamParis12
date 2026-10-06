@@ -83,6 +83,10 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 
 	// Journal d'activité (fonctionnalité « Consulter le journal d'activité »)
 	mux.HandleFunc("GET /api/audit", requireFeature(perm.JournalVoir, auditHandler.List))
+	mux.HandleFunc("POST /api/audit/navigation", authService.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+		id, _ := member.MemberIDFromContext(r.Context())
+		auditHandler.Navigation(w, r, id)
+	}))
 
 	// Statistiques, par section (fonctionnalités « Statistiques : effectifs / courses / engagement »)
 	statsHandler := stats.NewHandler(db)

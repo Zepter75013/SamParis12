@@ -1288,6 +1288,11 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .journal-table td small { display: block; color: var(--ink-soft); font-size: 0.78rem; margin-top: 0.1rem; }
 .journal-table tr.is-echec { background: color-mix(in srgb, #d92d20 7%, var(--surface)); }
 .journal-date { white-space: nowrap; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.journal-type { margin-bottom: 1rem; }
+.journal-type__titre { display: block; margin-bottom: 0.4rem; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.journal-kind { display: inline-block; padding: 0.12rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; white-space: nowrap; background: var(--surface-2); color: var(--ink-soft); }
+.journal-kind--modification { background: color-mix(in srgb, var(--vermilion) 14%, var(--surface)); color: var(--vermilion-deep, #a8231a); }
+.journal-kind--connexion { background: color-mix(in srgb, #e9a23b 22%, var(--surface)); color: #8a5a07; }
 .journal-res { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; white-space: nowrap; }
 .journal-res.is-ok { background: #d1fae5; color: #065f46; }
 .journal-res.is-ko { background: #fee2e2; color: #991b1b; }
@@ -1329,6 +1334,10 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .bascule button[aria-checked='true'], .bascule button[aria-checked='true']:hover { color: #fff; }
 .bascule button:focus-visible { outline: 2px solid var(--ink); outline-offset: -5px; }
 .bascule-aide { margin: 0.7rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
+@media (max-width: 560px) {
+  .bascule { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); display: grid; width: 100%; }
+  .bascule button { padding: 0.75rem 0.2rem; font-size: 0.66rem; letter-spacing: 0.03em; }
+}
 @media (prefers-reduced-motion: reduce) { .bascule__pastille { transition: none; } }
 
 /* Trombinoscope : alphabet et filtres sur toute la largeur */
