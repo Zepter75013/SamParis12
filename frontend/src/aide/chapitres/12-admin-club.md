@@ -41,7 +41,9 @@ Deux dates coexistent : la **date de naissance** (confidentielle, réservée aux
 
 - si la date affichée la **reprenait**, elle se met à jour toute seule (avec l'année seulement si elle en montrait une) ;
 - si elle est **vide**, elle reste vide : l'adhérent ne montre pas sa date ;
-- si c'est un **texte personnel différent**, il n'est pas touché. Tu peux alors le corriger toi-même dans le champ **Date de naissance affichée aux autres adhérents**, le vider, ou cliquer sur **Reprendre la date de naissance**.
+- si c'est un **texte personnel différent**, il n'est pas touché. Tu peux alors le corriger toi-même dans le champ **Date de naissance affichée aux autres adhérents**, ou cliquer sur **Reprendre la date de naissance**.
+
+Ce champ se remplit comme un champ date : **tape** la date au format `JJ/MM/AAAA` (les barres obliques s'ajoutent toutes seules) ou ouvre le **calendrier** avec le bouton à droite. Pour ne plus rien afficher, vide le champ. Si l'adhérent a choisi de ne montrer que le jour et le mois (« 23 juillet »), ce texte apparaît sous le champ avec un lien **Ne plus l'afficher**.
 
 Cette date affichée déclenche aussi la fête d'anniversaire du [Trombinoscope](aide:trombinoscope).
 

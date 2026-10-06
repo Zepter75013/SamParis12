@@ -86,8 +86,9 @@ export default function ChampDate({ label, valeur, onChange, min, max }) {
   const premier = (new Date(vue.a, vue.m, 1, 12).getDay() + 6) % 7
   const nbJours = new Date(vue.a, vue.m + 1, 0, 12).getDate()
   const cases = [...Array(premier).fill(null), ...Array.from({ length: nbJours }, (_, i) => i + 1)]
-  const anneeMin = min ? Number(min.slice(0, 4)) : new Date().getFullYear() - 30
-  const anneeMax = max ? Number(max.slice(0, 4)) : new Date().getFullYear() + 1
+  // La liste des années contient toujours l'année affichée, même hors des bornes habituelles (date de naissance ancienne par exemple)
+  const anneeMin = Math.min(min ? Number(min.slice(0, 4)) : new Date().getFullYear() - 30, vue.a)
+  const anneeMax = Math.max(max ? Number(max.slice(0, 4)) : new Date().getFullYear() + 1, vue.a)
   const annees = Array.from({ length: anneeMax - anneeMin + 1 }, (_, i) => anneeMax - i)
 
   return (

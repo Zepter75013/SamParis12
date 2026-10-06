@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.39.3',
+    date: '7 octobre 2026',
+    notes: "Fiche du bureau : la date de naissance affichée aux autres adhérents (trombinoscope) se saisit comme un champ date, au format JJ/MM/AAAA ou dans un calendrier (avec choix de l'année jusqu'en 1900). Une date déjà affichée sans année reste visible sous le champ, avec un lien pour ne plus l'afficher.",
+  },
+  {
     version: '1.39.2',
     date: '7 octobre 2026',
     notes: "Correction : quand la date de naissance d'un adhérent est modifiée (par le bureau ou par lui-même), la date affichée dans le trombinoscope (« Je suis né ») la suit si elle la reprenait ; vide, elle reste vide (l'adhérent ne montre pas sa date) ; une date personnelle différente n'est pas touchée. La fiche du bureau permet de voir, corriger ou vider cette date affichée, avec un lien « Reprendre la date de naissance ».",

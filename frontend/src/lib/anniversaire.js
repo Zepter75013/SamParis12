@@ -49,3 +49,12 @@ export function formaterNaissance(iso, avecAnnee = true) {
   const jour = Number(iso.slice(8, 10))
   return `${jour} ${NOMS[mois - 1]}${avecAnnee ? ` ${iso.slice(0, 4)}` : ''}`
 }
+
+// Date complète (jour, mois et année sur 4 chiffres) contenue dans le texte → « AAAA-MM-JJ », sinon chaîne vide
+// (texte vide, sans année ou non reconnu). Sert à afficher dans un champ date ce qui est déjà enregistré.
+export function dateComplete(texte) {
+  const j = jourAnniversaire(texte)
+  const a = /\b(1[89]\d{2}|20\d{2})\b/.exec(String(texte || ''))
+  if (!j || !a) return ''
+  return `${a[1]}-${String(j.mois).padStart(2, '0')}-${String(j.jour).padStart(2, '0')}`
+}
