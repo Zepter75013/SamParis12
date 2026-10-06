@@ -18,7 +18,7 @@ import CalculateurPanel from './CalculateurPanel.jsx'
 const AidePanel = lazy(() => import('./AidePanel.jsx'))
 import Bascule from '../../components/Bascule.jsx'
 import { DecorAnniversaire, FeuArtifice } from '../../components/Anniversaire.jsx'
-import { estAnniversaireAujourdhui, jourAnniversaire, libelleJour } from '../../lib/anniversaire.js'
+import { estAnniversaireAujourdhui, formaterNaissance, jourAnniversaire, libelleJour } from '../../lib/anniversaire.js'
 import { useChat } from '../../lib/chat.js'
 
 const THEME_OPTIONS = [
@@ -2850,6 +2850,7 @@ function adminFormFromMember(m) {
   return {
     prenom: m.prenom || '', nom: m.nom || '', role: m.role || '', groupe: m.groupe || '', statut: m.statut || '', sexe: m.sexe || '',
     roleAppId: m.roleApp?.id ?? '',
+    trombiNaissance: m.trombiNaissance || '',
 
     dateNaissance: m.dateNaissance || '', lieuNaissance: m.lieuNaissance || '', adresse: m.adresse || '',
     codePostal: m.codePostal || '', ville: m.ville || '', telephoneDomicile: m.telephoneDomicile || '',
@@ -3399,6 +3400,17 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
                 <div>{fieldLabel('Date de naissance')}<input type="date" style={inputStyle} value={form.dateNaissance} onChange={(e) => updateField('dateNaissance', e.target.value)} /></div>
                 <div>{fieldLabel('Lieu de naissance')}<input type="text" style={inputStyle} value={form.lieuNaissance} onChange={(e) => updateField('lieuNaissance', e.target.value)} /></div>
+              </div>
+              <div>
+                {fieldLabel('Date de naissance affichée aux autres adhérents (trombinoscope)')}
+                <input type="text" style={inputStyle} placeholder="Vide : l'adhérent ne montre pas sa date" value={form.trombiNaissance} onChange={(e) => updateField('trombiNaissance', e.target.value)} />
+                <p style={{ fontSize: '0.75rem', color: 'var(--stone)', margin: '0.35rem 0 0' }}>
+                  Cette date est visible de tous les adhérents et déclenche la fête d'anniversaire dans le trombinoscope. Quand l'adhérent la reprenait, elle suit la date de naissance ci-dessus ; vide, rien n'est affiché.
+                  {form.dateNaissance && (
+                    <> <button type="button" className="link-button" style={{ fontSize: '0.75rem' }} onClick={() => updateField('trombiNaissance', formaterNaissance(form.dateNaissance, true))}>Reprendre la date de naissance</button></>
+                  )}
+                  {form.trombiNaissance.trim() && !jourAnniversaire(form.trombiNaissance) && <b style={{ color: '#b91c1c' }}> Date non reconnue : l'adhérent ne sera pas fêté.</b>}
+                </p>
               </div>
               <div>{fieldLabel('Adresse postale')}<input type="text" style={inputStyle} value={form.adresse} onChange={(e) => updateField('adresse', e.target.value)} /></div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.8rem' }}>

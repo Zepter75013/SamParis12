@@ -41,3 +41,11 @@ export function estAnniversaireAujourdhui(texte) {
   const n = new Date()
   return j.jour === n.getDate() && j.mois === n.getMonth() + 1
 }
+
+// « 1967-07-23 » → « 23 juillet 1967 » (ou « 23 juillet » sans l'année)
+export function formaterNaissance(iso, avecAnnee = true) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso || '')) return ''
+  const mois = Number(iso.slice(5, 7))
+  const jour = Number(iso.slice(8, 10))
+  return `${jour} ${NOMS[mois - 1]}${avecAnnee ? ` ${iso.slice(0, 4)}` : ''}`
+}

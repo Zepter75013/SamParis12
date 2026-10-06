@@ -83,3 +83,50 @@ func jourAnniversaire(texte string) (string, bool) {
 	}
 	return time.Date(2024, time.Month(mois), jour, 12, 0, 0, 0, time.UTC).Format("01-02"), true
 }
+
+var moisFrancais = [...]string{"janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"}
+
+var reAnnee = regexp.MustCompile(`\b(1[89]\d{2}|20\d{2})\b`)
+
+// libelleNaissance : « 1967-07-23 » → « 23 juillet 1967 » (ou « 23 juillet » sans l'année).
+func libelleNaissance(date time.Time, avecAnnee bool) string {
+	s := strconv.Itoa(date.Day()) + " " + moisFrancais[date.Month()-1]
+	if avecAnnee {
+		s += " " + strconv.Itoa(date.Year())
+	}
+	return s
+}
+
+// naissanceVisibleSynchronisee garde la date de naissance affichée dans le trombinoscope (champ libre « Je suis né ») en phase
+// avec la date de naissance confidentielle quand elle la reprenait. Elle renvoie le nouveau texte et si le champ doit changer :
+//   - le champ visible est vide : l'adhérent ne montre pas sa date, on ne touche à rien ;
+//   - il n'indique pas le même jour et le même mois que l'ancienne date confidentielle (texte personnel, date déjà différente),
+//     ou une autre année : on ne touche à rien ;
+//   - sinon il suivait la date confidentielle : il prend la nouvelle (avec l'année seulement s'il en affichait une) ; si la date
+//     confidentielle est supprimée, le champ visible est vidé.
+func naissanceVisibleSynchronisee(ancienne, nouvelle *string, visible string) (string, bool) {
+	visible = strings.TrimSpace(visible)
+	if visible == "" || ancienne == nil {
+		return visible, false
+	}
+	avant, err := time.Parse("2006-01-02", *ancienne)
+	if err != nil {
+		return visible, false
+	}
+	if jour, ok := jourAnniversaire(visible); !ok || jour != avant.Format("01-02") {
+		return visible, false
+	}
+	annee := reAnnee.FindString(visible)
+	if annee != "" && annee != strconv.Itoa(avant.Year()) {
+		return visible, false
+	}
+	if nouvelle == nil || strings.TrimSpace(*nouvelle) == "" {
+		return "", true
+	}
+	apres, err := time.Parse("2006-01-02", strings.TrimSpace(*nouvelle))
+	if err != nil {
+		return visible, false
+	}
+	texte := libelleNaissance(apres, annee != "")
+	return texte, texte != visible
+}

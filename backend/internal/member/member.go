@@ -200,6 +200,10 @@ type AdminMemberUpdate struct {
 	Sexe      string `json:"sexe"`
 	RoleAppID *int64 `json:"roleAppId"` // rôle dans l'application (modifiable seulement avec « Gérer les rôles et les droits »)
 
+	// TrombiNaissance : date de naissance affichée aux autres adhérents (« Je suis né »). Absente ou inchangée, elle suit la date de
+	// naissance quand elle la reprenait ; modifiée par le bureau, elle est reprise telle quelle (vide : plus affichée).
+	TrombiNaissance *string `json:"trombiNaissance"`
+
 	DateNaissance     *string  `json:"dateNaissance"`
 	LieuNaissance     string   `json:"lieuNaissance"`
 	Adresse           string   `json:"adresse"`
@@ -477,18 +481,39 @@ func (r *Repository) UpdateTrombi(id int64, t TrombiUpdate) error {
 }
 
 func (r *Repository) UpdateConfidential(id int64, u ConfidentialUpdate) error {
+	visible, changed := r.naissanceVisibleApresChangement(id, u.DateNaissance, nil)
 	_, err := r.db.Exec(`
 		UPDATE members SET
 			date_naissance = ?, lieu_naissance = ?, adresse = ?, code_postal = ?, ville = ?,
 			telephone_domicile = ?, telephone_portable = ?, nationalite = ?,
-			urgence_nom = ?, urgence_telephone = ?, taille_maillot = ?, vma = ?, vma_date = ?
+			urgence_nom = ?, urgence_telephone = ?, taille_maillot = ?, vma = ?, vma_date = ?,
+			trombi_naissance = IF(?, ?, trombi_naissance)
 		WHERE id = ?`,
 		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
 		u.TelephoneDomicile, u.TelephonePortable, u.Nationalite,
 		u.UrgenceNom, u.UrgenceTelephone, u.TailleMaillot, u.VMA, u.VMADate,
+		changed, visible,
 		id,
 	)
 	return err
+}
+
+// naissanceVisibleApresChangement : nouvelle valeur du champ « Je suis né » (visible des autres adhérents) quand la date de
+// naissance confidentielle passe à « nouvelle ». Si le bureau a lui-même saisi un autre texte (explicite), il est repris tel quel ;
+// sinon le champ suit la date confidentielle quand il la reprenait (voir naissanceVisibleSynchronisee).
+func (r *Repository) naissanceVisibleApresChangement(id int64, nouvelle *string, explicite *string) (string, bool) {
+	var ancienne, visible sql.NullString
+	if err := r.db.QueryRow(`SELECT DATE_FORMAT(date_naissance, '%Y-%m-%d'), trombi_naissance FROM members WHERE id = ?`, id).Scan(&ancienne, &visible); err != nil {
+		return "", false
+	}
+	if explicite != nil && strings.TrimSpace(*explicite) != strings.TrimSpace(visible.String) {
+		return strings.TrimSpace(*explicite), true
+	}
+	var avant *string
+	if ancienne.Valid {
+		avant = &ancienne.String
+	}
+	return naissanceVisibleSynchronisee(avant, nouvelle, visible.String)
 }
 
 // ListFull retourne la fiche complète de tous les adhérents — réservé au bureau.
@@ -540,6 +565,7 @@ func (r *Repository) Delete(id int64) error {
 }
 
 func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
+	visible, changed := r.naissanceVisibleApresChangement(id, u.DateNaissance, u.TrombiNaissance)
 	_, err := r.db.Exec(`
 		UPDATE members SET
 			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, sexe = ?,
@@ -549,7 +575,8 @@ func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 			numero_licence = ?, licencie_par = ?, fonction_bureau = ?,
 			origine_contact = ?, annee_premiere_adhesion = ?, date_premiere_adhesion = ?,
 			date_dernier_certificat = ?, annee_derniere_adhesion = ?, activite_saison = ?,
-			licence_ffa_type = ?, montant_cotisation = ?, date_paiement_cotisation = ?, mode_paiement = ?
+			licence_ffa_type = ?, montant_cotisation = ?, date_paiement_cotisation = ?, mode_paiement = ?,
+			trombi_naissance = IF(?, ?, trombi_naissance)
 		WHERE id = ?`,
 		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.Sexe,
 		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
@@ -559,6 +586,7 @@ func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 		u.OrigineContact, u.AnneePremiereAdhesion, u.DatePremiereAdhesion,
 		u.DateDernierCertificat, u.AnneeDerniereAdhesion, u.ActiviteSaison,
 		u.LicenceFFAType, u.MontantCotisation, u.DatePaiementCotisation, u.ModePaiement,
+		changed, visible,
 		id,
 	)
 	return err

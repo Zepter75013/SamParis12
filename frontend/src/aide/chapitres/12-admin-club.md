@@ -35,6 +35,16 @@ L'email de bienvenue contient le lien pour que l'adhérent définisse son mot de
 
 Dans la fiche, tu peux compléter ou corriger toutes les informations : identité, coordonnées, licence, dates d'adhésion, certificat médical, cotisation, activité de la saison, etc. Clique sur **Enregistrer les modifications**. L'**adresse email** se change à part, avec son propre bouton **Enregistrer**.
 
+### La date de naissance affichée dans le trombinoscope
+
+Deux dates coexistent : la **date de naissance** (confidentielle, réservée aux responsables) et la **date de naissance affichée aux autres adhérents** (champ « Je suis né » du trombinoscope, que l'adhérent choisit de montrer). Quand tu modifies la date de naissance :
+
+- si la date affichée la **reprenait**, elle se met à jour toute seule (avec l'année seulement si elle en montrait une) ;
+- si elle est **vide**, elle reste vide : l'adhérent ne montre pas sa date ;
+- si c'est un **texte personnel différent**, il n'est pas touché. Tu peux alors le corriger toi-même dans le champ **Date de naissance affichée aux autres adhérents**, le vider, ou cliquer sur **Reprendre la date de naissance**.
+
+Cette date affichée déclenche aussi la fête d'anniversaire du [Trombinoscope](aide:trombinoscope).
+
 ### Donner un rôle à un adhérent
 
 Dans la fiche, le champ **Rôle dans l'application** détermine les écrans et les actions auxquels l'adhérent a accès (voir [Rôles et droits](aide:roles-droits)). Un adhérent a toujours un rôle ; **Adhérent** est le rôle le plus simple, sans aucune fonctionnalité d'administration.

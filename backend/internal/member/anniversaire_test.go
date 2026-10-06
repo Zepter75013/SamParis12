@@ -72,3 +72,33 @@ func TestJourAnniversaire(t *testing.T) {
 		}
 	}
 }
+
+func TestNaissanceVisibleSynchronisee(t *testing.T) {
+	p := func(s string) *string { return &s }
+	cas := []struct {
+		nom        string
+		ancienne   *string
+		nouvelle   *string
+		visible    string
+		want       string
+		wantChange bool
+	}{
+		{"suit la nouvelle date, avec l'année", p("1967-07-23"), p("1967-07-24"), "23 juillet 1967", "24 juillet 1967", true},
+		{"suit une date au format numérique", p("1967-07-23"), p("1968-08-01"), "23/07/1967", "1 août 1968", true},
+		{"sans année : l'année reste privée", p("1967-07-23"), p("1970-09-05"), "23 juillet", "5 septembre", true},
+		{"date supprimée : le champ est vidé", p("1967-07-23"), nil, "23 juillet 1967", "", true},
+		{"date supprimée (chaîne vide)", p("1967-07-23"), p(""), "23 juillet 1967", "", true},
+		{"champ vide : l'adhérent ne montre pas sa date", p("1967-07-23"), p("1968-01-01"), "", "", false},
+		{"pas d'ancienne date : rien à comparer", nil, p("1968-01-01"), "12 mars 1970", "12 mars 1970", false},
+		{"texte personnel sur un autre jour", p("1967-07-23"), p("1968-01-01"), "12 mars 1970", "12 mars 1970", false},
+		{"même jour mais autre année : pas synchronisé", p("1967-07-23"), p("1968-01-01"), "23 juillet 1971", "23 juillet 1971", false},
+		{"nouvelle date identique : rien à changer", p("1967-07-23"), p("1967-07-23"), "23 juillet 1967", "23 juillet 1967", false},
+		{"texte non reconnu : on ne touche à rien", p("1967-07-23"), p("1968-01-01"), "né en été", "né en été", false},
+	}
+	for _, c := range cas {
+		got, change := naissanceVisibleSynchronisee(c.ancienne, c.nouvelle, c.visible)
+		if got != c.want || change != c.wantChange {
+			t.Errorf("%s : (%q, %v), attendu (%q, %v)", c.nom, got, change, c.want, c.wantChange)
+		}
+	}
+}

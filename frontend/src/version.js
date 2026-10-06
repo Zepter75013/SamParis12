@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.39.2',
+    date: '7 octobre 2026',
+    notes: "Correction : quand la date de naissance d'un adhérent est modifiée (par le bureau ou par lui-même), la date affichée dans le trombinoscope (« Je suis né ») la suit si elle la reprenait ; vide, elle reste vide (l'adhérent ne montre pas sa date) ; une date personnelle différente n'est pas touchée. La fiche du bureau permet de voir, corriger ou vider cette date affichée, avec un lien « Reprendre la date de naissance ».",
+  },
+  {
     version: '1.39.1',
     date: '7 octobre 2026',
     notes: "Anniversaires : plus de case à cocher. Un adhérent est fêté dans le trombinoscope le jour de son anniversaire s'il a renseigné sa date de naissance dans ses informations visibles des autres adhérents (« Je suis né »), sinon rien ne se passe. L'écran Tes informations indique si la date est reconnue (« 23 juillet 1967 », « 23/07/1967 »…). La migration 0029 n'existe plus.",

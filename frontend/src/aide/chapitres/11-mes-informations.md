@@ -31,7 +31,7 @@ Pense à renseigner ton **contact d'urgence** : c'est utile en cas de souci pend
 Ce bloc alimente ta fiche du [Trombinoscope](aide:trombinoscope). **Tout est facultatif** : ce que tu laisses vide n'est pas affiché.
 
 - **J'habite**, **Je suis né**, **Originaire de** ;
-- **Je suis né** sert aussi à **te fêter le jour de ton anniversaire** : si tu y indiques ta date de naissance (par exemple « 23 juillet 1967 » ou « 23/07/1967 »), ta carte du [Trombinoscope](aide:trombinoscope) s'orne ce jour-là d'un gâteau, de champagne et d'un feu d'artifice. L'écran te dit si la date est reconnue. Tu peux n'écrire que le jour et le mois (« 23 juillet ») pour garder ton âge privé. Si tu laisses le champ vide, tu n'es pas fêté ;
+- **Je suis né** sert aussi à **te fêter le jour de ton anniversaire** : si tu y indiques ta date de naissance (par exemple « 23 juillet 1967 » ou « 23/07/1967 »), ta carte du [Trombinoscope](aide:trombinoscope) s'orne ce jour-là d'un gâteau, de champagne et d'un feu d'artifice. L'écran te dit si la date est reconnue. Si tu modifies ta date de naissance confidentielle, la date affichée la suit quand elle la reprenait. Tu peux n'écrire que le jour et le mois (« 23 juillet ») pour garder ton âge privé. Si tu laisses le champ vide, tu n'es pas fêté ;
 - **E-mail** et **Téléphone** affichés aux autres adhérents (ils peuvent être différents de tes coordonnées personnelles) ;
 - **Profession**, **Employeur**, **Distance favorite** ;
 - **Je me présente** : quelques mots pour te présenter.
