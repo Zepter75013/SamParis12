@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.40.2',
+    date: '7 octobre 2026',
+    notes: "Anniversaires : la scène est encore plus petite (environ un quart de moins en hauteur) sur la carte du trombinoscope et sur la fiche.",
+  },
+  {
     version: '1.40.1',
     date: '7 octobre 2026',
     notes: "Anniversaires : la scène du feu d'artifice, du gâteau, du champagne et de la flûte est plus compacte (environ un tiers de moins en hauteur sur la carte du trombinoscope et sur la fiche).",
