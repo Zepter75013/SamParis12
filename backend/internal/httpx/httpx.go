@@ -33,3 +33,8 @@ func CORS(frontendURL string, next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// DecodeJSON lit le corps JSON d'une requête (1 Mo maximum).
+func DecodeJSON(r *http.Request, dst any) error {
+	return json.NewDecoder(http.MaxBytesReader(nil, r.Body, 1<<20)).Decode(dst)
+}

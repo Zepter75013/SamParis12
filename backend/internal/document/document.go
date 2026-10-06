@@ -13,6 +13,7 @@ import (
 
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/member"
+	"samparis12/backend/internal/perm"
 )
 
 // Document est un fichier (PDF) mis à disposition des adhérents dans
@@ -135,15 +136,10 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 const documentUploadDir = "uploads/documents"
 const maxDocumentSize = 20 << 20 // 20 Mo
 
-// canUpload vérifie en base (plutôt que dans le jeton JWT) que l'adhérent
-// est bureau ou dispose du droit d'upload — évite qu'un droit accordé
-// après la connexion nécessite une reconnexion pour prendre effet.
+// canUpload vérifie en base (plutôt que dans le jeton JWT) que le rôle de l'adhérent comprend la fonctionnalité
+// « Ajouter des documents » — un changement de rôle prend effet sans reconnexion.
 func (h *Handler) canUpload(memberID int64) (bool, error) {
-	m, err := h.memberRepo.GetByID(memberID)
-	if err != nil {
-		return false, err
-	}
-	return m.IsBureau || m.DroitUploadDocuments, nil
+	return h.memberRepo.HasFeature(memberID, perm.DocumentsUpload), nil
 }
 
 func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {

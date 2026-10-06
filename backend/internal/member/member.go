@@ -19,6 +19,7 @@ import (
 
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/mailer"
+	"samparis12/backend/internal/perm"
 )
 
 // formatNom applique la convention administrative : NOM DE FAMILLE toujours
@@ -50,6 +51,12 @@ func cleanSexe(s string) string {
 	return ""
 }
 
+// RoleRef : rôle d'un adhérent dans l'application.
+type RoleRef struct {
+	ID  int64  `json:"id"`
+	Nom string `json:"nom"`
+}
+
 // Member reprend la fiche adhérent : identité publique (trombinoscope),
 // informations confidentielles (éditables par l'adhérent) et informations
 // administratives (lecture seule pour l'adhérent, gérées par le bureau).
@@ -67,6 +74,10 @@ type Member struct {
 	// IsSuperAdmin est seul-e à pouvoir modifier les fonctionnalités (droits
 	// des autres membres du bureau) — is_bureau seul ne suffit pas.
 	IsSuperAdmin bool `json:"isSuperAdmin"`
+
+	// Rôle dans l'application et fonctionnalités qui en découlent (voir package perm). Le rôle « Adhérent » n'en a aucune.
+	RoleApp  *RoleRef `json:"roleApp"`
+	Features []string `json:"features"`
 
 	// Suivi de l'email de bienvenue envoyé par le bureau (nullable, date du
 	// dernier envoi) et de l'activation du compte par l'adhérent lui-même
@@ -104,10 +115,6 @@ type Member struct {
 	NumeroLicence          string   `json:"numeroLicence"`
 	LicenciePar            string   `json:"licenciePar"`
 	FonctionBureau         string   `json:"fonctionBureau"`
-	DroitAdminEvenements   bool     `json:"droitAdminEvenements"`
-	DroitUploadDocuments   bool     `json:"droitUploadDocuments"`
-	DroitSaisieResultats   bool     `json:"droitSaisieResultats"`
-	DroitCreerSalons       bool     `json:"droitCreerSalons"`
 	OrigineContact         string   `json:"origineContact"`
 	AnneePremiereAdhesion  *int     `json:"anneePremiereAdhesion"`
 	DatePremiereAdhesion   *string  `json:"datePremiereAdhesion"`
@@ -179,14 +186,13 @@ type ConfidentialUpdate struct {
 // et administratives) — jamais l'email ni le mot de passe, qui restent gérés
 // par l'adhérent lui-même via leurs propres circuits.
 type AdminMemberUpdate struct {
-	Prenom       string `json:"prenom"`
-	Nom          string `json:"nom"`
-	Role         string `json:"role"`
-	Groupe       string `json:"groupe"`
-	Statut       string `json:"statut"`
-	Sexe         string `json:"sexe"`
-	IsBureau     bool   `json:"isBureau"`
-	IsSuperAdmin bool   `json:"isSuperAdmin"`
+	Prenom    string `json:"prenom"`
+	Nom       string `json:"nom"`
+	Role      string `json:"role"`
+	Groupe    string `json:"groupe"`
+	Statut    string `json:"statut"`
+	Sexe      string `json:"sexe"`
+	RoleAppID *int64 `json:"roleAppId"` // rôle dans l'application (modifiable seulement avec « Gérer les rôles et les droits »)
 
 	DateNaissance     *string  `json:"dateNaissance"`
 	LieuNaissance     string   `json:"lieuNaissance"`
@@ -205,10 +211,6 @@ type AdminMemberUpdate struct {
 	NumeroLicence          string   `json:"numeroLicence"`
 	LicenciePar            string   `json:"licenciePar"`
 	FonctionBureau         string   `json:"fonctionBureau"`
-	DroitAdminEvenements   bool     `json:"droitAdminEvenements"`
-	DroitUploadDocuments   bool     `json:"droitUploadDocuments"`
-	DroitSaisieResultats   bool     `json:"droitSaisieResultats"`
-	DroitCreerSalons       bool     `json:"droitCreerSalons"`
 	OrigineContact         string   `json:"origineContact"`
 	AnneePremiereAdhesion  *int     `json:"anneePremiereAdhesion"`
 	DatePremiereAdhesion   *string  `json:"datePremiereAdhesion"`
@@ -227,14 +229,14 @@ type AdminMemberUpdate struct {
 // le nouvel adhérent définit son propre mot de passe via "Mot de passe
 // oublié ?" (code envoyé par email), jamais choisi ou saisi par le bureau.
 type AdminMemberCreate struct {
-	Email    string `json:"email"`
-	Prenom   string `json:"prenom"`
-	Nom      string `json:"nom"`
-	Role     string `json:"role"`
-	Groupe   string `json:"groupe"`
-	Statut   string `json:"statut"`
-	Sexe     string `json:"sexe"`
-	IsBureau bool   `json:"isBureau"`
+	Email     string `json:"email"`
+	Prenom    string `json:"prenom"`
+	Nom       string `json:"nom"`
+	Role      string `json:"role"`
+	Groupe    string `json:"groupe"`
+	Statut    string `json:"statut"`
+	Sexe      string `json:"sexe"`
+	RoleAppID *int64 `json:"roleAppId"`
 }
 
 type Repository struct {
@@ -257,7 +259,7 @@ const memberColumns = `
 	DATE_FORMAT(date_naissance, '%Y-%m-%d'), lieu_naissance, adresse, code_postal, ville,
 	telephone_domicile, telephone_portable, nationalite, urgence_nom, urgence_telephone,
 	taille_maillot, vma, DATE_FORMAT(vma_date, '%Y-%m-%d'),
-	numero_licence, licencie_par, fonction_bureau, droit_admin_evenements, droit_upload_documents, droit_saisie_resultats, droit_creer_salons, origine_contact,
+	numero_licence, licencie_par, fonction_bureau, origine_contact,
 	annee_premiere_adhesion, DATE_FORMAT(date_premiere_adhesion, '%Y-%m-%d'),
 	DATE_FORMAT(date_dernier_certificat, '%Y-%m-%d'), annee_derniere_adhesion,
 	activite_saison, licence_ffa_type, montant_cotisation, DATE_FORMAT(date_paiement_cotisation, '%Y-%m-%d'), mode_paiement
@@ -287,7 +289,7 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 		&dateNaissance, &m.LieuNaissance, &m.Adresse, &m.CodePostal, &m.Ville,
 		&m.TelephoneDomicile, &m.TelephonePortable, &m.Nationalite, &m.UrgenceNom, &m.UrgenceTelephone,
 		&m.TailleMaillot, &vma, &vmaDate,
-		&m.NumeroLicence, &m.LicenciePar, &m.FonctionBureau, &m.DroitAdminEvenements, &m.DroitUploadDocuments, &m.DroitSaisieResultats, &m.DroitCreerSalons, &m.OrigineContact,
+		&m.NumeroLicence, &m.LicenciePar, &m.FonctionBureau, &m.OrigineContact,
 		&anneePremiereAdhesion, &datePremiereAdhesion, &dateDernierCertificat, &anneeDerniereAdhesion,
 		&m.ActiviteSaison, &m.LicenceFFAType, &montantCotisation, &datePaiementCotisation, &m.ModePaiement,
 	)
@@ -334,12 +336,20 @@ func nullIntPtr(v sql.NullInt64) *int {
 
 func (r *Repository) GetByID(id int64) (*Member, error) {
 	row := r.db.QueryRow(`SELECT `+memberColumns+` FROM members WHERE id = ?`, id)
-	return scanMember(row)
+	m, err := scanMember(row)
+	if err != nil {
+		return nil, err
+	}
+	return m, r.decorate([]*Member{m})
 }
 
 func (r *Repository) GetByEmail(email string) (*Member, error) {
 	row := r.db.QueryRow(`SELECT `+memberColumns+` FROM members WHERE email = ?`, email)
-	return scanMember(row)
+	m, err := scanMember(row)
+	if err != nil {
+		return nil, err
+	}
+	return m, r.decorate([]*Member{m})
 }
 
 func (r *Repository) getAuth(email string) (id int64, passwordHash string, mustChange bool, err error) {
@@ -441,7 +451,15 @@ func (r *Repository) ListFull() ([]Member, error) {
 		}
 		members = append(members, *m)
 	}
-	return members, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	ptrs := make([]*Member, len(members))
+	for i := range members {
+		ptrs[i] = &members[i]
+	}
+	return members, r.decorate(ptrs)
 }
 
 // Create insère un nouvel adhérent avec les seules informations d'identité ;
@@ -452,7 +470,7 @@ func (r *Repository) Create(m AdminMemberCreate, passwordHash string) (int64, er
 	res, err := r.db.Exec(`
 		INSERT INTO members (email, password_hash, must_change_password, prenom, nom, role, groupe, statut, sexe, is_bureau, trombi_bio)
 		VALUES (?, ?, TRUE, ?, ?, ?, ?, ?, ?, ?, '')`,
-		m.Email, passwordHash, m.Prenom, m.Nom, m.Role, m.Groupe, m.Statut, m.Sexe, m.IsBureau,
+		m.Email, passwordHash, m.Prenom, m.Nom, m.Role, m.Groupe, m.Statut, m.Sexe, false,
 	)
 	if err != nil {
 		return 0, err
@@ -468,20 +486,20 @@ func (r *Repository) Delete(id int64) error {
 func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 	_, err := r.db.Exec(`
 		UPDATE members SET
-			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, sexe = ?, is_bureau = ?, is_super_admin = ?,
+			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, sexe = ?,
 			date_naissance = ?, lieu_naissance = ?, adresse = ?, code_postal = ?, ville = ?,
 			telephone_domicile = ?, telephone_portable = ?, nationalite = ?,
 			urgence_nom = ?, urgence_telephone = ?, taille_maillot = ?, vma = ?, vma_date = ?,
-			numero_licence = ?, licencie_par = ?, fonction_bureau = ?, droit_admin_evenements = ?, droit_upload_documents = ?, droit_saisie_resultats = ?, droit_creer_salons = ?,
+			numero_licence = ?, licencie_par = ?, fonction_bureau = ?,
 			origine_contact = ?, annee_premiere_adhesion = ?, date_premiere_adhesion = ?,
 			date_dernier_certificat = ?, annee_derniere_adhesion = ?, activite_saison = ?,
 			licence_ffa_type = ?, montant_cotisation = ?, date_paiement_cotisation = ?, mode_paiement = ?
 		WHERE id = ?`,
-		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.Sexe, u.IsBureau, u.IsSuperAdmin,
+		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.Sexe,
 		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
 		u.TelephoneDomicile, u.TelephonePortable, u.Nationalite,
 		u.UrgenceNom, u.UrgenceTelephone, u.TailleMaillot, u.VMA, u.VMADate,
-		u.NumeroLicence, u.LicenciePar, u.FonctionBureau, u.DroitAdminEvenements, u.DroitUploadDocuments, u.DroitSaisieResultats, u.DroitCreerSalons,
+		u.NumeroLicence, u.LicenciePar, u.FonctionBureau,
 		u.OrigineContact, u.AnneePremiereAdhesion, u.DatePremiereAdhesion,
 		u.DateDernierCertificat, u.AnneeDerniereAdhesion, u.ActiviteSaison,
 		u.LicenceFFAType, u.MontantCotisation, u.DatePaiementCotisation, u.ModePaiement,
@@ -950,14 +968,14 @@ func (h *Handler) AdminListMembers(w http.ResponseWriter, r *http.Request) {
 }
 
 type createMemberRequest struct {
-	Email    string `json:"email"`
-	Prenom   string `json:"prenom"`
-	Nom      string `json:"nom"`
-	Role     string `json:"role"`
-	Groupe   string `json:"groupe"`
-	Statut   string `json:"statut"`
-	Sexe     string `json:"sexe"`
-	IsBureau bool   `json:"isBureau"`
+	Email     string `json:"email"`
+	Prenom    string `json:"prenom"`
+	Nom       string `json:"nom"`
+	Role      string `json:"role"`
+	Groupe    string `json:"groupe"`
+	Statut    string `json:"statut"`
+	Sexe      string `json:"sexe"`
+	RoleAppID *int64 `json:"roleAppId"`
 }
 
 func (h *Handler) AdminCreateMember(w http.ResponseWriter, r *http.Request) {
@@ -994,10 +1012,22 @@ func (h *Handler) AdminCreateMember(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.repo.Create(AdminMemberCreate{
 		Email: email, Prenom: prenom, Nom: nom,
-		Role: req.Role, Groupe: req.Groupe, Statut: req.Statut, Sexe: cleanSexe(req.Sexe), IsBureau: req.IsBureau,
+		Role: req.Role, Groupe: req.Groupe, Statut: req.Statut, Sexe: cleanSexe(req.Sexe),
 	}, string(passwordHash))
 	if err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible de créer l'adhérent")
+		return
+	}
+	// Rôle : « Adhérent » par défaut ; un autre rôle n'est attribué que par qui peut gérer les rôles.
+	roleID, err := h.repo.defaultRoleID()
+	if err == nil && req.RoleAppID != nil {
+		callerID, _ := MemberIDFromContext(r.Context())
+		if h.repo.HasFeature(callerID, perm.RolesAdmin) {
+			roleID = *req.RoleAppID
+		}
+	}
+	if err != nil || h.repo.SetRole(id, roleID) != nil {
+		httpx.Error(w, http.StatusBadRequest, "rôle inconnu : l'adhérent est créé sans rôle, à attribuer dans sa fiche")
 		return
 	}
 
@@ -1017,6 +1047,10 @@ func (h *Handler) AdminDeleteMember(w http.ResponseWriter, r *http.Request) {
 	}
 	if callerID, ok := MemberIDFromContext(r.Context()); ok && callerID == id {
 		httpx.Error(w, http.StatusBadRequest, "impossible de supprimer votre propre compte")
+		return
+	}
+	if err := h.repo.checkRemovable(id); err != nil {
+		httpx.Error(w, http.StatusConflict, err.Error())
 		return
 	}
 	if err := h.repo.Delete(id); err != nil {
@@ -1149,20 +1183,17 @@ func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusNotFound, "adhérent introuvable")
 		return
 	}
-	// Les fonctionnalités (droits accordés aux membres du bureau) et le
-	// statut SuperAdmin lui-même ne sont modifiables que par un SuperAdmin —
-	// is_bureau ne suffit pas. On ne bloque que si l'un de ces champs change
-	// réellement, pour ne pas gêner l'édition normale d'un profil.
-	featuresChanged := u.DroitAdminEvenements != current.DroitAdminEvenements ||
-		u.DroitUploadDocuments != current.DroitUploadDocuments ||
-		u.DroitSaisieResultats != current.DroitSaisieResultats ||
-		u.DroitCreerSalons != current.DroitCreerSalons ||
-		u.IsSuperAdmin != current.IsSuperAdmin
-	if featuresChanged {
+	// Le rôle dans l'application ne se change qu'avec la fonctionnalité « Gérer les rôles et les droits » ;
+	// on ne bloque que si le rôle change réellement, pour ne pas gêner l'édition normale d'une fiche.
+	roleChange := u.RoleAppID != nil && (current.RoleApp == nil || *u.RoleAppID != current.RoleApp.ID)
+	if roleChange {
 		callerID, _ := MemberIDFromContext(r.Context())
-		caller, err := h.repo.GetByID(callerID)
-		if err != nil || !caller.IsSuperAdmin {
-			httpx.Error(w, http.StatusForbidden, "seul un SuperAdmin peut modifier les fonctionnalités")
+		if !h.repo.HasFeature(callerID, perm.RolesAdmin) {
+			httpx.Error(w, http.StatusForbidden, "seul un administrateur des rôles peut changer le rôle d'un adhérent")
+			return
+		}
+		if err := h.repo.checkRoleChange(id, *u.RoleAppID); err != nil {
+			httpx.Error(w, http.StatusConflict, err.Error())
 			return
 		}
 	}
@@ -1170,6 +1201,12 @@ func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
 	if err := h.repo.UpdateAdmin(id, u); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer les modifications")
 		return
+	}
+	if roleChange {
+		if err := h.repo.SetRole(id, *u.RoleAppID); err != nil {
+			httpx.Error(w, http.StatusBadRequest, err.Error())
+			return
+		}
 	}
 	m, err := h.repo.GetByID(id)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/member"
+	"samparis12/backend/internal/perm"
 )
 
 // Race est une course proposée par un adhérent : n'importe quel adhérent
@@ -454,18 +455,10 @@ func NewHandler(repo *Repository, memberRepo *member.Repository) *Handler {
 	return &Handler{repo: repo, memberRepo: memberRepo}
 }
 
-// canEnterResults vérifie en base que l'adhérent dispose explicitement du
-// droit de saisie des résultats. Contrairement à canUpload (documents), ce
-// droit n'est PAS accordé automatiquement aux membres du bureau : il doit
-// être activé individuellement depuis l'écran Fonctionnalités, même pour un
-// membre du bureau — c'est volontairement une capacité plus restreinte que
-// le statut de bureau en lui-même.
+// canEnterResults vérifie en base que le rôle de l'adhérent comprend explicitement la fonctionnalité « Saisir les
+// résultats » : elle n'est pas déduite du statut de bureau, elle s'accorde au rôle dans l'écran Rôles et droits.
 func (h *Handler) canEnterResults(memberID int64) (bool, error) {
-	m, err := h.memberRepo.GetByID(memberID)
-	if err != nil {
-		return false, err
-	}
-	return m.DroitSaisieResultats, nil
+	return h.memberRepo.HasFeature(memberID, perm.ResultatsSaisie), nil
 }
 
 func decodeJSON(r *http.Request, dst any) error {

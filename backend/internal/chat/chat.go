@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"samparis12/backend/internal/perm"
 )
 
 const (
@@ -31,10 +33,9 @@ type Person struct {
 	Nom         string
 	PhotoURL    string
 	Groupe      string
-	IsBureau    bool
-	IsSuper     bool
-	CanCreate   bool // droit « Créer des salons de discussion » coché dans Fonctionnalités (explicite, même pour un SuperAdmin)
-	AnyBureauOK bool
+	IsBureau    bool // fait partie du bureau (salon automatique « Bureau »)
+	CanCreate   bool // fonctionnalité « Créer des salons de discussion » du rôle (explicite, même pour un super administrateur)
+	CanModerate bool // fonctionnalité « Modérer la messagerie » du rôle
 }
 
 type Last struct {
@@ -92,18 +93,22 @@ func NewRepository(db *sql.DB, secret string) *Repository {
 
 func (r *Repository) Person(id int64) (*Person, error) {
 	var p Person
-	var droit bool
 	err := r.db.QueryRow(`
-		SELECT id, prenom, nom, photo_path, groupe, is_bureau, is_super_admin, droit_creer_salons
+		SELECT id, prenom, nom, photo_path, groupe, is_bureau
 		FROM members WHERE id = ?`, id).
-		Scan(&p.ID, &p.Prenom, &p.Nom, &p.PhotoURL, &p.Groupe, &p.IsBureau, &p.IsSuper, &droit)
+		Scan(&p.ID, &p.Prenom, &p.Nom, &p.PhotoURL, &p.Groupe, &p.IsBureau)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
-	p.CanCreate = droit
+	info, err := perm.ForMember(r.db, id)
+	if err != nil {
+		return nil, err
+	}
+	p.CanCreate = info.Has(perm.SalonsCreer)
+	p.CanModerate = info.Has(perm.MessagerieModerer)
 	return &p, nil
 }
 
@@ -456,10 +461,10 @@ func (r *Repository) DeleteMessage(id int64, p *Person) (*Message, error) {
 	case m.SenderID == p.ID:
 		if read, err := r.readByOthers(m); err != nil {
 			return nil, err
-		} else if read && !p.IsBureau {
+		} else if read && !p.CanModerate {
 			return nil, ErrAlreadyRead
 		}
-	case !p.IsBureau:
+	case !p.CanModerate:
 		return nil, ErrForbidden
 	}
 	if _, err := r.db.Exec(`UPDATE chat_messages SET deleted_at = CURRENT_TIMESTAMP WHERE id = ? AND deleted_at IS NULL`, id); err != nil {

@@ -117,6 +117,11 @@ export const api = {
   chatAddMembers: (token, roomId, memberIds) =>
     request(`/chat/rooms/${roomId}/members`, { method: 'POST', token, body: JSON.stringify({ memberIds }) }),
 
+  getRoles: (token) => request('/roles', { token }),
+  createRole: (token, data) => request('/roles', { method: 'POST', token, body: JSON.stringify(data) }),
+  updateRole: (token, id, data) => request(`/roles/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),
+  deleteRole: (token, id) => request(`/roles/${id}`, { method: 'DELETE', token }),
+
   listDocuments: (token) => request('/documents', { token }),
   uploadDocument: (token, formData) => request('/documents', { method: 'POST', token, body: formData }),
 }

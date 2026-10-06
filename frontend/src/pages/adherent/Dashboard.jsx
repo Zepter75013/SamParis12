@@ -7,6 +7,7 @@ import PasswordField from '../../components/PasswordField.jsx'
 import AboutContent from '../../components/AboutContent.jsx'
 import { ord } from '../../components/Ord.jsx'
 import ChatPanel from './Chat.jsx'
+import RolesPanel from './RolesPanel.jsx'
 import { useChat } from '../../lib/chat.js'
 
 const TABS = [
@@ -20,7 +21,7 @@ const TABS = [
   { id: 'documents', label: 'Plans & Documents' },
   { id: 'vieduclub', label: 'Vie du Club' },
   { id: 'admin', label: 'Admin Club', badge: 'Bureau' },
-  { id: 'droitsBureau', label: 'Fonctionnalités', badge: 'Bureau' },
+  { id: 'droitsBureau', label: 'Rôles et droits', badge: 'Admin' },
 ]
 
 // Reprend les rubriques réelles de "Le Club > Vie du Club" et "Préparation".
@@ -328,6 +329,8 @@ export default function Dashboard() {
   const [members, setMembers] = useState([])
   const [myUpcomingRaces, setMyUpcomingRaces] = useState([])
   const chat = useChat(token, me?.id)
+  // Fonctionnalités d'administration du rôle de l'adhérent connecté (voir l'écran Rôles et droits)
+  const can = (feature) => !!me?.features?.includes(feature)
 
   // Nombre de messages à lire : dans le titre de l'onglet « (3) … » et sur l'icône de l'application installée.
   useEffect(() => {
@@ -489,8 +492,8 @@ export default function Dashboard() {
         <div className="shell">
           <nav className="adherent-tabs-nav">
             {TABS.filter((tab) => {
-              if (tab.id === 'admin') return me?.isBureau
-              if (tab.id === 'droitsBureau') return me?.isSuperAdmin
+              if (tab.id === 'admin') return can('membres.admin')
+              if (tab.id === 'droitsBureau') return can('roles.admin')
               return true
             }).map((tab) => (
               <button
@@ -553,6 +556,10 @@ export default function Dashboard() {
                 <div>
                   <span style={{ color: 'var(--stone)', display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>Groupe d'entraînement</span>
                   <b style={{ fontSize: '0.95rem' }}>{me.groupe || '—'}</b>
+                </div>
+                <div>
+                  <span style={{ color: 'var(--stone)', display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>Rôle dans l'application</span>
+                  <b style={{ fontSize: '0.95rem' }}>{me.roleApp?.nom || '—'}</b>
                 </div>
                 <div>
                   <span style={{ color: 'var(--stone)', display: 'block', textTransform: 'uppercase', fontSize: '0.68rem' }}>Statut</span>
@@ -866,10 +873,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {activeTab === 'admin' && !me?.isBureau && (
-          <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux membres du bureau du club.</p>
+        {activeTab === 'admin' && !can('membres.admin') && (
+          <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux adhérents dont le rôle comprend « Administrer les adhérents ».</p>
         )}
-        {activeTab === 'admin' && me?.isBureau && (
+        {activeTab === 'admin' && can('membres.admin') && (
           <div>
             {!openAdminCard ? (
               <>
@@ -968,11 +975,11 @@ export default function Dashboard() {
           </div>
         )}
 
-        {activeTab === 'droitsBureau' && !me?.isSuperAdmin && (
-          <p style={{ color: 'var(--stone)' }}>Cette section est réservée au SuperAdmin du club.</p>
+        {activeTab === 'droitsBureau' && !can('roles.admin') && (
+          <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux adhérents dont le rôle comprend « Gérer les rôles et les droits ».</p>
         )}
-        {activeTab === 'droitsBureau' && me?.isSuperAdmin && (
-          <BureauRightsPanel token={token} />
+        {activeTab === 'droitsBureau' && can('roles.admin') && (
+          <RolesPanel token={token} />
         )}
 
         {activeTab === 'profil' && (
@@ -2506,7 +2513,7 @@ function DocumentsPanel({ token, me }) {
   const [slotUploading, setSlotUploading] = useState(false)
   const [slotMessage, setSlotMessage] = useState('')
 
-  const canUpload = !!(me?.isBureau || me?.droitUploadDocuments)
+  const canUpload = !!me?.features?.includes('documents.upload')
 
   function loadDocs() {
     return api.listDocuments(token)
@@ -2640,8 +2647,7 @@ const STATUTS_ADHERENT = ['Adhérents 2027', 'Anciens adhérents', 'Nouveaux adh
 function adminFormFromMember(m) {
   return {
     prenom: m.prenom || '', nom: m.nom || '', role: m.role || '', groupe: m.groupe || '', statut: m.statut || '', sexe: m.sexe || '',
-    isBureau: !!m.isBureau,
-    isSuperAdmin: !!m.isSuperAdmin,
+    roleAppId: m.roleApp?.id ?? '',
 
     dateNaissance: m.dateNaissance || '', lieuNaissance: m.lieuNaissance || '', adresse: m.adresse || '',
     codePostal: m.codePostal || '', ville: m.ville || '', telephoneDomicile: m.telephoneDomicile || '',
@@ -2649,7 +2655,7 @@ function adminFormFromMember(m) {
     urgenceTelephone: m.urgenceTelephone || '', tailleMaillot: m.tailleMaillot || '', vma: m.vma ?? '', vmaDate: m.vmaDate || '',
 
     numeroLicence: m.numeroLicence || '', licenciePar: m.licenciePar || '', fonctionBureau: m.fonctionBureau || '',
-    droitAdminEvenements: !!m.droitAdminEvenements, droitUploadDocuments: !!m.droitUploadDocuments, droitSaisieResultats: !!m.droitSaisieResultats, droitCreerSalons: !!m.droitCreerSalons, origineContact: m.origineContact || '',
+    origineContact: m.origineContact || '',
     anneePremiereAdhesion: m.anneePremiereAdhesion ?? '', datePremiereAdhesion: m.datePremiereAdhesion || '',
     dateDernierCertificat: m.dateDernierCertificat || '', anneeDerniereAdhesion: m.anneeDerniereAdhesion ?? '',
     activiteSaison: m.activiteSaison || '', licenceFfaType: m.licenceFfaType || '',
@@ -2663,6 +2669,7 @@ function toAdminUpdatePayload(form) {
   return {
     ...form,
     dateNaissance: form.dateNaissance === '' ? null : form.dateNaissance,
+    roleAppId: form.roleAppId === '' || form.roleAppId == null ? null : Number(form.roleAppId),
     vmaDate: form.vmaDate === '' ? null : form.vmaDate,
     vma: form.vma === '' ? null : Number(form.vma),
     anneePremiereAdhesion: form.anneePremiereAdhesion === '' ? null : Number(form.anneePremiereAdhesion),
@@ -2674,7 +2681,7 @@ function toAdminUpdatePayload(form) {
   }
 }
 
-const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', sexe: '', isBureau: false }
+const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', sexe: '', roleAppId: '' }
 
 function AdminModal({ onClose, maxWidth = 640, children }) {
   return (
@@ -2693,99 +2700,8 @@ function AdminModal({ onClose, maxWidth = 640, children }) {
 }
 
 function sortValue(m, key) {
-  if (key === 'bureau') return m.isBureau ? 1 : 0
+  if (key === 'roleApp') return (m.roleApp?.nom || '').toLowerCase()
   return (m[key] || '').toString().toLowerCase()
-}
-
-const BUREAU_FEATURES = [
-  { field: 'droitAdminEvenements', label: 'Administrer les événements' },
-  { field: 'droitUploadDocuments', label: 'Ajouter des documents' },
-  { field: 'droitSaisieResultats', label: 'Saisir les résultats' },
-  { field: 'droitCreerSalons', label: 'Créer des salons de discussion' },
-]
-
-function BureauRightsPanel({ token }) {
-  const [members, setMembers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState('')
-  const [savingKey, setSavingKey] = useState(null)
-
-  useEffect(() => {
-    setLoading(true)
-    api.adminListMembers(token)
-      .then((data) => setMembers(data.filter((m) => m.isBureau)))
-      .catch((err) => setLoadError(err.message))
-      .finally(() => setLoading(false))
-  }, [token])
-
-  async function toggleRight(member, field) {
-    const key = `${member.id}-${field}`
-    setSavingKey(key)
-    try {
-      const form = adminFormFromMember(member)
-      form[field] = !form[field]
-      const payload = toAdminUpdatePayload(form)
-      const updated = await api.adminUpdateMember(token, member.id, payload)
-      setMembers((prev) => prev.map((m) => (m.id === updated.id ? updated : m)))
-    } catch (err) {
-      setLoadError(err.message)
-    } finally {
-      setSavingKey(null)
-    }
-  }
-
-  return (
-    <div>
-      <div style={{ marginBottom: '1.5rem' }}>
-        <span className="eyebrow">Réservé au bureau du club</span>
-        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Fonctionnalités</h2>
-        <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>
-          Donne à certains membres du bureau des droits supplémentaires sur des fonctionnalités précises du site.
-        </p>
-      </div>
-
-      {loading && <p style={{ color: 'var(--stone)' }}>Chargement…</p>}
-      {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
-
-      {!loading && !loadError && (
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--line)', color: 'var(--stone)', textTransform: 'uppercase', fontSize: '0.68rem' }}>
-                <th style={{ padding: '0.8rem 1rem' }}>Membre du bureau</th>
-                {BUREAU_FEATURES.map((f) => (
-                  <th key={f.field} style={{ padding: '0.8rem 1rem', textAlign: 'center' }}>{f.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m.id} style={{ borderBottom: '1px solid var(--line)' }}>
-                  <td style={{ padding: '0.8rem 1rem' }}>
-                    <b>{m.prenom} {m.nom}</b>
-                    <div style={{ color: 'var(--ink-soft)', fontSize: '0.72rem' }}>{m.email}</div>
-                  </td>
-                  {BUREAU_FEATURES.map((f) => (
-                    <td key={f.field} style={{ padding: '0.8rem 1rem', textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={!!m[f.field]}
-                        disabled={savingKey === `${m.id}-${f.field}`}
-                        onChange={() => toggleRight(m, f.field)}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-              {members.length === 0 && (
-                <tr><td colSpan={1 + BUREAU_FEATURES.length} style={{ padding: '1rem', color: 'var(--stone)' }}>Aucun membre du bureau trouvé.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  )
 }
 
 function AdminMembersPanel({ token, me, onMembersChanged }) {
@@ -2816,6 +2732,12 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
   const [actionError, setActionError] = useState('')
   const [generatingCodeId, setGeneratingCodeId] = useState(null)
   const [generatedCode, setGeneratedCode] = useState(null) // { member, code, expiresAt }
+  const [roles, setRoles] = useState([])
+  const peutChangerRole = !!me?.features?.includes('roles.admin')
+
+  useEffect(() => {
+    api.getRoles(token).then((d) => setRoles(d.roles)).catch(() => {})
+  }, [token])
 
   useEffect(() => {
     let cancelled = false
@@ -3028,7 +2950,7 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                   <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('email')}>Email{sortIndicator('email')}</th>
                   <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('groupe')}>Groupe{sortIndicator('groupe')}</th>
                   <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap' }} onClick={() => sortBy('statut')}>Statut{sortIndicator('statut')}</th>
-                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }} onClick={() => sortBy('bureau')}>Bureau{sortIndicator('bureau')}</th>
+                  <th style={{ padding: '1rem', cursor: 'pointer', whiteSpace: 'nowrap', textAlign: 'center' }} onClick={() => sortBy('roleApp')}>Rôle{sortIndicator('roleApp')}</th>
                   <th style={{ padding: '1rem', whiteSpace: 'nowrap' }}>Activation du compte</th>
                 </tr>
               </thead>
@@ -3048,7 +2970,9 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                     <td style={{ padding: '0.9rem 1rem' }}>{m.groupe || '—'}</td>
                     <td style={{ padding: '0.9rem 1rem' }}>{m.statut || '—'}</td>
                     <td style={{ padding: '0.9rem 1rem', textAlign: 'center' }}>
-                      {m.isBureau && <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem', background: 'var(--vermilion)', color: '#fff' }}>Bureau</span>}
+                      {m.roleApp && m.roleApp.nom !== 'Adhérent'
+                        ? <span style={{ fontSize: '0.7rem', padding: '0.2rem 0.55rem', background: 'var(--vermilion)', color: '#fff', whiteSpace: 'nowrap' }}>{m.roleApp.nom}</span>
+                        : <span style={{ fontSize: '0.72rem', color: 'var(--stone)' }}>{m.roleApp?.nom || '—'}</span>}
                     </td>
                     <td style={{ padding: '0.9rem 1rem' }} onClick={(e) => e.stopPropagation()}>
                       {m.activatedAt ? (
@@ -3129,10 +3053,14 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                   </select>
                 </div>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                <input type="checkbox" checked={newForm.isBureau} onChange={(e) => updateNewField('isBureau', e.target.checked)} />
-                Membre du bureau (accès à cette page d'administration)
-              </label>
+              <div>
+                {fieldLabel("Rôle dans l'application")}
+                <select style={inputStyle} value={newForm.roleAppId ?? ''} disabled={!peutChangerRole} onChange={(e) => updateNewField('roleAppId', e.target.value)}>
+                  {!peutChangerRole && !newForm.roleAppId && <option value="">—</option>}
+                  {roles.map((r) => <option key={r.id} value={r.id}>{r.nom}</option>)}
+                </select>
+                <small style={{ color: 'var(--stone)', fontSize: '0.72rem' }}>{peutChangerRole ? "Détermine les fonctionnalités d'administration de l'adhérent (écran Rôles et droits)." : "Seul un administrateur des rôles peut changer le rôle d'un adhérent."}</small>
+              </div>
 
               {createMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{createMessage}</p>}
               <div style={{ display: 'flex', gap: '0.8rem' }}>
@@ -3257,10 +3185,14 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                   </select>
                 </div>
               </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                <input type="checkbox" checked={form.isBureau} onChange={(e) => updateField('isBureau', e.target.checked)} />
-                Membre du bureau (accès à cette page d'administration)
-              </label>
+              <div>
+                {fieldLabel("Rôle dans l'application")}
+                <select style={inputStyle} value={form.roleAppId ?? ''} disabled={!peutChangerRole} onChange={(e) => updateField('roleAppId', e.target.value)}>
+                  {!peutChangerRole && !form.roleAppId && <option value="">—</option>}
+                  {roles.map((r) => <option key={r.id} value={r.id}>{r.nom}</option>)}
+                </select>
+                <small style={{ color: 'var(--stone)', fontSize: '0.72rem' }}>{peutChangerRole ? "Détermine les fonctionnalités d'administration de l'adhérent (écran Rôles et droits)." : "Seul un administrateur des rôles peut changer le rôle d'un adhérent."}</small>
+              </div>
 
               <b style={{ fontSize: '0.85rem', marginTop: '0.6rem' }}>Informations confidentielles</b>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>

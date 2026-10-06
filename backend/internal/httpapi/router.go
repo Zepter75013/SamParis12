@@ -15,7 +15,9 @@ import (
 	"samparis12/backend/internal/member"
 	"samparis12/backend/internal/news"
 	"samparis12/backend/internal/partner"
+	"samparis12/backend/internal/perm"
 	"samparis12/backend/internal/race"
+	"samparis12/backend/internal/role"
 
 	"samparis12/backend/internal/httpx"
 )
@@ -36,6 +38,19 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
 	gameHandler := game.NewHandler(game.NewRepository(db))
 	chatHandler := chat.NewHandler(chat.NewRepository(db, cfg.JWTSecret))
+
+	// Accès réservé aux adhérents dont le rôle comprend la fonctionnalité (vérifié en base à chaque appel).
+	requireFeature := func(feature string, next http.HandlerFunc) http.HandlerFunc {
+		return authService.RequireAuth(func(w http.ResponseWriter, r *http.Request) {
+			id, _ := member.MemberIDFromContext(r.Context())
+			if !perm.Has(db, id, feature) {
+				httpx.Error(w, http.StatusForbidden, "droit insuffisant pour cette action")
+				return
+			}
+			next(w, r)
+		})
+	}
+	roleHandler := role.NewHandler(db)
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -60,14 +75,20 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("PUT /api/members/me/trombi", authService.RequireAuth(memberHandler.UpdateTrombi))
 	mux.HandleFunc("POST /api/members/me/photo", authService.RequireAuth(memberHandler.UploadPhoto))
 
-	mux.HandleFunc("GET /api/admin/members", authService.RequireBureau(memberHandler.AdminListMembers))
-	mux.HandleFunc("POST /api/admin/members", authService.RequireBureau(memberHandler.AdminCreateMember))
-	mux.HandleFunc("GET /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminGetMember))
-	mux.HandleFunc("PUT /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminUpdateMember))
-	mux.HandleFunc("PUT /api/admin/members/{id}/email", authService.RequireBureau(memberHandler.AdminUpdateEmail))
-	mux.HandleFunc("DELETE /api/admin/members/{id}", authService.RequireBureau(memberHandler.AdminDeleteMember))
-	mux.HandleFunc("POST /api/admin/members/{id}/send-welcome-email", authService.RequireBureau(memberHandler.AdminSendWelcomeEmail))
-	mux.HandleFunc("POST /api/admin/members/{id}/generate-code", authService.RequireBureau(memberHandler.AdminGenerateCode))
+	// Rôles et droits
+	mux.HandleFunc("GET /api/roles", authService.RequireAuth(roleHandler.List))
+	mux.HandleFunc("POST /api/roles", authService.RequireAuth(roleHandler.Create))
+	mux.HandleFunc("PUT /api/roles/{id}", authService.RequireAuth(roleHandler.Update))
+	mux.HandleFunc("DELETE /api/roles/{id}", authService.RequireAuth(roleHandler.Delete))
+
+	mux.HandleFunc("GET /api/admin/members", requireFeature(perm.MembresAdmin, memberHandler.AdminListMembers))
+	mux.HandleFunc("POST /api/admin/members", requireFeature(perm.MembresAdmin, memberHandler.AdminCreateMember))
+	mux.HandleFunc("GET /api/admin/members/{id}", requireFeature(perm.MembresAdmin, memberHandler.AdminGetMember))
+	mux.HandleFunc("PUT /api/admin/members/{id}", requireFeature(perm.MembresAdmin, memberHandler.AdminUpdateMember))
+	mux.HandleFunc("PUT /api/admin/members/{id}/email", requireFeature(perm.MembresAdmin, memberHandler.AdminUpdateEmail))
+	mux.HandleFunc("DELETE /api/admin/members/{id}", requireFeature(perm.MembresAdmin, memberHandler.AdminDeleteMember))
+	mux.HandleFunc("POST /api/admin/members/{id}/send-welcome-email", requireFeature(perm.MembresAdmin, memberHandler.AdminSendWelcomeEmail))
+	mux.HandleFunc("POST /api/admin/members/{id}/generate-code", requireFeature(perm.MembresAdmin, memberHandler.AdminGenerateCode))
 
 	mux.HandleFunc("GET /api/races", authService.RequireAuth(raceHandler.List))
 	mux.HandleFunc("POST /api/races", authService.RequireAuth(raceHandler.Create))

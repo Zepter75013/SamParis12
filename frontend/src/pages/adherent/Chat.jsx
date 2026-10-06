@@ -72,7 +72,7 @@ function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, onVote
   // l'auteur peut modifier / supprimer tant que personne d'autre n'a lu ; le bureau peut toujours supprimer (modération)
   const modifiable = mine && actif && message.id > otherRead && (!message.kind || message.kind === 'text') // seuls les textes se modifient
   const supprimable = mine && actif && message.id > otherRead
-  const canDelete = actif && (supprimable || me.isBureau)
+  const canDelete = actif && (supprimable || !!me.features?.includes('messagerie.moderer'))
   return (
     <div className={`chat-row${mine ? ' is-mine' : ''}`}>
       <div className={`chat-bubble${mine ? ' is-mine' : ''}${message.deleted ? ' is-deleted' : ''}${message.kind && message.kind !== 'text' && !message.deleted ? ' is-rich' : ''}`} tabIndex={0}>

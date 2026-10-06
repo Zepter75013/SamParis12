@@ -374,7 +374,7 @@ func (h *Handler) AddMembers(w http.ResponseWriter, r *http.Request) {
 	if rr == nil {
 		return
 	}
-	if rr.kind != "custom" || (!p.IsSuper && rr.createdBy != p.ID) {
+	if rr.kind != "custom" || rr.createdBy != p.ID {
 		httpx.Error(w, http.StatusForbidden, "seul le créateur du salon peut ajouter des participants")
 		return
 	}

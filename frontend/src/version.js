@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.26.0',
+    date: '7 octobre 2026',
+    notes: "Nouvel écran Rôles et droits, sur le modèle de la personnalisation du ruban d'Excel : on choisit un rôle, les fonctionnalités disponibles sont à gauche, celles accordées au rôle à droite. Chaque adhérent a désormais un rôle dans l'application (champ de sa fiche) ; le rôle Adhérent, le plus simple, n'a aucune fonctionnalité d'administration. Remplace l'écran Fonctionnalités (migration 0023, les anciens droits sont repris).",
+  },
+  {
     version: '1.25.2',
     date: '7 octobre 2026',
     notes: "Messagerie sur ordinateur : le bas n'est plus tronqué (la liste des discussions défile dans le cadre et la zone de saisie reste visible). Le nombre de messages à lire s'affiche dans le menu Messagerie, dans le titre de l'onglet du navigateur et sur l'icône de l'application installée.",
