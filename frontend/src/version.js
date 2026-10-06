@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.24.2',
+    date: '6 octobre 2026',
+    notes: "iPhone / application installée : plus de zoom automatique à la saisie dans un champ (police 16 px) et plus de page plus large que l'écran (onglet Fonctionnalités). Les filles sont plus reconnaissables (jupe et grande queue-de-cheval), y compris les marcheuses.",
+  },
+  {
     version: '1.24.1',
     date: '6 octobre 2026',
     notes: "Correctifs : la version affichée dans À propos suit désormais toujours le dernier numéro de l'historique. Les migrations 0018 à 0021 peuvent être relancées sans erreur, et l'API signale dans ses journaux les migrations oubliées.",
