@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.35.1',
+    date: '7 octobre 2026',
+    notes: "Mon activité (Strava) : si Strava refuse de fournir les totaux, la liste des activités s'affiche quand même (avec une note) au lieu d'une erreur ; les erreurs de Strava sont détaillées dans les journaux du serveur pour faciliter le diagnostic. L'application installée affiche une courte page « pas de connexion » hors réseau (plus d'avertissement du navigateur sur le service worker).",
+  },
+  {
     version: '1.35.0',
     date: '7 octobre 2026',
     notes: "Liaison Strava : chaque adhérent peut relier son compte Strava (bouton « Se connecter avec Strava ») et retrouver dans le nouvel écran Mon activité ses totaux (4 semaines, année, depuis toujours), ses kilomètres par semaine et la liste de ses sorties. Ces données ne sont visibles que de l'adhérent concerné (règle de Strava) et le club n'en conserve aucune ; la déconnexion révoque l'accès. Nécessite l'application Strava du club (docs/strava-installation.md) et la migration 0028.",

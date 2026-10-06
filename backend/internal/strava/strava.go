@@ -279,7 +279,11 @@ func (h *Handler) appeler(memberID int64, chemin string) ([]byte, error) {
 	case res.StatusCode == http.StatusTooManyRequests:
 		return nil, errLimite
 	case res.StatusCode != http.StatusOK:
-		return nil, fmt.Errorf("strava a répondu %d", res.StatusCode)
+		extrait := strings.Join(strings.Fields(string(body)), " ")
+		if len(extrait) > 300 {
+			extrait = extrait[:300] + "…"
+		}
+		return nil, fmt.Errorf("GET %s : Strava a répondu %d %s", chemin, res.StatusCode, extrait) // pas de jeton dans ce message
 	}
 	h.mu.Lock()
 	h.cache[cle] = cacheEntry{body: body, exp: time.Now().Add(cacheTTL)}

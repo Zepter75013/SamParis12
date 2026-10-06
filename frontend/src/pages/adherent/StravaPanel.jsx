@@ -89,7 +89,8 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
       const s = await api.stravaStatus(token)
       setStatut(s)
       if (s.connected && s.activites) {
-        const [st, ac] = await Promise.all([api.stravaStats(token), api.stravaActivities(token, 1)])
+        // Les totaux sont facultatifs : si Strava ne les fournit pas, la liste des activités s'affiche quand même.
+        const [st, ac] = await Promise.all([api.stravaStats(token).catch(() => null), api.stravaActivities(token, 1)])
         setStats(st)
         setActivites(ac.activites)
         setSuite(ac.suite)
@@ -220,6 +221,9 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
             <p className="roles-erreur">L'autorisation de lire tes activités n'a pas été accordée. Déconnecte ton compte puis reconnecte-le en laissant cochée « Voir les données de tes activités ».</p>
           )}
 
+          {statut.activites && !stats && !chargement && (
+            <p className="stats-note">Les totaux Strava (4 semaines, année, depuis toujours) ne sont pas disponibles pour le moment ; tes activités s'affichent ci-dessous.</p>
+          )}
           {stats && (
             <div className="stats-grille">
               <Totaux titre="Course à pied" t={stats.course} />
