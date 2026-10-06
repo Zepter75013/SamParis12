@@ -2,7 +2,13 @@ SET NAMES utf8mb4;
 
 -- Sexe de l'adhérent : 'F', 'H' ou '' (non renseigné). Utilisé pour le petit bonhomme SAM de la messagerie
 -- (une fille pour les filles) ; renseigné par le bureau dans la fiche adhérent.
-ALTER TABLE members ADD COLUMN sexe CHAR(1) NOT NULL DEFAULT '' AFTER statut;
+SET @ddl = IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'members' AND COLUMN_NAME = 'sexe') = 0,
+    'ALTER TABLE members ADD COLUMN sexe CHAR(1) NOT NULL DEFAULT \'\' AFTER statut',
+    'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Adhérents de démonstration uniquement (demo.*@demo-samparis12.test) : sexe déduit du prénom fictif.
 -- Les vrais comptes ne sont jamais touchés ; les prénoms absents des deux listes restent non renseignés.

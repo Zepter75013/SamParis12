@@ -4,7 +4,14 @@ SET NAMES utf8mb4;
 -- les adhérents autorisés, et messages privés entre deux adhérents.
 
 -- Droit « Créer des salons de discussion » (réglable dans Fonctionnalités par un SuperAdmin).
-ALTER TABLE members ADD COLUMN droit_creer_salons BOOLEAN NOT NULL DEFAULT FALSE AFTER droit_saisie_resultats;
+-- Cette migration (comme 0019 et 0021) peut être relancée sans erreur : l'ajout de colonne est conditionnel.
+SET @ddl = IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'members' AND COLUMN_NAME = 'droit_creer_salons') = 0,
+    'ALTER TABLE members ADD COLUMN droit_creer_salons BOOLEAN NOT NULL DEFAULT FALSE AFTER droit_saisie_resultats',
+    'SELECT 1');
+PREPARE stmt FROM @ddl;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- kind : auto (membres déduits du profil via auto_rule), custom (membres choisis), dm (message privé, dm_key = "petitId-grandId").
 CREATE TABLE IF NOT EXISTS chat_rooms (

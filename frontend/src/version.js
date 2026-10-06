@@ -1,9 +1,13 @@
 // Numéro de version du site (convention semver : MAJOR.MINOR.PATCH).
-// Ajouter une entrée en haut de CHANGELOG à chaque changement notable et
-// mettre à jour APP_VERSION en conséquence.
-export const APP_VERSION = '1.19.1'
+// Ajouter une entrée en haut de CHANGELOG à chaque changement notable : APP_VERSION en découle
+// (c'est la version de la première entrée), il n'y a plus rien d'autre à mettre à jour.
 
 export const CHANGELOG = [
+  {
+    version: '1.24.1',
+    date: '6 octobre 2026',
+    notes: "Correctifs : la version affichée dans À propos suit désormais toujours le dernier numéro de l'historique. Les migrations 0018 à 0021 peuvent être relancées sans erreur, et l'API signale dans ses journaux les migrations oubliées.",
+  },
   {
     version: '1.24.0',
     date: '6 octobre 2026',
@@ -255,3 +259,5 @@ export const CHANGELOG = [
     notes: "Première version stable de l'espace adhérent réel : authentification par email/mot de passe, gestion des adhérents par le bureau, trombinoscope, Nos Courses (inscription, recherche et cession de dossard), Plans & Documents, écran Fonctionnalités du bureau et préférence de thème.",
   },
 ]
+
+export const APP_VERSION = CHANGELOG[0].version
