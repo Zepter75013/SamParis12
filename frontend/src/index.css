@@ -1371,6 +1371,34 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 }
 @media (prefers-reduced-motion: reduce) { .mdetail__rideau, .mdetail.is-open .mdetail__rideau { transition: none; } }
 
+/* ---- Calculateur d'allure ---- */
+.calc-grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.calc-grille .stats-bloc { margin-bottom: 0; }
+.calc-titre { display: block; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); margin: 0 0 0.4rem; }
+.calc-raccourcis { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.calc-puce { padding: 0.4rem 0.85rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.calc-puce:hover { border-color: var(--vermilion); color: var(--vermilion); }
+.calc-puce.is-on { background: var(--vermilion); border-color: var(--vermilion); color: #fff; font-weight: 600; }
+.calc-champ { display: block; margin: 0 0 1rem; padding: 0; border: 0; min-width: 0; }
+.calc-champ small { display: block; margin-top: 0.3rem; color: var(--stone); font-size: 0.78rem; }
+.calc-unite { display: flex; align-items: center; gap: 0.5rem; }
+.calc-unite .roles-input, .calc-chrono .roles-input { min-width: 0; width: 7rem; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.calc-chrono { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: flex-end; }
+.calc-chrono legend { width: 100%; padding: 0; }
+.calc-chrono label { display: flex; align-items: center; gap: 0.4rem; }
+.calc-chrono .roles-input { width: 5rem; text-align: right; }
+.calc-chiffres { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.calc-chiffres b { display: block; font: 700 2.4rem/1.1 var(--font-display); color: var(--vermilion); }
+.calc-chiffres b small { font-size: 1.1rem; color: var(--ink-soft); }
+.calc-chiffres em { display: block; margin-top: 0.15rem; color: var(--stone); font-size: 0.8rem; font-style: normal; }
+.calc-passage .calc-raccourcis { margin-bottom: 0.6rem; }
+.calc-temps { display: block; margin-top: 0.7rem; font: 700 2rem/1.1 var(--font-display); }
+.calc-formules { margin: 0 0 1rem; padding-left: 1.2rem; line-height: 1.6; }
+.calc-formules li { margin-bottom: 0.35rem; }
+.calc-equiv { max-width: 22rem; }
+.calc-equiv caption { text-align: left; padding: 0 0 0.4rem; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+@media (max-width: 860px) { .calc-grille { grid-template-columns: minmax(0, 1fr); } }
+
 /* ---- Champ date (saisie JJ/MM/AAAA + calendrier) ---- */
 .champ-date { position: relative; display: flex; flex-direction: column; gap: 0.25rem; }
 .champ-date__label { font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }

@@ -12,6 +12,7 @@ import RolesPanel from './RolesPanel.jsx'
 import JournalPanel from './JournalPanel.jsx'
 import StatsPanel from './StatsPanel.jsx'
 import StravaPanel from './StravaPanel.jsx'
+import CalculateurPanel from './CalculateurPanel.jsx'
 
 // L'aide (chapitres + moteur Markdown) est chargée à la demande : elle n'alourdit pas le reste de l'espace adhérent.
 const AidePanel = lazy(() => import('./AidePanel.jsx'))
@@ -37,6 +38,7 @@ const TABS = [
   { id: 'resultats', label: 'Résultats' },
   { id: 'records', label: 'Records du Club' },
   { id: 'strava', label: 'Mon activité' },
+  { id: 'calculateur', label: 'Calculateur' },
   { id: 'reseaute', label: 'SAM Réseaute' },
   { id: 'documents', label: 'Plans & Documents' },
   { id: 'vieduclub', label: 'Vie du Club' },
@@ -1148,6 +1150,8 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'stats' && <StatsPanel token={token} can={can} />}
+
+        {activeTab === 'calculateur' && <CalculateurPanel />}
 
         {activeTab === 'strava' && <StravaPanel token={token} flash={stravaFlash} onFlashClear={() => setStravaFlash(null)} />}
 

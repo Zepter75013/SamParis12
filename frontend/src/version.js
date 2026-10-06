@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.38.0',
+    date: '7 octobre 2026',
+    notes: "Nouvel écran Calculateur d'allure : à partir d'une distance (raccourcis 5 km, 10 km, semi-marathon, marathon, ou saisie en mètres) et d'un chrono, il calcule la vitesse moyenne (km/h et m/s), l'allure au kilomètre et le temps de passage sur la distance de son choix (200 m, 400 m, 1 km…), avec les formules et une table d'équivalences. Le calcul se fait dans le navigateur.",
+  },
+  {
     version: '1.37.2',
     date: '7 octobre 2026',
     notes: "Mon activité (Strava) : les dates de la période « Dates » se saisissent directement au clavier (JJ/MM/AAAA, les barres obliques s'ajoutent toutes seules, avec contrôle des dates impossibles ou futures) ou se choisissent dans un calendrier qui s'ouvre avec un bouton bien visible à droite de chaque champ.",
