@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { RunnerFigure } from '../../components/Legs.jsx'
 
@@ -89,15 +90,16 @@ const typeDe = (m) => {
   if ((m.groupe || '').startsWith('Marche')) return 'marcheur'
   return ''
 }
-const LOOK_MINI = { femme: false, peau: '#f1c7a1', cheveux: '#3a2a1d' }
+const LOOK_HOMME = { femme: false, peau: '#f1c7a1', cheveux: '#3a2a1d' }
+const LOOK_FEMME = { femme: true, peau: '#f1c7a1', cheveux: '#8a3b1d' }
 
-// Le petit bonhomme SAM : en course pour les coureurs, avec ses bâtons pour les marcheurs.
-function Mini({ type }) {
+// Le petit bonhomme SAM (une fille pour les filles) : en course pour les coureurs, avec ses bâtons pour les marcheurs.
+function Mini({ type, femme = false }) {
   if (!type) return null
   const marche = type === 'marcheur'
   return (
-    <span className={`runner runner--mini ${marche ? 'runner--walk' : 'runner--run'}`} title={marche ? 'Marcheur' : 'Coureur'} aria-hidden="true">
-      <RunnerFigure look={LOOK_MINI} flag={false} walk={marche} />
+    <span className={`runner runner--mini ${marche ? 'runner--walk' : 'runner--run'}${femme ? ' is-woman' : ''}`} title={marche ? 'Marche nordique' : 'Running'} aria-hidden="true">
+      <RunnerFigure look={femme ? LOOK_FEMME : LOOK_HOMME} flag={false} walk={marche} />
     </span>
   )
 }
@@ -163,7 +165,7 @@ function ChoixMembres({ members, meId, exclude = [], selected = [], onChange, on
             <button type="button" key={m.id} className={`chat-pick__row${selected.includes(m.id) ? ' is-on' : ''}`} onClick={() => (multiple ? unParUn(m.id) : onPick(m))}>
               <Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={36} />
               <span>{m.prenom} {m.nom}</span>
-              {type && <small className="chat-type"><Mini type={type} />{type === 'coureur' ? 'Coureur' : 'Marcheur'}</small>}
+              {type && <small className="chat-type"><Mini type={type} femme={m.sexe === 'F'} /></small>}
               {multiple && <i>{selected.includes(m.id) ? '☑' : '☐'}</i>}
             </button>
           )
@@ -453,11 +455,33 @@ function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) 
   )
 }
 
-export default function ChatPanel({ chat, token, me, members }) {
+// Plein écran sur téléphone et quand le site est installé comme application (PWA).
+const QUERY_PLEIN_ECRAN = '(max-width: 760px), (display-mode: standalone) and (max-width: 1100px)'
+function usePleinEcran() {
+  const [plein, setPlein] = useState(() => window.matchMedia(QUERY_PLEIN_ECRAN).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(QUERY_PLEIN_ECRAN)
+    const on = () => setPlein(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return plein
+}
+
+export default function ChatPanel({ chat, token, me, members, onExit }) {
+  const plein = usePleinEcran()
   const [q, setQ] = useState('')
   const [nouveau, setNouveau] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
   const { setPanelOpen } = chat
+
+  // en plein écran la page derrière ne défile pas
+  useEffect(() => {
+    if (!plein) return undefined
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [plein])
 
   useEffect(() => {
     setPanelOpen(true)
@@ -485,13 +509,21 @@ export default function ChatPanel({ chat, token, me, members }) {
 
   return (
     <div>
-      <div style={{ marginBottom: '1rem' }}>
-        <span className="eyebrow">Entre adhérents</span>
-        <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Messagerie</h2>
-      </div>
-      <div className={`chat${current ? ' has-conv' : ''}`}>
+      {!plein && (
+        <div style={{ marginBottom: '1rem' }}>
+          <span className="eyebrow">Entre adhérents</span>
+          <h2 style={{ fontSize: '2rem', textTransform: 'uppercase', marginTop: '0.2rem' }}>Messagerie</h2>
+        </div>
+      )}
+      <div className={`chat${current ? ' has-conv' : ''}${plein ? ' chat--full' : ''}`}>
         <aside className="chat-list">
           <div className="chat-list__head">
+            {plein && !showArchived && (
+              <span className="chat-list__exit">
+                <button type="button" onClick={onExit} title="Retour à l'espace adhérent" aria-label="Retour à l'espace adhérent">←</button>
+                <Link to="/" title="Retour au site SAM Paris 12" aria-label="Retour au site SAM Paris 12">🏠</Link>
+              </span>
+            )}
             {showArchived
               ? <button type="button" className="chat-list__back" onClick={() => setShowArchived(false)}>← Archivées</button>
               : <b>Discussions</b>}

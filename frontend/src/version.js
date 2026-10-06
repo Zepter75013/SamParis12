@@ -5,6 +5,11 @@ export const APP_VERSION = '1.19.1'
 
 export const CHANGELOG = [
   {
+    version: '1.24.0',
+    date: '6 octobre 2026',
+    notes: "Messagerie : plein écran sur mobile et en application installée (←  retour à l'espace adhérent, 🏠 retour au site). Le site devient installable (PWA). Le petit bonhomme est une fille pour les filles (nouveau champ Sexe dans la fiche adhérent, migration 0021) et les libellés Coureur / Marcheur disparaissent.",
+  },
+  {
     version: '1.23.0',
     date: '6 octobre 2026',
     notes: "Messagerie : archiver et désarchiver une discussion (rubrique « Archivées »), et la supprimer de son écran. Une discussion supprimée reste conservée en base avec un drapeau ; seul l'administrateur de la base peut la réactiver, par requête SQL (migration 0020).",

@@ -374,7 +374,7 @@ export default function Dashboard() {
       m.id === updated.id
         ? {
           ...m,
-          prenom: updated.prenom, nom: updated.nom, role: updated.role, groupe: updated.groupe, statut: updated.statut, photoUrl: updated.photoUrl,
+          prenom: updated.prenom, nom: updated.nom, role: updated.role, groupe: updated.groupe, statut: updated.statut, sexe: updated.sexe, photoUrl: updated.photoUrl,
           trombiHabite: updated.trombiHabite, trombiNaissance: updated.trombiNaissance, trombiOrigine: updated.trombiOrigine,
           trombiEmail: updated.trombiEmail, trombiTelephone: updated.trombiTelephone, trombiProfession: updated.trombiProfession,
           trombiEmployeur: updated.trombiEmployeur, trombiDistanceFavorite: updated.trombiDistanceFavorite, trombiBio: updated.trombiBio,
@@ -728,7 +728,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'chat' && me && (
-          <ChatPanel chat={chat} token={token} me={me} members={members} />
+          <ChatPanel chat={chat} token={token} me={me} members={members} onExit={() => switchTab('overview')} />
         )}
 
         {activeTab === 'courses' && (
@@ -2624,7 +2624,7 @@ const STATUTS_ADHERENT = ['Adhérents 2027', 'Anciens adhérents', 'Nouveaux adh
 
 function adminFormFromMember(m) {
   return {
-    prenom: m.prenom || '', nom: m.nom || '', role: m.role || '', groupe: m.groupe || '', statut: m.statut || '',
+    prenom: m.prenom || '', nom: m.nom || '', role: m.role || '', groupe: m.groupe || '', statut: m.statut || '', sexe: m.sexe || '',
     isBureau: !!m.isBureau,
     isSuperAdmin: !!m.isSuperAdmin,
 
@@ -2659,7 +2659,7 @@ function toAdminUpdatePayload(form) {
   }
 }
 
-const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', isBureau: false }
+const NEW_MEMBER_FORM = { email: '', prenom: '', nom: '', role: '', groupe: '', statut: '', sexe: '', isBureau: false }
 
 function AdminModal({ onClose, maxWidth = 640, children }) {
   return (
@@ -3090,6 +3090,14 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                 <div>{fieldLabel('Nom')}<input type="text" required style={inputStyle} value={newForm.nom} onChange={(e) => updateNewField('nom', e.target.value)} /></div>
               </div>
               <div>{fieldLabel('Rôle')}<input type="text" style={inputStyle} value={newForm.role} onChange={(e) => updateNewField('role', e.target.value)} /></div>
+              <div>
+                {fieldLabel('Sexe')}
+                <select style={inputStyle} value={newForm.sexe || ''} onChange={(e) => updateNewField('sexe', e.target.value)}>
+                  <option value="">Non renseigné</option>
+                  <option value="F">Femme</option>
+                  <option value="H">Homme</option>
+                </select>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
                 <div>
                   {fieldLabel('Groupe')}
@@ -3210,6 +3218,14 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
                 <div>{fieldLabel('Nom')}<input type="text" style={inputStyle} value={form.nom} onChange={(e) => updateField('nom', e.target.value)} /></div>
               </div>
               <div>{fieldLabel('Rôle')}<input type="text" style={inputStyle} value={form.role} onChange={(e) => updateField('role', e.target.value)} /></div>
+              <div>
+                {fieldLabel('Sexe')}
+                <select style={inputStyle} value={form.sexe || ''} onChange={(e) => updateField('sexe', e.target.value)}>
+                  <option value="">Non renseigné</option>
+                  <option value="F">Femme</option>
+                  <option value="H">Homme</option>
+                </select>
+              </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
                 <div>
                   {fieldLabel('Groupe')}

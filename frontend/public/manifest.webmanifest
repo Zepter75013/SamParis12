@@ -1,0 +1,16 @@
+{
+  "name": "SAM Paris 12",
+  "short_name": "SAM Paris 12",
+  "description": "Club d'athlétisme SAM Paris 12 : site du club et espace adhérent (messagerie, courses, résultats).",
+  "lang": "fr",
+  "start_url": "/espace-adherent",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#17120e",
+  "theme_color": "#DE3327",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

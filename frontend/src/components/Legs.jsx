@@ -77,7 +77,12 @@ export function RunnerFigure({ look, flag = true, walk = false }) {
         </g>
         <path className="runner-collar" d="M17 14.2 Q22 18 27 14.2" />
         <path className="runner-shorts" d="M15 33 H27 L28 40.5 H14 Z" />
-        {look.femme && <path className="runner-hair runner-pony" d="M17.4 4.4 Q9.6 2.6 10.6 11.4 Q10.9 14.6 12.6 15.6 Q13.4 9.6 17 7.4 Z" />}
+        {look.femme && (
+          <g className="runner-pony-g">
+            <path className="runner-hair runner-pony" d="M17.4 4.4 Q8.6 1.8 9.8 12 Q10.2 15.6 12.6 17 Q13.4 10 17 7.4 Z" />
+            <circle className="runner-tie" cx="15.6" cy="5.6" r="1.5" />
+          </g>
+        )}
         <circle className="runner-skin" cx="22" cy="8" r="5.2" />
         <path className="runner-hair" d="M16.8 8.4 Q16.4 2.6 22 2.6 Q27.8 2.6 27.2 7.6 Q23 4.6 16.8 8.4 Z" />
         <g className="runner-leg runner-leg--a"><path d="M23 35 L27 45 L23 53" /><path className="runner-shoe" d="M22 53 H28" /></g>

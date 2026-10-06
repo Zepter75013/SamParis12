@@ -39,6 +39,17 @@ func formatPrenom(s string) string {
 	return string(r)
 }
 
+// cleanSexe ne garde que les valeurs prévues : 'F', 'H' ou ” (non renseigné).
+func cleanSexe(s string) string {
+	switch strings.ToUpper(strings.TrimSpace(s)) {
+	case "F":
+		return "F"
+	case "H":
+		return "H"
+	}
+	return ""
+}
+
 // Member reprend la fiche adhérent : identité publique (trombinoscope),
 // informations confidentielles (éditables par l'adhérent) et informations
 // administratives (lecture seule pour l'adhérent, gérées par le bureau).
@@ -50,6 +61,7 @@ type Member struct {
 	Role     string `json:"role"`
 	Groupe   string `json:"groupe"`
 	Statut   string `json:"statut"`
+	Sexe     string `json:"sexe"` // 'F', 'H' ou '' (non renseigné)
 	PhotoURL string `json:"photoUrl"`
 	IsBureau bool   `json:"isBureau"`
 	// IsSuperAdmin est seul-e à pouvoir modifier les fonctionnalités (droits
@@ -118,6 +130,7 @@ type PublicMember struct {
 	Role                   string `json:"role"`
 	Groupe                 string `json:"groupe"`
 	Statut                 string `json:"statut"`
+	Sexe                   string `json:"sexe"`
 	PhotoURL               string `json:"photoUrl"`
 	TrombiHabite           string `json:"trombiHabite"`
 	TrombiNaissance        string `json:"trombiNaissance"`
@@ -171,6 +184,7 @@ type AdminMemberUpdate struct {
 	Role         string `json:"role"`
 	Groupe       string `json:"groupe"`
 	Statut       string `json:"statut"`
+	Sexe         string `json:"sexe"`
 	IsBureau     bool   `json:"isBureau"`
 	IsSuperAdmin bool   `json:"isSuperAdmin"`
 
@@ -219,6 +233,7 @@ type AdminMemberCreate struct {
 	Role     string `json:"role"`
 	Groupe   string `json:"groupe"`
 	Statut   string `json:"statut"`
+	Sexe     string `json:"sexe"`
 	IsBureau bool   `json:"isBureau"`
 }
 
@@ -235,7 +250,7 @@ func NewRepository(db *sql.DB) *Repository {
 // Go (le pilote MySQL, avec parseTime=true, renverrait sinon un time.Time non
 // scannable dans un **string).
 const memberColumns = `
-	id, email, prenom, nom, role, groupe, statut, photo_path, is_bureau, is_super_admin,
+	id, email, prenom, nom, role, groupe, statut, sexe, photo_path, is_bureau, is_super_admin,
 	DATE_FORMAT(welcome_email_sent_at, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(activated_at, '%Y-%m-%d %H:%i:%s'),
 	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
 	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio,
@@ -265,7 +280,7 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 		anneePremiereAdhesion, anneeDerniereAdhesion                                                sql.NullInt64
 	)
 	err := scan(
-		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL, &m.IsBureau, &m.IsSuperAdmin,
+		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.Sexe, &m.PhotoURL, &m.IsBureau, &m.IsSuperAdmin,
 		&welcomeEmailSentAt, &activatedAt,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
 		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
@@ -334,7 +349,7 @@ func (r *Repository) getAuth(email string) (id int64, passwordHash string, mustC
 }
 
 const publicMemberColumns = `
-	id, prenom, nom, role, groupe, statut, photo_path,
+	id, prenom, nom, role, groupe, statut, sexe, photo_path,
 	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
 	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio
 `
@@ -342,7 +357,7 @@ const publicMemberColumns = `
 func scanPublicMember(scan func(...any) error) (*PublicMember, error) {
 	var m PublicMember
 	err := scan(
-		&m.ID, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.PhotoURL,
+		&m.ID, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.Sexe, &m.PhotoURL,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
 		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
 	)
@@ -435,9 +450,9 @@ func (r *Repository) ListFull() ([]Member, error) {
 // une colonne TEXT NOT NULL sans DEFAULT : elle doit être fournie explicitement.
 func (r *Repository) Create(m AdminMemberCreate, passwordHash string) (int64, error) {
 	res, err := r.db.Exec(`
-		INSERT INTO members (email, password_hash, must_change_password, prenom, nom, role, groupe, statut, is_bureau, trombi_bio)
-		VALUES (?, ?, TRUE, ?, ?, ?, ?, ?, ?, '')`,
-		m.Email, passwordHash, m.Prenom, m.Nom, m.Role, m.Groupe, m.Statut, m.IsBureau,
+		INSERT INTO members (email, password_hash, must_change_password, prenom, nom, role, groupe, statut, sexe, is_bureau, trombi_bio)
+		VALUES (?, ?, TRUE, ?, ?, ?, ?, ?, ?, ?, '')`,
+		m.Email, passwordHash, m.Prenom, m.Nom, m.Role, m.Groupe, m.Statut, m.Sexe, m.IsBureau,
 	)
 	if err != nil {
 		return 0, err
@@ -453,7 +468,7 @@ func (r *Repository) Delete(id int64) error {
 func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 	_, err := r.db.Exec(`
 		UPDATE members SET
-			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, is_bureau = ?, is_super_admin = ?,
+			prenom = ?, nom = ?, role = ?, groupe = ?, statut = ?, sexe = ?, is_bureau = ?, is_super_admin = ?,
 			date_naissance = ?, lieu_naissance = ?, adresse = ?, code_postal = ?, ville = ?,
 			telephone_domicile = ?, telephone_portable = ?, nationalite = ?,
 			urgence_nom = ?, urgence_telephone = ?, taille_maillot = ?, vma = ?, vma_date = ?,
@@ -462,7 +477,7 @@ func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 			date_dernier_certificat = ?, annee_derniere_adhesion = ?, activite_saison = ?,
 			licence_ffa_type = ?, montant_cotisation = ?, date_paiement_cotisation = ?, mode_paiement = ?
 		WHERE id = ?`,
-		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.IsBureau, u.IsSuperAdmin,
+		u.Prenom, u.Nom, u.Role, u.Groupe, u.Statut, u.Sexe, u.IsBureau, u.IsSuperAdmin,
 		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
 		u.TelephoneDomicile, u.TelephonePortable, u.Nationalite,
 		u.UrgenceNom, u.UrgenceTelephone, u.TailleMaillot, u.VMA, u.VMADate,
@@ -941,6 +956,7 @@ type createMemberRequest struct {
 	Role     string `json:"role"`
 	Groupe   string `json:"groupe"`
 	Statut   string `json:"statut"`
+	Sexe     string `json:"sexe"`
 	IsBureau bool   `json:"isBureau"`
 }
 
@@ -978,7 +994,7 @@ func (h *Handler) AdminCreateMember(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.repo.Create(AdminMemberCreate{
 		Email: email, Prenom: prenom, Nom: nom,
-		Role: req.Role, Groupe: req.Groupe, Statut: req.Statut, IsBureau: req.IsBureau,
+		Role: req.Role, Groupe: req.Groupe, Statut: req.Statut, Sexe: cleanSexe(req.Sexe), IsBureau: req.IsBureau,
 	}, string(passwordHash))
 	if err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible de créer l'adhérent")
@@ -1126,6 +1142,7 @@ func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
 	}
 	u.Prenom = formatPrenom(u.Prenom)
 	u.Nom = formatNom(u.Nom)
+	u.Sexe = cleanSexe(u.Sexe)
 
 	current, err := h.repo.GetByID(id)
 	if err != nil {
