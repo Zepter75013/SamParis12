@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.40.1',
+    date: '7 octobre 2026',
+    notes: "Anniversaires : la scène du feu d'artifice, du gâteau, du champagne et de la flûte est plus compacte (environ un tiers de moins en hauteur sur la carte du trombinoscope et sur la fiche).",
+  },
+  {
     version: '1.40.0',
     date: '7 octobre 2026',
     notes: "Anniversaires : nouvelle scène en grand sur la carte et la fiche de l'adhérent fêté. Un ciel étoilé avec un vrai feu d'artifice (fusées qui montent, explosions en sphères et en anneaux, étincelles scintillantes qui retombent, traînées lumineuses), et au premier plan un gâteau à trois étages avec ses bougies, une bouteille de champagne dont le bouchon saute avec sa gerbe de mousse, et une flûte pleine de bulles, redessinés avec reflets et dégradés.",
