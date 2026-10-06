@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.34.0',
+    date: '7 octobre 2026',
+    notes: "Aide en ligne complète et interactive : nouvel onglet Aide (chapitres par écran, recherche avec surlignage, liens vers les écrans, questions fréquentes, « Quoi de neuf ? » automatique) et bouton « ? » en haut de chaque écran qui ouvre l'aide correspondante. Les chapitres d'administration ne s'affichent que si le rôle y donne droit. Impression ou enregistrement en PDF d'un chapitre ou du manuel complet. Les textes sont de simples fichiers Markdown faciles à mettre à jour, et `npm run aide:pdf` génère le PDF complet.",
+  },
+  {
     version: '1.33.0',
     date: '7 octobre 2026',
     notes: "Journal d'activité : filtre par type d'action (Toutes / Modifications de données / Navigation / Connexions) avec une colonne Type et dans l'export CSV. L'ouverture de chaque écran de l'espace adhérent est désormais journalisée comme action de navigation (migration 0027 : les lignes existantes sont classées d'après leur libellé).",

@@ -1340,6 +1340,9 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 }
 @media (prefers-reduced-motion: reduce) { .bascule__pastille { transition: none; } }
 
+/* Bouton « ? » (aide sur l'écran courant) */
+.adh-aide-btn { width: 2.1rem; height: 2.1rem; padding: 0 !important; justify-content: center; border-radius: 50% !important; font-size: 0.95rem !important; font-weight: 700; }
+
 /* Trombinoscope : alphabet et filtres sur toute la largeur */
 .trombi-alpha { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 1.2rem; }
 .trombi-alpha > .btn { flex: 1 1 0; min-width: 1.4rem; padding-inline: 0 !important; justify-content: center; text-align: center; }

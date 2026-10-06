@@ -1,0 +1,147 @@
+/* Aide en ligne : mise en page à l'écran (.aide) et document imprimable / PDF (.aide-doc). Les éléments de contenu
+   (encadrés, étapes, FAQ…) sont communs aux deux et reposent sur les variables de couleur du site ; .aide-doc les fixe
+   (papier blanc) pour que le PDF soit identique quel que soit le thème de l'écran. */
+
+/* ---------- Contenu commun ---------- */
+.aide-contenu, .aide-doc { --aide-astuce: #2f7d6d; --aide-attention: #c2410c; --aide-info: #3b6fb6; --aide-important: var(--vermilion); }
+.aide-contenu { font-size: 1rem; line-height: 1.7; color: var(--ink); min-width: 0; }
+.aide-contenu p, .aide-doc p { margin: 0 0 0.9rem; }
+.aide-contenu h2, .aide-doc h2 { font: 700 1.5rem/1.2 var(--font-display); text-transform: uppercase; letter-spacing: 0.02em; margin: 2.2rem 0 0.8rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--vermilion); }
+.aide-contenu h3, .aide-doc h3 { font: 700 1.15rem/1.25 var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; margin: 1.6rem 0 0.5rem; color: var(--ink); }
+.aide-contenu h2, .aide-contenu h3 { scroll-margin-top: 9rem; }
+.aide-contenu ul, .aide-contenu ol, .aide-doc ul, .aide-doc ol { margin: 0 0 1rem; padding-left: 1.4rem; }
+.aide-contenu li, .aide-doc li { margin: 0.25rem 0; }
+.aide-contenu code, .aide-doc code { font: 0.88em var(--font-mono); background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 0.05em 0.35em; }
+.aide-contenu a, .aide-doc a { color: var(--vermilion); }
+.aide-contenu .aide-lien, .aide-doc .aide-lien { text-decoration: underline; text-underline-offset: 2px; font-weight: 600; cursor: pointer; }
+.aide-contenu table, .aide-doc table { width: 100%; border-collapse: collapse; margin: 0 0 1.2rem; font-size: 0.92rem; line-height: 1.45; }
+.aide-contenu th, .aide-doc th { text-align: left; padding: 0.55rem 0.7rem; background: var(--surface-2); border: 1px solid var(--line); font: 700 0.78rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.aide-contenu td, .aide-doc td { padding: 0.5rem 0.7rem; border: 1px solid var(--line); vertical-align: top; }
+.aide-contenu mark { background: color-mix(in srgb, #f5c542 55%, transparent); color: inherit; border-radius: 3px; padding: 0 0.1em; }
+
+.aide-note { --n: var(--aide-info); margin: 1.1rem 0; padding: 0.8rem 1rem; border: 1px solid var(--line); border-left: 4px solid var(--n); border-radius: 0 var(--radius-btn, 8px) var(--radius-btn, 8px) 0; background: color-mix(in srgb, var(--n) 8%, var(--surface)); }
+.aide-note--astuce { --n: var(--aide-astuce); }
+.aide-note--attention { --n: var(--aide-attention); }
+.aide-note--important { --n: var(--aide-important); }
+.aide-note__titre { font: 700 0.85rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--n); margin-bottom: 0.25rem; }
+.aide-note__corps > :last-child { margin-bottom: 0; }
+
+.aide-etapes { margin: 1rem 0; }
+.aide-etapes ol { list-style: none; counter-reset: etape; padding: 0; margin: 0; }
+.aide-etapes li { counter-increment: etape; position: relative; margin: 0 0 0.7rem; padding: 0.15rem 0 0.15rem 2.7rem; min-height: 1.9rem; }
+.aide-etapes li::before { content: counter(etape); position: absolute; left: 0; top: 0; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--vermilion); color: #fff; display: grid; place-items: center; font: 700 0.9rem var(--font-display); }
+
+.aide-faq { margin: 0 0 0.6rem; border: 1px solid var(--line); border-radius: var(--radius-btn, 8px); background: var(--surface); }
+.aide-faq summary { cursor: pointer; list-style: none; padding: 0.75rem 1rem 0.75rem 2.4rem; font-weight: 700; position: relative; }
+.aide-faq summary::-webkit-details-marker { display: none; }
+.aide-faq summary::before { content: '▸'; position: absolute; left: 0.9rem; top: 0.72rem; color: var(--vermilion); transition: transform 0.15s; }
+.aide-faq[open] summary::before { transform: rotate(90deg); }
+.aide-faq__corps { padding: 0 1rem 0.4rem 2.4rem; }
+
+.aide-nouveautes { list-style: none; padding: 0; margin: 0; }
+.aide-nouveaute { margin: 0 0 1rem; padding: 0.2rem 0 0.2rem 1rem; border-left: 3px solid var(--vermilion); }
+.aide-nouveaute__tete { display: flex; gap: 0.8rem; align-items: baseline; flex-wrap: wrap; }
+.aide-nouveaute__tete span { color: var(--stone); font-size: 0.85rem; }
+.aide-nouveaute p { margin: 0.2rem 0 0; }
+
+/* ---------- Écran : navigation + chapitre ---------- */
+.aide-entete { margin-bottom: 1.4rem; }
+.aide-grille { display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 2rem; align-items: start; }
+.aide-nav { position: sticky; top: 9rem; max-height: calc(100vh - 11rem); overflow-y: auto; }
+.aide-recherche { position: relative; margin-bottom: 0.9rem; }
+.aide-recherche input { width: 100%; box-sizing: border-box; padding: 0.7rem 2.2rem 0.7rem 0.9rem; border: 1px solid var(--line); border-radius: var(--radius-btn, 8px); background: var(--surface); color: var(--ink); font: inherit; font-size: 0.92rem; }
+.aide-recherche button { position: absolute; right: 0.3rem; top: 50%; transform: translateY(-50%); width: 1.8rem; height: 1.8rem; border: 0; border-radius: 50%; background: none; color: var(--stone); font-size: 1rem; cursor: pointer; }
+.aide-nav ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
+.aide-nav li button { width: 100%; display: flex; gap: 0.6rem; align-items: center; padding: 0.55rem 0.7rem; border: 0; border-left: 3px solid transparent; border-radius: 0 var(--radius-btn, 8px) var(--radius-btn, 8px) 0; background: none; color: var(--ink-soft); font: 600 0.88rem var(--font-display); letter-spacing: 0.05em; text-transform: uppercase; text-align: left; cursor: pointer; }
+.aide-nav li button:hover { background: var(--surface-2); color: var(--ink); }
+.aide-nav li button[aria-current='true'] { background: var(--surface-2); color: var(--vermilion); border-left-color: var(--vermilion); }
+.aide-nav__ico { width: 1.4rem; text-align: center; flex: none; }
+.aide-nav__cadenas { margin-left: auto; font-size: 0.7rem; opacity: 0.6; }
+.aide-version { margin: 1rem 0 0; color: var(--stone); font-size: 0.78rem; }
+
+.aide-main { min-width: 0; scroll-margin-top: 9rem; }
+.aide-chap-tete { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
+.aide-chap-tete h3.aide-titre { font: 700 2.2rem/1.1 var(--font-display); text-transform: uppercase; margin: 0.1rem 0 0.4rem; }
+.aide-chap-tete p { margin: 0; color: var(--ink-soft); }
+.aide-badge-droit { display: inline-block; margin-top: 0.5rem; padding: 0.15rem 0.6rem; border-radius: 999px; background: var(--surface-2); color: var(--stone); font: 600 0.72rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.aide-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.aide-puces { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.4rem; padding: 0.8rem 1rem; border: 1px solid var(--line); border-radius: var(--radius-btn, 8px); background: var(--surface); }
+.aide-puces > span { width: 100%; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.aide-puces button { padding: 0.3rem 0.7rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.aide-puces button:hover { border-color: var(--vermilion); color: var(--vermilion); }
+.aide-pied { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 2.4rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+.aide-pied button { max-width: 48%; text-align: left; }
+
+.aide-resultats { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.7rem; }
+.aide-resultat { display: block; width: 100%; text-align: left; padding: 0.8rem 1rem; border: 1px solid var(--line); border-radius: var(--radius-btn, 8px); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }
+.aide-resultat:hover { border-color: var(--vermilion); }
+.aide-resultat b { display: block; font: 700 1rem var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; }
+.aide-resultat small { display: block; margin-top: 0.15rem; color: var(--stone); }
+.aide-resultat span { display: block; margin-top: 0.3rem; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.5; }
+.aide-resultat mark { background: color-mix(in srgb, #f5c542 55%, transparent); color: inherit; border-radius: 3px; }
+
+@media (max-width: 860px) {
+  .aide-grille { grid-template-columns: minmax(0, 1fr); gap: 1.2rem; }
+  .aide-nav { position: static; max-height: none; overflow: visible; }
+  .aide-nav ol { display: flex; overflow-x: auto; gap: 0.4rem; padding-bottom: 0.4rem; }
+  .aide-nav li { flex: none; }
+  .aide-nav li button { width: auto; white-space: nowrap; border: 1px solid var(--line); border-radius: 999px; padding: 0.4rem 0.8rem; }
+  .aide-nav li button[aria-current='true'] { border-color: var(--vermilion); }
+  .aide-nav__cadenas { display: none; }
+  .aide-version { display: none; }
+  .aide-chap-tete h3.aide-titre { font-size: 1.8rem; }
+  .aide-main, .aide-contenu h2, .aide-contenu h3 { scroll-margin-top: 15.5rem; } /* l'en-tête collant est plus haut sur téléphone */
+  .aide-pied button { max-width: 100%; }
+}
+
+/* ---------- Impression et PDF ---------- */
+.aide-printroot { display: none; }
+
+.aide-doc { --ink: #1c1917; --ink-soft: #44403c; --stone: #78716c; --line: #dcd6cf; --surface: #ffffff; --surface-2: #f4f1ed; --vermilion: #de3327; --radius-btn: 6px;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif; --font-mono: 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-family: 'Spectral', Georgia, 'Times New Roman', serif; font-size: 10pt; line-height: 1.5; color: var(--ink); background: #fff;
+  page: aide; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.aide-doc * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.aide-doc h1, .aide-doc h2, .aide-doc h3 { font-family: var(--font-display); }
+.aide-doc h2 { font-size: 15pt; margin: 18pt 0 6pt; break-after: avoid; }
+.aide-doc h3 { font-size: 12pt; margin: 12pt 0 4pt; break-after: avoid; }
+.aide-doc p, .aide-doc li { orphans: 3; widows: 3; }
+.aide-doc .aide-note, .aide-doc .aide-faq, .aide-doc li, .aide-doc tr, .aide-doc table { break-inside: avoid; }
+.aide-doc .aide-etapes { break-inside: avoid-page; }
+.aide-doc a { color: var(--vermilion); text-decoration: none; }
+.aide-doc .aide-lien { text-decoration: none; font-weight: 600; }
+.aide-doc .aide-faq summary { cursor: default; padding-left: 12pt; }
+.aide-doc .aide-faq summary::before { content: none; }
+.aide-doc .aide-faq__corps { padding-left: 12pt; }
+
+.aide-couv { min-height: 235mm; display: flex; flex-direction: column; justify-content: center; padding: 0 6mm; break-after: page; }
+.aide-couv__bandeau { align-self: flex-start; padding: 4pt 14pt; background: var(--vermilion); color: #fff; font: 700 14pt var(--font-display); letter-spacing: 0.2em; text-transform: uppercase; }
+.aide-couv h1 { font: 700 44pt/1 var(--font-display); text-transform: uppercase; margin: 18pt 0 10pt; }
+.aide-couv__sous { font-size: 14pt; color: var(--ink-soft); margin: 0 0 40pt; }
+.aide-couv__version { font: 600 10pt var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+
+.aide-som { break-after: page; }
+.aide-som h1 { font: 700 26pt var(--font-display); text-transform: uppercase; margin: 0 0 14pt; padding-bottom: 6pt; border-bottom: 2pt solid var(--vermilion); }
+.aide-som ol { list-style: none; padding: 0; margin: 0; }
+.aide-som li { margin: 0 0 5.5pt; }
+.aide-som a { display: flex; gap: 8pt; align-items: baseline; font: 700 12pt var(--font-display); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink); }
+.aide-som__ico { width: 18pt; text-align: center; }
+.aide-som small { display: block; margin-left: 26pt; color: var(--stone); font-size: 9pt; line-height: 1.3; }
+
+.aide-chap { break-before: page; }
+.aide-chap:first-of-type { break-before: auto; }
+.aide-chap__tete { display: flex; gap: 10pt; align-items: center; margin: 0 0 6pt; padding-bottom: 6pt; border-bottom: 3pt solid var(--vermilion); }
+.aide-chap__ico { font-size: 22pt; }
+.aide-chap h1 { font: 700 28pt/1.05 var(--font-display); text-transform: uppercase; margin: 0; }
+.aide-chap__droit { margin: 6pt 0 10pt; padding: 3pt 8pt; background: var(--surface-2); color: var(--stone); font-size: 9pt; font-style: italic; border-radius: 4pt; }
+.aide-doc .aide-etapes li::before { width: 15pt; height: 15pt; font-size: 9pt; }
+.aide-doc .aide-etapes li { padding-left: 24pt; min-height: 15pt; }
+.aide-doc.aide-doc--chapitre .aide-chap { break-before: auto; }
+
+@page aide { size: A4; margin: 15mm 15mm 18mm; @bottom-center { content: "SAM Paris 12 · Aide de l'espace adhérent · page " counter(page) " / " counter(pages); font: 8pt 'Barlow Condensed', Arial, sans-serif; color: #78716c; } }
+@page aide:first { @bottom-center { content: none; } }
+
+@media print {
+  body > #root { display: none !important; }
+  .aide-printroot { display: block !important; }
+}

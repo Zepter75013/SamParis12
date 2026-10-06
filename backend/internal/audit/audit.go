@@ -423,7 +423,7 @@ var ecrans = map[string]string{
 	"overview": "Tableau de bord", "chat": "Messagerie", "trombi": "Trombinoscope", "courses": "Nos Courses",
 	"resultats": "Résultats", "records": "Records du Club", "reseaute": "SAM Réseaute", "documents": "Plans & Documents",
 	"vieduclub": "Vie du Club", "admin": "Admin Club", "droitsBureau": "Rôles et droits", "stats": "Statistiques",
-	"journal": "Journal d'activité", "profil": "Mes informations",
+	"journal": "Journal d'activité", "profil": "Mes informations", "aide": "Aide",
 }
 
 // Navigation : l'application signale l'ouverture d'un écran (adhérent connecté, identifiant d'écran connu seulement).

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
@@ -11,6 +11,9 @@ import ChatPanel from './Chat.jsx'
 import RolesPanel from './RolesPanel.jsx'
 import JournalPanel from './JournalPanel.jsx'
 import StatsPanel from './StatsPanel.jsx'
+
+// L'aide (chapitres + moteur Markdown) est chargée à la demande : elle n'alourdit pas le reste de l'espace adhérent.
+const AidePanel = lazy(() => import('./AidePanel.jsx'))
 import Bascule from '../../components/Bascule.jsx'
 import { useChat } from '../../lib/chat.js'
 
@@ -35,6 +38,7 @@ const TABS = [
   { id: 'reseaute', label: 'SAM Réseaute' },
   { id: 'documents', label: 'Plans & Documents' },
   { id: 'vieduclub', label: 'Vie du Club' },
+  { id: 'aide', label: 'Aide' },
   { id: 'admin', label: 'Admin Club', badge: 'Bureau' },
   { id: 'droitsBureau', label: 'Rôles et droits', badge: 'Admin' },
   { id: 'stats', label: 'Statistiques' },
@@ -379,6 +383,7 @@ function MemberDetailModal({ member, token, onClose }) {
 export default function Dashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
+  const [aideCible, setAideCible] = useState(null) // écran dont on demande l'aide : { id, n }
   const [search, setSearch] = useState('')
   const [activity, setActivity] = useState('Toutes les activités')
   const [status, setStatus] = useState(null)
@@ -620,6 +625,17 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
+            {activeTab !== 'aide' && (
+              <button
+                type="button"
+                className="btn btn--ghost adh-aide-btn"
+                onClick={() => { setAideCible({ id: activeTab, n: Date.now() }); switchTab('aide') }}
+                aria-label="Aide sur cet écran"
+                title="Aide sur cet écran"
+              >
+                ?
+              </button>
+            )}
             <button onClick={handleLogout} className="btn btn--ghost" style={{ padding: '0.45rem 0.85rem', fontSize: '0.68rem' }}>
               Déconnexion
             </button>
@@ -1111,6 +1127,12 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'stats' && <StatsPanel token={token} can={can} />}
+
+        {activeTab === 'aide' && (
+          <Suspense fallback={<p style={{ color: 'var(--stone)' }}>Chargement de l'aide…</p>}>
+            <AidePanel features={me?.features} cible={aideCible} onEcran={(id) => switchTab(id)} />
+          </Suspense>
+        )}
 
         {activeTab === 'journal' && !can('journal.voir') && (
           <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux adhérents dont le rôle comprend « Consulter le journal d'activité ».</p>
