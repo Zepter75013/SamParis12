@@ -141,6 +141,7 @@ export const api = {
   stravaCallback: (token, body) => request('/strava/callback', { method: 'POST', body: JSON.stringify(body), token }),
   stravaDisconnect: (token) => request('/strava', { method: 'DELETE', token }),
   stravaActivities: (token, page = 1) => request(`/strava/activities?page=${page}`, { token }),
+  stravaActivitesPeriode: (token, from, to) => request(`/strava/activities?from=${from}&to=${to}`, { token }),
   stravaStats: (token) => request('/strava/stats', { token }),
   logNavigation: (token, ecran) => request('/audit/navigation', { method: 'POST', body: JSON.stringify({ ecran }), token }),
   getAudit: (token, params) => request(`/audit?${new URLSearchParams(params).toString()}`, { token }),

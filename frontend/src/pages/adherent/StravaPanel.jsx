@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
 import { Colonnes } from './StatsPanel.jsx'
+import Bascule from '../../components/Bascule.jsx'
 
 // « Mon activité » : l'adhérent relie son compte Strava et consulte ses propres activités. Conformément aux règles de
 // l'API Strava, ces données ne sont visibles que de lui : aucun autre adhérent (ni le bureau) n'y a accès.
@@ -43,12 +44,52 @@ const allure100 = (ms) => {
 const vitesse = (ms) => (ms ? `${nf.format(ms * 3.6)} km/h` : '—')
 const dateFr = (iso) => new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
 
-// Lundi de la semaine d'une date (AAAA-MM-JJ)
-function lundi(iso) {
-  const d = new Date(iso.slice(0, 10) + 'T12:00:00')
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
-  return d.toISOString().slice(0, 10)
+// ---- dates locales (AAAA-MM-JJ), à midi pour éviter les décalages d'heure d'été ----
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const parse = (j) => new Date(`${j}T12:00:00`)
+const addJours = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+const lundiDe = (d) => addJours(d, -((d.getDay() + 6) % 7))
+const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.']
+const courte = (j) => { const d = parse(j); return `${d.getDate()} ${MOIS[d.getMonth()]}` }
+const jourMois = (j) => `${j.slice(8, 10)}/${j.slice(5, 7)}`
+
+// Période choisie → { from, to } (jours inclus), ou null si elle est incomplète.
+function plage(mode, ref, debut, fin) {
+  if (mode === 'semaine') { const l = lundiDe(ref); return { from: iso(l), to: iso(addJours(l, 6)) } }
+  if (mode === 'mois') return { from: iso(new Date(ref.getFullYear(), ref.getMonth(), 1, 12)), to: iso(new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 12)) }
+  if (mode === 'annee') return { from: `${ref.getFullYear()}-01-01`, to: `${ref.getFullYear()}-12-31` }
+  if (mode === 'dates' && debut && fin && debut <= fin) return { from: debut, to: fin }
+  return null
 }
+
+function libellePlage(mode, ref, p) {
+  if (!p) return ''
+  if (mode === 'semaine') return `Semaine du ${courte(p.from)} au ${courte(p.to)} ${parse(p.to).getFullYear()}`
+  if (mode === 'mois') return ref.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  if (mode === 'annee') return String(ref.getFullYear())
+  return `Du ${courte(p.from)} ${p.from.slice(0, 4)} au ${courte(p.to)} ${p.to.slice(0, 4)}`
+}
+
+// Découpage du graphique selon la durée : par jour (≤ 5 semaines), par semaine (≤ 6 mois), sinon par mois.
+function decoupage(from, to) {
+  const jours = Math.round((parse(to) - parse(from)) / 86400000) + 1
+  const gran = jours <= 35 ? 'jour' : jours <= 190 ? 'semaine' : 'mois'
+  const cles = []
+  if (gran === 'jour') for (let d = parse(from); iso(d) <= to; d = addJours(d, 1)) cles.push(iso(d))
+  else if (gran === 'semaine') for (let d = lundiDe(parse(from)); iso(d) <= to; d = addJours(d, 7)) cles.push(iso(d))
+  else for (let d = new Date(parse(from).getFullYear(), parse(from).getMonth(), 1, 12); iso(d) <= to; d = new Date(d.getFullYear(), d.getMonth() + 1, 1, 12)) cles.push(iso(d).slice(0, 7))
+  const cleDe = (j) => (gran === 'jour' ? j : gran === 'semaine' ? iso(lundiDe(parse(j))) : j.slice(0, 7))
+  const libelle = (c) => (gran === 'mois' ? `${MOIS[Number(c.slice(5, 7)) - 1]} ${c.slice(2, 4)}` : jourMois(c))
+  return { gran, cles, cleDe, libelle }
+}
+
+const MODES = [
+  { value: 'recent', label: 'Récentes' },
+  { value: 'semaine', label: 'Semaine' },
+  { value: 'mois', label: 'Mois' },
+  { value: 'annee', label: 'Année' },
+  { value: 'dates', label: 'Dates' },
+]
 
 function Totaux({ titre, t }) {
   if (!t || !t.total.nombre) return null
@@ -81,6 +122,15 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
   const [chargement, setChargement] = useState(true)
   const [occupe, setOccupe] = useState(false)
   const [filtre, setFiltre] = useState('')
+  // Période affichée : activités récentes, ou une semaine / un mois / une année / des dates choisies
+  const [mode, setMode] = useState('recent')
+  const [ref, setRef] = useState(() => new Date())
+  const [debut, setDebut] = useState('')
+  const [fin, setFin] = useState('')
+  const [periodeActs, setPeriodeActs] = useState(null)
+  const [tronque, setTronque] = useState(false)
+  const [chargePeriode, setChargePeriode] = useState(false)
+  const requete = useRef(0)
 
   const charger = useCallback(async () => {
     setChargement(true)
@@ -109,6 +159,30 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
 
   // au chargement, et après le retour de Strava (flash)
   useEffect(() => { charger() }, [charger, flash])
+
+  const periode = useMemo(() => (mode === 'recent' ? null : plage(mode, ref, debut, fin)), [mode, ref, debut, fin])
+  const connecte = !!(statut && statut.connected && statut.activites)
+
+  // Chargement de toutes les activités de la période choisie (une requête plus récente rend la précédente caduque)
+  useEffect(() => {
+    if (!connecte || !periode) { setPeriodeActs(null); return undefined }
+    const n = ++requete.current
+    setChargePeriode(true)
+    setErreur('')
+    api.stravaActivitesPeriode(token, periode.from, periode.to)
+      .then((r) => { if (n === requete.current) { setPeriodeActs(r.activites); setTronque(!!r.tronque) } })
+      .catch((e) => { if (n === requete.current) { setPeriodeActs([]); setErreur(e.message) } })
+      .finally(() => { if (n === requete.current) setChargePeriode(false) })
+    return undefined
+  }, [connecte, periode, token])
+
+  function decaler(sens) {
+    setRef((d) => {
+      if (mode === 'semaine') return addJours(d, 7 * sens)
+      if (mode === 'mois') return new Date(d.getFullYear(), d.getMonth() + sens, 1, 12)
+      return new Date(d.getFullYear() + sens, d.getMonth(), 1, 12)
+    })
+  }
 
   async function relier() {
     setOccupe(true)
@@ -151,20 +225,31 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
   }
 
   const sportsFiltre = FILTRES.find((f) => f.id === filtre)?.sports
-  const liste = useMemo(() => (sportsFiltre ? activites.filter((a) => sportsFiltre.includes(a.sport)) : activites), [activites, sportsFiltre])
+  const source = mode === 'recent' ? activites : (periodeActs || [])
+  const liste = useMemo(() => (sportsFiltre ? source.filter((a) => sportsFiltre.includes(a.sport)) : source), [source, sportsFiltre])
 
-  // Kilomètres par semaine sur les 12 dernières semaines
-  const semaines = useMemo(() => {
-    const debut = new Date(lundi(new Date().toISOString()) + 'T12:00:00')
-    const cles = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(debut)
-      d.setDate(d.getDate() - 7 * (11 - i))
-      return d.toISOString().slice(0, 10)
+  // Résumé de la période (ou des activités chargées)
+  const resume = useMemo(() => {
+    const r = { n: 0, m: 0, s: 0, d: 0, mAllure: 0, sAllure: 0 }
+    liste.forEach((a) => {
+      r.n += 1; r.m += a.distanceM; r.s += a.dureeS; r.d += a.denivelePos
+      if (infoSport(a.sport)[2] === 'allure' && a.distanceM > 0) { r.mAllure += a.distanceM; r.sAllure += a.dureeS }
     })
-    const somme = Object.fromEntries(cles.map((c) => [c, 0]))
-    liste.forEach((a) => { const w = lundi(a.debut); if (w in somme) somme[w] += a.distanceM / 1000 })
-    return cles.map((c) => ({ label: c, n: Math.round(somme[c] * 10) / 10 }))
+    return r
   }, [liste])
+
+  // Graphique des kilomètres : 12 dernières semaines (mode « Récentes »), sinon découpé selon la durée de la période
+  const graphique = useMemo(() => {
+    let from; let to
+    if (mode === 'recent') { to = iso(new Date()); from = iso(addJours(lundiDe(new Date()), -77)) }
+    else if (periode) ({ from, to } = periode)
+    else return null
+    const d = mode === 'recent' ? { gran: 'semaine', cles: Array.from({ length: 12 }, (_, i) => iso(addJours(lundiDe(new Date()), -77 + 7 * i))), cleDe: (j) => iso(lundiDe(parse(j))), libelle: jourMois } : decoupage(from, to)
+    const somme = Object.fromEntries(d.cles.map((c) => [c, 0]))
+    liste.forEach((a) => { const c = d.cleDe(a.debut.slice(0, 10)); if (c in somme) somme[c] += a.distanceM / 1000 })
+    const titre = mode === 'recent' ? 'Kilomètres par semaine (12 dernières semaines)' : `Kilomètres par ${d.gran}`
+    return { titre, libelle: d.libelle, data: d.cles.map((c) => ({ label: c, n: Math.round(somme[c] * 10) / 10 })) }
+  }, [mode, periode, liste])
 
   return (
     <div className="strava">
@@ -234,18 +319,56 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
 
           {statut.activites && (
             <>
-              <div className="stats-filtre">
-                <label>Activités affichées
-                  <select className="roles-select" value={filtre} onChange={(e) => setFiltre(e.target.value)}>
-                    {FILTRES.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
-                  </select>
-                </label>
+              <div className="strava-periode">
+                <span className="strava-periode__titre">Période</span>
+                <Bascule label="Période affichée" options={MODES} value={mode} onChange={setMode} />
+                {mode !== 'recent' && (
+                  <div className="strava-periode__nav">
+                    {mode === 'dates' ? (
+                      <>
+                        <label>Du<input className="roles-input" type="date" max={iso(new Date())} value={debut} onChange={(e) => setDebut(e.target.value)} /></label>
+                        <label>Au<input className="roles-input" type="date" max={iso(new Date())} min={debut || undefined} value={fin} onChange={(e) => setFin(e.target.value)} /></label>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="btn btn--ghost" onClick={() => decaler(-1)} aria-label="Période précédente">‹</button>
+                        <b>{libellePlage(mode, ref, periode)}</b>
+                        <button type="button" className="btn btn--ghost" onClick={() => decaler(1)} disabled={!!periode && periode.to >= iso(new Date())} aria-label="Période suivante">›</button>
+                        <button type="button" className="link-button" onClick={() => setRef(new Date())}>Aujourd'hui</button>
+                      </>
+                    )}
+                  </div>
+                )}
+                <div className="stats-filtre" style={{ marginBottom: 0 }}>
+                  <label>Activités affichées
+                    <select className="roles-select" value={filtre} onChange={(e) => setFiltre(e.target.value)}>
+                      {FILTRES.map((f) => <option key={f.id} value={f.id}>{f.label}</option>)}
+                    </select>
+                  </label>
+                </div>
               </div>
-              <Colonnes titre="Kilomètres par semaine (12 dernières semaines)" data={semaines} libelle={(l) => `${l.slice(8, 10)}/${l.slice(5, 7)}`} note="Semaines du lundi au dimanche, d'après les activités chargées ci-dessous." />
+
+              {mode === 'dates' && !periode && <p className="stats-vide">Choisis une date de début et une date de fin pour afficher la période.</p>}
+              {chargePeriode && <p className="stats-vide">Chargement de la période…</p>}
+              {tronque && mode !== 'recent' && <p className="roles-info">La période contient plus de 2 000 activités : seules les plus récentes sont affichées. Raccourcis-la pour tout voir.</p>}
+
+              {(mode === 'recent' || periode) && !chargePeriode && (
+                <>
+                  <div className="stats-cartes">
+                    <div className="stats-carte"><b>{nf0.format(resume.n)}</b><span>Sortie{resume.n > 1 ? 's' : ''}</span></div>
+                    <div className="stats-carte"><b>{km(resume.m)}</b><span>Distance</span></div>
+                    <div className="stats-carte"><b>{duree(resume.s)}</b><span>Temps en mouvement</span></div>
+                    <div className="stats-carte"><b>{nf0.format(resume.d)} m</b><span>Dénivelé positif</span></div>
+                    {resume.mAllure > 0 && <div className="stats-carte"><b>{allure(resume.mAllure / resume.sAllure)}</b><span>Allure moyenne</span><small>course et marche</small></div>}
+                  </div>
+                  {mode === 'recent' && <p className="stats-note" style={{ marginTop: '-0.6rem', marginBottom: '1rem' }}>Résumé des activités chargées ci-dessous. Choisis une période pour un bilan précis.</p>}
+                  {graphique && <Colonnes titre={graphique.titre} data={graphique.data} libelle={graphique.libelle} />}
+                </>
+              )}
 
               <section className="stats-bloc">
                 <h3>Mes activités</h3>
-                {liste.length === 0 ? <p className="stats-vide">Aucune activité à afficher.</p> : (
+                {liste.length === 0 ? <p className="stats-vide">{chargePeriode ? 'Chargement…' : 'Aucune activité sur cette période.'}</p> : (
                   <div className="stats-table-wrap">
                     <table className="stats-table">
                       <thead><tr><th>Date</th><th>Activité</th><th className="num">Distance</th><th className="num">Durée</th><th className="num">Allure / vitesse</th><th className="num">D+</th><th className="num">FC moy.</th><th /></tr></thead>
@@ -269,7 +392,7 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                     </table>
                   </div>
                 )}
-                {suite && <button type="button" className="btn btn--ghost" style={{ marginTop: '0.8rem', padding: '0.5rem 1rem', fontSize: '0.72rem' }} onClick={plus} disabled={occupe}>Charger les activités plus anciennes</button>}
+                {mode === 'recent' && suite && <button type="button" className="btn btn--ghost" style={{ marginTop: '0.8rem', padding: '0.5rem 1rem', fontSize: '0.72rem' }} onClick={plus} disabled={occupe}>Charger les activités plus anciennes</button>}
               </section>
             </>
           )}

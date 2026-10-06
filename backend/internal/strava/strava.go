@@ -20,6 +20,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -438,13 +439,50 @@ type Activite struct {
 	Prive       bool    `json:"prive"`
 }
 
+type brutActivite struct {
+	ID         int64   `json:"id"`
+	Name       string  `json:"name"`
+	SportType  string  `json:"sport_type"`
+	Type       string  `json:"type"`
+	StartLocal string  `json:"start_date_local"`
+	Distance   float64 `json:"distance"`
+	Moving     int     `json:"moving_time"`
+	Elapsed    int     `json:"elapsed_time"`
+	Elevation  float64 `json:"total_elevation_gain"`
+	AvgSpeed   float64 `json:"average_speed"`
+	AvgHR      float64 `json:"average_heartrate"`
+	Private    bool    `json:"private"`
+}
+
+func (a brutActivite) convertir() Activite {
+	sport := a.SportType
+	if sport == "" {
+		sport = a.Type
+	}
+	return Activite{ID: a.ID, Nom: a.Name, Sport: sport, Debut: strings.TrimSuffix(a.StartLocal, "Z"), DistanceM: a.Distance, DureeS: a.Moving,
+		TempsTotalS: a.Elapsed, DenivelePos: a.Elevation, VitesseMoy: a.AvgSpeed, FCMoyenne: a.AvgHR, Prive: a.Private}
+}
+
+const (
+	parPagePeriode  = 200 // maximum accepté par Strava
+	pagesMaxPeriode = 10  // 2 000 activités au plus par période (au-delà : « tronque »)
+	joursMaxPeriode = 3700
+)
+
 // Activities : les activités de l'adhérent connecté (jamais celles d'un autre adhérent).
+//   - sans paramètre : les plus récentes, 100 par page (?page=2 pour les plus anciennes) ;
+//   - ?from=AAAA-MM-JJ&to=AAAA-MM-JJ : toutes les activités de la période (jours inclus), jusqu'à 2 000.
 func (h *Handler) Activities(w http.ResponseWriter, r *http.Request) {
 	id, ok := idAdherent(w, r)
 	if !ok {
 		return
 	}
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	q := r.URL.Query()
+	if q.Get("from") != "" || q.Get("to") != "" {
+		h.activitesPeriode(w, id, q.Get("from"), q.Get("to"))
+		return
+	}
+	page, _ := strconv.Atoi(q.Get("page"))
 	if page < 1 {
 		page = 1
 	}
@@ -453,34 +491,61 @@ func (h *Handler) Activities(w http.ResponseWriter, r *http.Request) {
 		h.erreurStrava(w, err)
 		return
 	}
-	var brut []struct {
-		ID         int64   `json:"id"`
-		Name       string  `json:"name"`
-		SportType  string  `json:"sport_type"`
-		Type       string  `json:"type"`
-		StartLocal string  `json:"start_date_local"`
-		Distance   float64 `json:"distance"`
-		Moving     int     `json:"moving_time"`
-		Elapsed    int     `json:"elapsed_time"`
-		Elevation  float64 `json:"total_elevation_gain"`
-		AvgSpeed   float64 `json:"average_speed"`
-		AvgHR      float64 `json:"average_heartrate"`
-		Private    bool    `json:"private"`
-	}
+	var brut []brutActivite
 	if err := json.Unmarshal(body, &brut); err != nil {
 		h.erreurStrava(w, err)
 		return
 	}
 	out := make([]Activite, 0, len(brut))
 	for _, a := range brut {
-		sport := a.SportType
-		if sport == "" {
-			sport = a.Type
-		}
-		out = append(out, Activite{ID: a.ID, Nom: a.Name, Sport: sport, Debut: strings.TrimSuffix(a.StartLocal, "Z"), DistanceM: a.Distance, DureeS: a.Moving,
-			TempsTotalS: a.Elapsed, DenivelePos: a.Elevation, VitesseMoy: a.AvgSpeed, FCMoyenne: a.AvgHR, Prive: a.Private})
+		out = append(out, a.convertir())
 	}
 	httpx.JSON(w, http.StatusOK, map[string]any{"activites": out, "page": page, "suite": len(brut) == 100})
+}
+
+// activitesPeriode lit toutes les activités entre deux jours (heure locale de l'activité). Strava filtre sur l'heure UTC :
+// on demande un jour de marge de chaque côté, puis on garde exactement les jours demandés.
+func (h *Handler) activitesPeriode(w http.ResponseWriter, memberID int64, from, to string) {
+	debut, err1 := time.Parse("2006-01-02", from)
+	fin, err2 := time.Parse("2006-01-02", to)
+	if err1 != nil || err2 != nil || fin.Before(debut) || fin.Sub(debut) > joursMaxPeriode*24*time.Hour {
+		httpx.Error(w, http.StatusBadRequest, "période invalide")
+		return
+	}
+	apres := debut.Add(-24 * time.Hour).Unix()
+	avant := fin.Add(48 * time.Hour).Unix()
+	out := []Activite{}
+	tronque := false
+	for page := 1; ; page++ {
+		if page > pagesMaxPeriode {
+			tronque = true
+			break
+		}
+		body, err := h.appeler(memberID, fmt.Sprintf("/athlete/activities?per_page=%d&page=%d&after=%d&before=%d", parPagePeriode, page, apres, avant))
+		if err != nil {
+			h.erreurStrava(w, err)
+			return
+		}
+		var brut []brutActivite
+		if err := json.Unmarshal(body, &brut); err != nil {
+			h.erreurStrava(w, err)
+			return
+		}
+		for _, a := range brut {
+			jour := a.StartLocal
+			if len(jour) >= 10 {
+				jour = jour[:10]
+			}
+			if jour >= from && jour <= to {
+				out = append(out, a.convertir())
+			}
+		}
+		if len(brut) < parPagePeriode {
+			break
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Debut > out[j].Debut })
+	httpx.JSON(w, http.StatusOK, map[string]any{"activites": out, "from": from, "to": to, "tronque": tronque})
 }
 
 type Totaux struct {

@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.36.0',
+    date: '7 octobre 2026',
+    notes: "Mon activité (Strava) : choix de la période affichée par semaine, mois, année ou de date à date (avec flèches pour passer à la période précédente ou suivante). Chaque période affiche son bilan (sorties, distance, temps, dénivelé, allure moyenne), un graphique des kilomètres par jour, par semaine ou par mois selon sa durée, et la liste de ses activités, avec le filtre par sport.",
+  },
+  {
     version: '1.35.1',
     date: '7 octobre 2026',
     notes: "Mon activité (Strava) : si Strava refuse de fournir les totaux, la liste des activités s'affiche quand même (avec une note) au lieu d'une erreur ; les erreurs de Strava sont détaillées dans les journaux du serveur pour faciliter le diagnostic. L'application installée affiche une courte page « pas de connexion » hors réseau (plus d'avertissement du navigateur sur le service worker).",

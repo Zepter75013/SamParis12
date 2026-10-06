@@ -1388,6 +1388,12 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .strava-tot__col small { color: var(--ink-soft); font-size: 0.82rem; }
 .strava .stats-table td:first-child { white-space: nowrap; }
 .strava .stats-table td:nth-child(2) { min-width: 13rem; }
+.strava-periode { margin: 0 0 1.2rem; padding: 0.9rem 1.1rem; border: 1px solid var(--line); border-radius: var(--radius-btn); background: var(--surface); display: grid; gap: 0.8rem; }
+.strava-periode__titre { font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.strava-periode__nav { display: flex; flex-wrap: wrap; gap: 0.6rem 0.8rem; align-items: center; }
+.strava-periode__nav b { min-width: 12rem; text-align: center; text-transform: capitalize; }
+.strava-periode__nav label { display: flex; flex-direction: column; gap: 0.25rem; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.strava-periode__nav .btn { padding: 0.4rem 0.85rem; font-size: 1rem; }
 .strava-lien { color: #fc4c02; font-weight: 600; white-space: nowrap; }
 .strava-credit { margin: 1.4rem 0 0; color: var(--stone); font-size: 0.78rem; }
 
