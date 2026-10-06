@@ -12,7 +12,7 @@ l'écran affiche « La liaison Strava n'est pas encore activée par le club » e
 - **Capacité** : une application Strava toute neuve ne peut connecter qu'**un seul athlète** (le propriétaire de l'application).
   Strava la passe à **10 athlètes** sur simple demande ; au-delà, il faut déposer une demande d'examen auprès de Strava
   (réponse non garantie pour une application de club). Le formulaire est accessible depuis la page de l'application
-  (strava.com/settings/api) et la documentation : https://developers.strava.com/docs/getting-started/ .
+  (https://www.strava.com/settings/api) et la documentation : https://developers.strava.com/docs/getting-started/ .
 - **Limites d'appels** : 100 requêtes / 15 min et 1 000 / jour à l'origine (200 / 2 000 après passage à 10 athlètes). L'écran
   garde les réponses en mémoire 5 minutes pour les ménager.
 
@@ -20,7 +20,7 @@ l'écran affiche « La liaison Strava n'est pas encore activée par le club » e
 
 1. Se connecter à **strava.com** avec le compte qui sera propriétaire de l'application (ce compte est le premier athlète
    autorisé : choisir celui de la personne qui administre le site).
-2. Ouvrir **https://www.strava.com/settings/api** (Réglages → Mon API).
+2. Ouvrir **https://www.strava.com/settings/api** (ou : photo de profil en haut à droite → Réglages → Mon API).
 3. Remplir le formulaire :
 
    | Champ | Valeur |
