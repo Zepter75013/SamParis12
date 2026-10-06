@@ -934,7 +934,7 @@ footer {
 .chat {
   --c-bg: #efeae2; --c-panel: #fff; --c-head: #f0f2f5; --c-in: #fff; --c-out: #d9fdd3; --c-text: #111b21; --c-sub: #667781;
   --c-line: #e9edef; --c-tick: #53bdeb; --c-accent: #00a884; --c-hover: #f5f6f6; --c-sel: #f0f2f5; --c-quote: rgba(0, 0, 0, 0.06);
-  display: grid; grid-template-columns: 340px minmax(0, 1fr); height: min(720px, calc(100vh - 290px)); min-height: 520px;
+  display: grid; grid-template-columns: 340px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); height: min(760px, calc(100vh - 310px)); min-height: 460px;
   border: 1px solid var(--line); background: var(--c-panel); color: var(--c-text); overflow: hidden; font-family: var(--font-body, inherit);
 }
 @media (prefers-color-scheme: dark) {
@@ -1211,3 +1211,8 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
   .chat-bubble.is-rich { width: 86%; }
   .chat-attach { bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
 }
+
+/* La liste et la conversation ne dépassent jamais le cadre : elles défilent à l'intérieur (zone de saisie toujours visible) */
+.chat-list, .chat-conv { min-height: 0; }
+.chat--full { grid-template-rows: minmax(0, 1fr); }
+.adh-tab-badge { margin-left: 0.4rem; min-width: 1.15rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: #00a884; color: #fff; font-size: 0.68rem; font-weight: 700; line-height: 1.3; text-align: center; display: inline-block; }

@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.25.2',
+    date: '7 octobre 2026',
+    notes: "Messagerie sur ordinateur : le bas n'est plus tronqué (la liste des discussions défile dans le cadre et la zone de saisie reste visible). Le nombre de messages à lire s'affiche dans le menu Messagerie, dans le titre de l'onglet du navigateur et sur l'icône de l'application installée.",
+  },
+  {
     version: '1.25.1',
     date: '6 octobre 2026',
     notes: "Messagerie : photos plus robustes (affichage fiable sur iPhone, lien valable une semaine, rechargement automatique si une photo ne se charge pas). L'application vérifie à chaque retour qu'une nouvelle version n'est pas disponible et se recharge toute seule.",

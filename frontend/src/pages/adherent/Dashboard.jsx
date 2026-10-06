@@ -329,6 +329,21 @@ export default function Dashboard() {
   const [myUpcomingRaces, setMyUpcomingRaces] = useState([])
   const chat = useChat(token, me?.id)
 
+  // Nombre de messages à lire : dans le titre de l'onglet « (3) … » et sur l'icône de l'application installée.
+  useEffect(() => {
+    const n = chat.unreadTotal
+    const titre = document.title.replace(/^\(\d+\+?\)\s*/, '')
+    document.title = n > 0 ? `(${n > 99 ? '99+' : n}) ${titre}` : titre
+    try {
+      if (n > 0) navigator.setAppBadge?.(n)?.catch?.(() => {})
+      else navigator.clearAppBadge?.()?.catch?.(() => {})
+    } catch { /* non pris en charge */ }
+    return () => {
+      document.title = document.title.replace(/^\(\d+\+?\)\s*/, '')
+      try { navigator.clearAppBadge?.()?.catch?.(() => {}) } catch { /* ignore */ }
+    }
+  }, [chat.unreadTotal])
+
   useEffect(() => {
     if (!token) {
       navigate('/espace-adherent')
@@ -485,7 +500,7 @@ export default function Dashboard() {
               >
                 {tab.label}
                 {tab.id === 'chat' && chat.unreadTotal > 0 && (
-                  <span style={{ marginLeft: '0.4rem', fontSize: '0.62rem', padding: '0.05rem 0.4rem', background: '#00a884', color: '#fff', borderRadius: 999, fontWeight: 700 }}>
+                  <span className="adh-tab-badge" aria-label={`${chat.unreadTotal} message${chat.unreadTotal > 1 ? 's' : ''} à lire`}>
                     {chat.unreadTotal > 99 ? '99+' : chat.unreadTotal}
                   </span>
                 )}
