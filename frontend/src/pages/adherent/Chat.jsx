@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
+import { RunnerFigure } from '../../components/Legs.jsx'
 
 const EMOJIS = ['😀', '😂', '😅', '😍', '🥰', '😎', '🤩', '🙂', '😉', '🙏', '👍', '👏', '🙌', '💪', '🔥', '🎉', '❤️', '😢', '😮', '🤔',
   '🏃', '🏃‍♀️', '🚶', '🥇', '🏅', '🏆', '⏱️', '👟', '☀️', '🌧️', '💧', '🍌', '🍝', '🍻', '🚗', '📍', '✅', '❌', '⚠️', '👋']
@@ -82,6 +83,25 @@ function Bulle({ message, room, me, otherRead, onReply, onEdit, onDelete, showAu
   )
 }
 
+// Typologie d'un adhérent d'après son groupe : coureur (Running) ou marcheur (marche nordique / loisir).
+const typeDe = (m) => {
+  if (m.groupe === 'Running') return 'coureur'
+  if ((m.groupe || '').startsWith('Marche')) return 'marcheur'
+  return ''
+}
+const LOOK_MINI = { femme: false, peau: '#f1c7a1', cheveux: '#3a2a1d' }
+
+// Le petit bonhomme SAM : en course pour les coureurs, avec ses bâtons pour les marcheurs.
+function Mini({ type }) {
+  if (!type) return null
+  const marche = type === 'marcheur'
+  return (
+    <span className={`runner runner--mini ${marche ? 'runner--walk' : 'runner--run'}`} title={marche ? 'Marcheur' : 'Coureur'} aria-hidden="true">
+      <RunnerFigure look={LOOK_MINI} flag={false} walk={marche} />
+    </span>
+  )
+}
+
 function Modal({ titre, onClose, children }) {
   return (
     <div className="chat-modal" onClick={onClose}>
@@ -96,28 +116,61 @@ function Modal({ titre, onClose, children }) {
   )
 }
 
-function ChoixMembres({ members, meId, exclude = [], multiple, selected, onToggle }) {
+function ChoixMembres({ members, meId, exclude = [], selected = [], onChange, onPick }) {
+  const multiple = Boolean(onChange)
   const [q, setQ] = useState('')
+  const eligibles = useMemo(() => members
+    .filter((m) => m.id !== meId && !exclude.includes(m.id))
+    .sort((a, b) => `${a.prenom} ${a.nom}`.localeCompare(`${b.prenom} ${b.nom}`, 'fr')), [members, meId, exclude])
   const list = useMemo(() => {
     const t = q.trim().toLowerCase()
-    return members
-      .filter((m) => m.id !== meId && !exclude.includes(m.id))
-      .filter((m) => !t || `${m.prenom} ${m.nom}`.toLowerCase().includes(t))
-      .sort((a, b) => `${a.prenom} ${a.nom}`.localeCompare(`${b.prenom} ${b.nom}`, 'fr'))
-  }, [members, meId, exclude, q])
+    return t ? eligibles.filter((m) => `${m.prenom} ${m.nom}`.toLowerCase().includes(t)) : eligibles
+  }, [eligibles, q])
+
+  const groupes = {
+    tous: eligibles.map((m) => m.id),
+    coureur: eligibles.filter((m) => typeDe(m) === 'coureur').map((m) => m.id),
+    marcheur: eligibles.filter((m) => typeDe(m) === 'marcheur').map((m) => m.id),
+  }
+  const toutes = (ids) => ids.length > 0 && ids.every((id) => selected.includes(id))
+  // un clic sélectionne tout le groupe, un second clic le désélectionne (mises à jour fonctionnelles : pas de clic perdu)
+  const basculer = (ids) => onChange((cur) => (ids.length > 0 && ids.every((id) => cur.includes(id))
+    ? cur.filter((id) => !ids.includes(id))
+    : [...new Set([...cur, ...ids])]))
+  const unParUn = (id) => onChange((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
+
   return (
     <>
       <input className="chat-search" placeholder="Rechercher un adhérent…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
-      <div className="chat-pick">
-        {list.map((m) => (
-          <button type="button" key={m.id} className={`chat-pick__row${selected?.includes(m.id) ? ' is-on' : ''}`} onClick={() => onToggle(m)}>
-            <Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={36} />
-            <span>{m.prenom} {m.nom}</span>
-            {multiple && <i>{selected?.includes(m.id) ? '☑' : '☐'}</i>}
+      {multiple && (
+        <div className="chat-chips">
+          <button type="button" className={toutes(groupes.tous) ? 'is-on' : ''} onClick={() => basculer(groupes.tous)}>
+            Tout sélectionner ({groupes.tous.length})
           </button>
-        ))}
+          <button type="button" className={toutes(groupes.coureur) ? 'is-on' : ''} disabled={groupes.coureur.length === 0} onClick={() => basculer(groupes.coureur)}>
+            <Mini type="coureur" /> Running ({groupes.coureur.length})
+          </button>
+          <button type="button" className={toutes(groupes.marcheur) ? 'is-on' : ''} disabled={groupes.marcheur.length === 0} onClick={() => basculer(groupes.marcheur)}>
+            <Mini type="marcheur" /> Marche nordique ({groupes.marcheur.length})
+          </button>
+          <button type="button" disabled={selected.length === 0} onClick={() => onChange([])}>Aucun</button>
+        </div>
+      )}
+      <div className="chat-pick">
+        {list.map((m) => {
+          const type = typeDe(m)
+          return (
+            <button type="button" key={m.id} className={`chat-pick__row${selected.includes(m.id) ? ' is-on' : ''}`} onClick={() => (multiple ? unParUn(m.id) : onPick(m))}>
+              <Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={36} />
+              <span>{m.prenom} {m.nom}</span>
+              {type && <small className="chat-type"><Mini type={type} />{type === 'coureur' ? 'Coureur' : 'Marcheur'}</small>}
+              {multiple && <i>{selected.includes(m.id) ? '☑' : '☐'}</i>}
+            </button>
+          )
+        })}
         {list.length === 0 && <p className="chat-empty">Aucun adhérent trouvé.</p>}
       </div>
+      {multiple && <p className="chat-count">{selected.length} sélectionné{selected.length > 1 ? 's' : ''}</p>}
     </>
   )
 }
@@ -148,7 +201,6 @@ function NouvelleDiscussion({ chat, token, me, members, onClose }) {
       onClose()
     } catch (e) { setErr(e.message); setBusy(false) }
   }
-  const toggle = (m) => setChoisis((c) => (c.includes(m.id) ? c.filter((x) => x !== m.id) : [...c, m.id]))
 
   return (
     <Modal titre="Nouvelle discussion" onClose={onClose}>
@@ -159,11 +211,11 @@ function NouvelleDiscussion({ chat, token, me, members, onClose }) {
         </div>
       )}
       {err && <p className="chat-error">{err}</p>}
-      {onglet === 'dm' && <ChoixMembres members={members} meId={me.id} onToggle={(m) => !busy && ouvrirDM(m)} />}
+      {onglet === 'dm' && <ChoixMembres members={members} meId={me.id} onPick={(m) => !busy && ouvrirDM(m)} />}
       {onglet === 'salon' && (
         <>
           <input className="chat-search" placeholder="Nom du salon (ex. Covoiturage Paris-Reims)" maxLength={100} value={nom} onChange={(e) => setNom(e.target.value)} />
-          <ChoixMembres members={members} meId={me.id} multiple selected={choisis} onToggle={toggle} />
+          <ChoixMembres members={members} meId={me.id} selected={choisis} onChange={setChoisis} />
           <button type="button" className="btn btn--solid chat-create" disabled={busy || !nom.trim()} onClick={creer}>
             Créer le salon ({choisis.length + 1} participant{choisis.length ? 's' : ''})
           </button>
@@ -203,7 +255,7 @@ function Participants({ room, conv, token, members, me, onClose, chat }) {
       )}
       {ajout && (
         <>
-          <ChoixMembres members={members} meId={me.id} exclude={deja} multiple selected={choisis} onToggle={(m) => setChoisis((c) => (c.includes(m.id) ? c.filter((x) => x !== m.id) : [...c, m.id]))} />
+          <ChoixMembres members={members} meId={me.id} exclude={deja} selected={choisis} onChange={setChoisis} />
           <button type="button" className="btn btn--solid chat-create" disabled={choisis.length === 0} onClick={ajouter}>Ajouter {choisis.length || ''}</button>
         </>
       )}

@@ -49,7 +49,7 @@ export function tirerCoureur() {
 }
 
 // Le coureur lui-même (dessin SVG), utilisé par le petit coureur du défilement et par le mini-jeu.
-export function RunnerFigure({ look }) {
+export function RunnerFigure({ look, flag = true, walk = false }) {
   const cid = `rt${useId().replace(/[^a-zA-Z0-9]/g, '')}`
   return (
     <svg viewBox="0 0 40 56" width="60" height="84">
@@ -58,13 +58,15 @@ export function RunnerFigure({ look }) {
       </defs>
       <ellipse className="runner-shadow" cx="20" cy="54" rx="11" ry="2" />
       <g className="runner-body">
-        <g className="runner-flame">
-          <path className="runner-pole" d="M12.6 34 L11 -4" />
-          <path className="runner-flag" d="M-8 -18 Q9 -19 11 -4 L11 22 L-7 25 Z" />
-          <path className="runner-binding" d="M-8 -18 Q9 -19 11 -4 L11 22" />
-          <text className="runner-flag-text" x="1.5" y="2" transform="rotate(-90 1.5 -4)">50</text>
-          <text className="runner-flag-min" x="1.5" y="17.2" transform="rotate(-90 1.5 14)">min</text>
-        </g>
+        {flag && (
+          <g className="runner-flame">
+            <path className="runner-pole" d="M12.6 34 L11 -4" />
+            <path className="runner-flag" d="M-8 -18 Q9 -19 11 -4 L11 22 L-7 25 Z" />
+            <path className="runner-binding" d="M-8 -18 Q9 -19 11 -4 L11 22" />
+            <text className="runner-flag-text" x="1.5" y="2" transform="rotate(-90 1.5 -4)">50</text>
+            <text className="runner-flag-min" x="1.5" y="17.2" transform="rotate(-90 1.5 14)">min</text>
+          </g>
+        )}
         <g className="runner-arm runner-arm--b"><path d="M20 17 L13 26 L16 33" /><path className="runner-sleeve" d="M20 17 L16.8 21" /><path className="runner-cuff" d="M16.9 20.8 L16.1 21.8" /></g>
         <g className="runner-leg runner-leg--b"><path d="M20 35 L18 45 L21 53" /><path className="runner-shoe" d="M19 53 H25" /></g>
         <path className="runner-torso" d="M14 14 L28 14 L27 33 L15 33 Z" />
@@ -80,6 +82,12 @@ export function RunnerFigure({ look }) {
         <path className="runner-hair" d="M16.8 8.4 Q16.4 2.6 22 2.6 Q27.8 2.6 27.2 7.6 Q23 4.6 16.8 8.4 Z" />
         <g className="runner-leg runner-leg--a"><path d="M23 35 L27 45 L23 53" /><path className="runner-shoe" d="M22 53 H28" /></g>
         <g className="runner-arm runner-arm--a"><path d="M24 17 L31 25 L28 31" /><path className="runner-sleeve" d="M24 17 L27.4 21" /><path className="runner-cuff" d="M27.2 20.8 L28 21.8" /></g>
+        {walk && (
+          <>
+            <path className="runner-stick" d="M28 31 L37.5 54" />
+            <path className="runner-stick" d="M16 33 L7.5 54" />
+          </>
+        )}
       </g>
     </svg>
   )

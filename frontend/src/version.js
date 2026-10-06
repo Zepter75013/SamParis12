@@ -5,6 +5,11 @@ export const APP_VERSION = '1.19.1'
 
 export const CHANGELOG = [
   {
+    version: '1.22.0',
+    date: '6 octobre 2026',
+    notes: "Messagerie : panneau et fenêtres aux coins arrondis avec liseré rouge. Création d'un salon : sélection un par un, par type (Running ou Marche nordique) ou tout d'un coup, avec le petit bonhomme SAM qui court ou qui marche (avec ses bâtons) dans la liste.",
+  },
+  {
     version: '1.21.0',
     date: '6 octobre 2026',
     notes: "Messagerie : un message peut être modifié ou supprimé par son auteur tant qu'aucune autre personne ne l'a lu (mention « modifié », coches bleues dès qu'il est lu). Le droit de créer des salons suit désormais strictement la case de Fonctionnalités, même pour un SuperAdmin (migration 0019).",
