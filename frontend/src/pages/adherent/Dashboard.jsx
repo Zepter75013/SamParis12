@@ -11,6 +11,7 @@ import ChatPanel from './Chat.jsx'
 import RolesPanel from './RolesPanel.jsx'
 import JournalPanel from './JournalPanel.jsx'
 import StatsPanel from './StatsPanel.jsx'
+import StravaPanel from './StravaPanel.jsx'
 
 // L'aide (chapitres + moteur Markdown) est chargée à la demande : elle n'alourdit pas le reste de l'espace adhérent.
 const AidePanel = lazy(() => import('./AidePanel.jsx'))
@@ -35,6 +36,7 @@ const TABS = [
   { id: 'courses', label: 'Nos Courses' },
   { id: 'resultats', label: 'Résultats' },
   { id: 'records', label: 'Records du Club' },
+  { id: 'strava', label: 'Mon activité' },
   { id: 'reseaute', label: 'SAM Réseaute' },
   { id: 'documents', label: 'Plans & Documents' },
   { id: 'vieduclub', label: 'Vie du Club' },
@@ -384,6 +386,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [aideCible, setAideCible] = useState(null) // écran dont on demande l'aide : { id, n }
+  const [stravaFlash, setStravaFlash] = useState(null) // résultat du retour de Strava : { ok, msg }
   const [search, setSearch] = useState('')
   const [activity, setActivity] = useState('Toutes les activités')
   const [status, setStatus] = useState(null)
@@ -396,6 +399,24 @@ export default function Dashboard() {
   const [aboutOpen, setAboutOpen] = useState(false)
 
   const [token, setAuthToken] = useState(() => getToken())
+
+  // Retour de Strava après l'autorisation (?code=…&state=… dans l'adresse) : on finalise la liaison puis on nettoie l'adresse.
+  const stravaRetour = useRef(false)
+  useEffect(() => {
+    if (!token || stravaRetour.current) return
+    const p = new URLSearchParams(window.location.search)
+    const code = p.get('code')
+    const state = p.get('state')
+    const refus = p.get('error')
+    if (!state || (!code && !refus)) return
+    stravaRetour.current = true
+    window.history.replaceState({}, '', window.location.pathname)
+    setActiveTab('strava')
+    if (refus || !code) { setStravaFlash({ ok: false, msg: 'La connexion à Strava a été annulée.' }); return }
+    api.stravaCallback(token, { code, state, scope: p.get('scope') || '' })
+      .then((r) => setStravaFlash({ ok: true, msg: `Ton compte Strava${r.athleteNom ? ` (${r.athleteNom})` : ''} est relié.` }))
+      .catch((e) => setStravaFlash({ ok: false, msg: e.message }))
+  }, [token])
 
   // Journal d'activité : l'ouverture d'un écran est signalée au serveur (une seule fois par changement d'écran).
   const dernierEcran = useRef('')
@@ -1127,6 +1148,8 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'stats' && <StatsPanel token={token} can={can} />}
+
+        {activeTab === 'strava' && <StravaPanel token={token} flash={stravaFlash} onFlashClear={() => setStravaFlash(null)} />}
 
         {activeTab === 'aide' && (
           <Suspense fallback={<p style={{ color: 'var(--stone)' }}>Chargement de l'aide…</p>}>

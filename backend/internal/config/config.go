@@ -16,6 +16,11 @@ type Config struct {
 
 	JWTSecret string
 
+	// Application Strava (strava.com/settings/api) : sans identifiant, la liaison Strava est désactivée.
+	StravaClientID     string
+	StravaClientSecret string
+	StravaBaseURL      string
+
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUsername string
@@ -34,6 +39,10 @@ func Load() Config {
 		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5173"),
 
 		JWTSecret: getEnv("JWT_SECRET", "dev-insecure-secret-change-me"),
+
+		StravaClientID:     os.Getenv("STRAVA_CLIENT_ID"),
+		StravaClientSecret: os.Getenv("STRAVA_CLIENT_SECRET"),
+		StravaBaseURL:      getEnv("STRAVA_BASE_URL", "https://www.strava.com"),
 
 		SMTPHost:     getEnv("SMTP_HOST", ""),
 		SMTPPort:     getEnv("SMTP_PORT", "587"),

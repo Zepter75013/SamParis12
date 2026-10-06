@@ -20,6 +20,7 @@ import (
 	"samparis12/backend/internal/race"
 	"samparis12/backend/internal/role"
 	"samparis12/backend/internal/stats"
+	"samparis12/backend/internal/strava"
 
 	"samparis12/backend/internal/httpx"
 )
@@ -87,6 +88,17 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 		id, _ := member.MemberIDFromContext(r.Context())
 		auditHandler.Navigation(w, r, id)
 	}))
+
+	// Liaison Strava : chaque adhérent ne voit que ses propres activités (règle de l'API Strava).
+	stravaHandler := strava.NewHandler(db, strava.Config{
+		ClientID: cfg.StravaClientID, ClientSecret: cfg.StravaClientSecret, BaseURL: cfg.StravaBaseURL, FrontendURL: cfg.FrontendURL, Secret: cfg.JWTSecret,
+	})
+	mux.HandleFunc("GET /api/strava/status", authService.RequireAuth(stravaHandler.Status))
+	mux.HandleFunc("POST /api/strava/connect", authService.RequireAuth(stravaHandler.Connect))
+	mux.HandleFunc("POST /api/strava/callback", authService.RequireAuth(stravaHandler.Callback))
+	mux.HandleFunc("DELETE /api/strava", authService.RequireAuth(stravaHandler.Disconnect))
+	mux.HandleFunc("GET /api/strava/activities", authService.RequireAuth(stravaHandler.Activities))
+	mux.HandleFunc("GET /api/strava/stats", authService.RequireAuth(stravaHandler.Stats))
 
 	// Statistiques, par section (fonctionnalités « Statistiques : effectifs / courses / engagement »)
 	statsHandler := stats.NewHandler(db)

@@ -128,6 +128,9 @@ var routes = map[string]route{
 	"GET /api/stats/courses/assiduite.csv":            {"Export CSV de l'assiduité aux courses", ""},
 	"GET /api/stats/engagement":                       {"Consultation des statistiques : engagement (fiches incomplètes)", ""},
 	"GET /api/stats/engagement/fiches.csv":            {"Export CSV des fiches adhérents incomplètes", ""},
+	"POST /api/strava/callback":                       {"Liaison de son compte Strava", ""},
+	"DELETE /api/strava":                              {"Déconnexion de son compte Strava", ""},
+	"GET /api/strava/activities":                      {"Consultation de ses activités Strava", ""},
 	"POST /api/roles":                                 {"Création d'un rôle", ""},
 	"PUT /api/roles/{id}":                             {"Modification d'un rôle et de ses fonctionnalités", "role"},
 	"DELETE /api/roles/{id}":                          {"Suppression d'un rôle", "role"},
@@ -423,7 +426,7 @@ var ecrans = map[string]string{
 	"overview": "Tableau de bord", "chat": "Messagerie", "trombi": "Trombinoscope", "courses": "Nos Courses",
 	"resultats": "Résultats", "records": "Records du Club", "reseaute": "SAM Réseaute", "documents": "Plans & Documents",
 	"vieduclub": "Vie du Club", "admin": "Admin Club", "droitsBureau": "Rôles et droits", "stats": "Statistiques",
-	"journal": "Journal d'activité", "profil": "Mes informations", "aide": "Aide",
+	"journal": "Journal d'activité", "profil": "Mes informations", "aide": "Aide", "strava": "Mon activité (Strava)",
 }
 
 // Navigation : l'application signale l'ouverture d'un écran (adhérent connecté, identifiant d'écran connu seulement).

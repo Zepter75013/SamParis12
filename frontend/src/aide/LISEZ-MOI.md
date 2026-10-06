@@ -13,7 +13,7 @@ des fichiers Markdown du dossier `chapitres/`. **Modifier un fichier suffit** : 
 
 ## Ajouter un chapitre
 
-Créer un fichier `chapitres/NN-nom.md` (le nombre `NN` donne l'ordre dans le menu : 05, 12, 20…). Il apparaît tout seul.
+Créer un fichier `chapitres/NN-nom.md` (le nombre `NN` donne l'ordre dans le menu : 05, 12, 20… ; une décimale permet d'insérer entre deux chapitres, par exemple `07.5-mon-activite.md`). Il apparaît tout seul.
 Le fichier commence par un en-tête :
 
 ```
@@ -31,7 +31,7 @@ droit: resultats.saisie
 | `titre` | Titre du chapitre (obligatoire). |
 | `icone` | Un émoji. |
 | `resume` | Phrase d'introduction affichée sous le titre et dans le sommaire du PDF. |
-| `ecran` | Écran de l'application décrit par le chapitre : ajoute le bouton **Ouvrir cet écran** et relie le bouton **?** d'en-tête. Valeurs : `overview`, `chat`, `trombi`, `courses`, `resultats`, `records`, `reseaute`, `documents`, `vieduclub`, `admin`, `droitsBureau`, `stats`, `journal`, `profil`. |
+| `ecran` | Écran de l'application décrit par le chapitre : ajoute le bouton **Ouvrir cet écran** et relie le bouton **?** d'en-tête. Valeurs : `overview`, `chat`, `trombi`, `courses`, `resultats`, `records`, `reseaute`, `documents`, `vieduclub`, `admin`, `droitsBureau`, `stats`, `journal`, `profil`, `strava`. |
 | `droit` | Si renseigné, le chapitre n'est visible que des rôles qui ont cette fonctionnalité (`membres.admin`, `roles.admin`, `journal.voir`, `resultats.saisie`…). Plusieurs possibles séparés par `\|` (au moins une suffit). Le chapitre garde un cadenas 🔒 et le PDF indique à qui il est réservé. |
 
 L'identifiant du chapitre (pour les liens) est le nom du fichier sans le numéro : `04-trombinoscope.md` → `trombinoscope`.

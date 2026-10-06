@@ -1371,6 +1371,26 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 }
 @media (prefers-reduced-motion: reduce) { .mdetail__rideau, .mdetail.is-open .mdetail__rideau { transition: none; } }
 
+/* ---- Mon activité (Strava) ---- */
+.strava-accueil ul { margin: 0 0 0.8rem; padding-left: 1.2rem; line-height: 1.6; }
+.strava-btn { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.85rem 1.5rem; border: 0; border-radius: var(--radius-btn); background: #fc4c02; color: #fff; font: 700 0.85rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+.strava-btn:hover { background: #d94000; }
+.strava-btn:disabled { opacity: 0.6; cursor: default; }
+.strava-entete { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; padding: 0.9rem 1.1rem; border: 1px solid var(--line); border-left: 4px solid #fc4c02; border-radius: var(--radius-btn); background: var(--surface); }
+.strava-entete b { display: block; font-size: 1.05rem; }
+.strava-entete small { color: var(--stone); }
+.strava-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.strava-tot { display: grid; gap: 0.9rem; }
+.strava-tot__col { display: flex; flex-direction: column; gap: 0.1rem; padding-bottom: 0.7rem; border-bottom: 1px solid var(--line); }
+.strava-tot__col:last-child { border-bottom: 0; padding-bottom: 0; }
+.strava-tot__col span { font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.strava-tot__col b { font: 700 1.7rem/1.15 var(--font-display); }
+.strava-tot__col small { color: var(--ink-soft); font-size: 0.82rem; }
+.strava .stats-table td:first-child { white-space: nowrap; }
+.strava .stats-table td:nth-child(2) { min-width: 13rem; }
+.strava-lien { color: #fc4c02; font-weight: 600; white-space: nowrap; }
+.strava-credit { margin: 1.4rem 0 0; color: var(--stone); font-size: 0.78rem; }
+
 /* ---- Statistiques ---- */
 .camembert { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.2rem; }
 .camembert__svg { flex: 0 1 15rem; width: 15rem; max-width: 100%; height: auto; overflow: visible; }

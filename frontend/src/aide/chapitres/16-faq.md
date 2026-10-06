@@ -82,6 +82,20 @@ Les courses passées ne sont plus dans **Nos Courses** : retrouve-les dans **Ré
 Les résultats sont saisis par les adhérents qui ont le droit **Saisir les résultats** (en général le bureau). Signale-le-leur, avec le nom de la course et ton temps officiel.
 :::
 
+## Strava
+
+:::faq Les autres adhérents voient-ils mes activités Strava ?
+**Non.** Tes activités ne sont visibles que de toi : Strava l'interdit aux applications. Ni les adhérents ni le bureau n'y ont accès.
+:::
+
+:::faq L'écran Mon activité reste vide après la connexion
+Sur la page de Strava, l'autorisation « Voir les données de tes activités » doit rester **cochée**. Si tu l'as décochée, clique sur **Déconnecter** puis reconnecte ton compte en la laissant cochée.
+:::
+
+:::faq « Ce compte Strava est déjà relié à un autre adhérent »
+Un compte Strava ne peut servir qu'à un seul adhérent. Vérifie que tu n'as pas déjà un autre compte de l'espace adhérent, ou demande au bureau de t'aider.
+:::
+
 ## Autres
 
 :::faq Où est enregistré ce que je saisis, et qui le voit ?

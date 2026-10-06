@@ -119,8 +119,8 @@ export function texteBrut(html) {
 export function parseChapitre(raw, fichier) {
   const { meta, corps } = parseFrontmatter(raw)
   const nom = fichier.replace(/^.*[\\/]/, '').replace(/\.md$/, '')
-  const id = meta.id || slug(nom.replace(/^\d+-/, ''))
-  const ordre = parseInt(/^(\d+)-/.exec(nom)?.[1] ?? '999', 10)
+  const id = meta.id || slug(nom.replace(/^\d+(\.\d+)?-/, ''))
+  const ordre = parseFloat(/^(\d+(?:\.\d+)?)-/.exec(nom)?.[1] ?? '999')
   const { html, sections } = rendreCorps(corps, id)
   return {
     id, ordre, html, sections,

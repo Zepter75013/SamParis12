@@ -136,6 +136,12 @@ export const api = {
 
   getStats: (token, section, params = {}) => request(`/stats/${section}?${new URLSearchParams(params).toString()}`, { token }),
   downloadFile,
+  stravaStatus: (token) => request('/strava/status', { token }),
+  stravaConnect: (token) => request('/strava/connect', { method: 'POST', token }),
+  stravaCallback: (token, body) => request('/strava/callback', { method: 'POST', body: JSON.stringify(body), token }),
+  stravaDisconnect: (token) => request('/strava', { method: 'DELETE', token }),
+  stravaActivities: (token, page = 1) => request(`/strava/activities?page=${page}`, { token }),
+  stravaStats: (token) => request('/strava/stats', { token }),
   logNavigation: (token, ecran) => request('/audit/navigation', { method: 'POST', body: JSON.stringify({ ecran }), token }),
   getAudit: (token, params) => request(`/audit?${new URLSearchParams(params).toString()}`, { token }),
 

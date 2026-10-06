@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.35.0',
+    date: '7 octobre 2026',
+    notes: "Liaison Strava : chaque adhérent peut relier son compte Strava (bouton « Se connecter avec Strava ») et retrouver dans le nouvel écran Mon activité ses totaux (4 semaines, année, depuis toujours), ses kilomètres par semaine et la liste de ses sorties. Ces données ne sont visibles que de l'adhérent concerné (règle de Strava) et le club n'en conserve aucune ; la déconnexion révoque l'accès. Nécessite l'application Strava du club (docs/strava-installation.md) et la migration 0028.",
+  },
+  {
     version: '1.34.0',
     date: '7 octobre 2026',
     notes: "Aide en ligne complète et interactive : nouvel onglet Aide (chapitres par écran, recherche avec surlignage, liens vers les écrans, questions fréquentes, « Quoi de neuf ? » automatique) et bouton « ? » en haut de chaque écran qui ouvre l'aide correspondante. Les chapitres d'administration ne s'affichent que si le rôle y donne droit. Impression ou enregistrement en PDF d'un chapitre ou du manuel complet. Les textes sont de simples fichiers Markdown faciles à mettre à jour, et `npm run aide:pdf` génère le PDF complet.",

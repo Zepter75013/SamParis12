@@ -79,7 +79,7 @@ function Barres({ data, titre, total, unite = '', large = false, vide = 'Aucune 
 }
 
 // Colonnes en SVG (évolution dans le temps) ; une étiquette sur n pour rester lisible.
-function Colonnes({ data, titre, libelle = (l) => l, note, vide = 'Aucune donnée.' }) {
+export function Colonnes({ data, titre, libelle = (l) => l, note, vide = 'Aucune donnée.' }) {
   const W = 640
   const H = 180
   const bas = 26
