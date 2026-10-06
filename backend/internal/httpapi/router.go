@@ -19,6 +19,7 @@ import (
 	"samparis12/backend/internal/perm"
 	"samparis12/backend/internal/race"
 	"samparis12/backend/internal/role"
+	"samparis12/backend/internal/stats"
 
 	"samparis12/backend/internal/httpx"
 )
@@ -82,6 +83,14 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 
 	// Journal d'activité (fonctionnalité « Consulter le journal d'activité »)
 	mux.HandleFunc("GET /api/audit", requireFeature(perm.JournalVoir, auditHandler.List))
+
+	// Statistiques, par section (fonctionnalités « Statistiques : effectifs / courses / engagement »)
+	statsHandler := stats.NewHandler(db)
+	mux.HandleFunc("GET /api/stats/effectifs", requireFeature(perm.StatsEffectifs, statsHandler.Effectifs))
+	mux.HandleFunc("GET /api/stats/courses", requireFeature(perm.StatsCourses, statsHandler.Courses))
+	mux.HandleFunc("GET /api/stats/courses/assiduite.csv", requireFeature(perm.StatsCourses, statsHandler.AssiduiteCSV))
+	mux.HandleFunc("GET /api/stats/engagement", requireFeature(perm.StatsEngagement, statsHandler.Engagement))
+	mux.HandleFunc("GET /api/stats/engagement/fiches.csv", requireFeature(perm.StatsEngagement, statsHandler.FichesCSV))
 
 	// Rôles et droits
 	mux.HandleFunc("GET /api/roles", authService.RequireAuth(roleHandler.List))

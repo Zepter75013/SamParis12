@@ -19,6 +19,22 @@ async function request(path, { token, headers, ...options } = {}) {
   return res.json()
 }
 
+// Téléchargement d'un fichier protégé (export CSV) : le jeton passe par l'en-tête, on enregistre le résultat via un lien temporaire.
+async function downloadFile(token, path) {
+  const res = await fetch(`${BASE_URL}${path}`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || `Erreur ${res.status}`)
+  }
+  const nom = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') || '')?.[1] || 'export.csv'
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url
+  a.download = nom
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 2000)
+}
+
 export const chatStreamUrl = () => `${BASE_URL}/chat/stream`
 
 // Lien d'une pièce jointe de la messagerie (l'API renvoie un chemin signé commençant par /api/).
@@ -118,6 +134,8 @@ export const api = {
   chatAddMembers: (token, roomId, memberIds) =>
     request(`/chat/rooms/${roomId}/members`, { method: 'POST', token, body: JSON.stringify({ memberIds }) }),
 
+  getStats: (token, section, params = {}) => request(`/stats/${section}?${new URLSearchParams(params).toString()}`, { token }),
+  downloadFile,
   getAudit: (token, params) => request(`/audit?${new URLSearchParams(params).toString()}`, { token }),
 
   getRoles: (token) => request('/roles', { token }),

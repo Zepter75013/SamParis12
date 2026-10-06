@@ -17,6 +17,9 @@ const (
 	MessagerieModerer = "messagerie.moderer"
 	RolesAdmin        = "roles.admin"
 	JournalVoir       = "journal.voir"
+	StatsEffectifs    = "stats.effectifs"
+	StatsCourses      = "stats.courses"
+	StatsEngagement   = "stats.engagement"
 )
 
 type Feature struct {
@@ -33,6 +36,9 @@ var Catalog = []Feature{
 	{ResultatsSaisie, "Saisir les résultats", "Saisir, modifier et supprimer les résultats des courses."},
 	{SalonsCreer, "Créer des salons de discussion", "Créer des salons dans la messagerie et choisir leurs participants."},
 	{MessagerieModerer, "Modérer la messagerie", "Supprimer les messages des autres adhérents."},
+	{StatsEffectifs, "Statistiques : effectifs", "Écran Statistiques, section Effectifs : adhérents par statut, groupe, sexe et âge, historique des adhésions (chiffres agrégés)."},
+	{StatsCourses, "Statistiques : courses", "Écran Statistiques, section Courses : participation aux courses, résultats, kilomètres, podiums et assiduité des adhérents (liste nominative)."},
+	{StatsEngagement, "Statistiques : engagement", "Écran Statistiques, section Engagement : connexions, messagerie, jeu et fiches adhérents incomplètes (liste nominative, export CSV)."},
 	{JournalVoir, "Consulter le journal d'activité", "Écran Journal d'activité : voir qui a fait quoi dans l'application, et si l'action a réussi."},
 	{RolesAdmin, "Gérer les rôles et les droits", "Écran Rôles et droits : créer des rôles, choisir leurs fonctionnalités et les attribuer aux adhérents."},
 }
