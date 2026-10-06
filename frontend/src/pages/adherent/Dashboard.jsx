@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
 import { getTheme, setTheme as applyThemeChoice } from '../../lib/theme.js'
+import { getMenuLayout, cacheMenuLayout, valide as menuValide } from '../../lib/menu.js'
 import PasswordField from '../../components/PasswordField.jsx'
 import AboutContent from '../../components/AboutContent.jsx'
 import { ord } from '../../components/Ord.jsx'
@@ -334,6 +335,27 @@ export default function Dashboard() {
   // Fonctionnalités d'administration du rôle de l'adhérent connecté (voir l'écran Rôles et droits)
   const can = (feature) => !!me?.features?.includes(feature)
 
+  // Disposition du menu choisie par l'adhérent : horizontal (onglets en haut) ou latéral (à gauche, tiroir sur mobile).
+  const [menuLayout, setMenuLayout] = useState(getMenuLayout)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  useEffect(() => {
+    if (me?.menuLayout) {
+      setMenuLayout(menuValide(me.menuLayout))
+      cacheMenuLayout(me.menuLayout)
+    }
+  }, [me?.menuLayout])
+  async function changeMenuLayout(value) {
+    const v = menuValide(value)
+    setMenuLayout(v)
+    cacheMenuLayout(v)
+    setDrawerOpen(false)
+    try {
+      setMe(await api.updatePreferences(token, { menuLayout: v }))
+    } catch {
+      // la disposition reste appliquée localement ; elle sera réenregistrée au prochain changement
+    }
+  }
+
   // Nombre de messages à lire : dans le titre de l'onglet « (3) … » et sur l'icône de l'application installée.
   useEffect(() => {
     const n = chat.unreadTotal
@@ -409,6 +431,32 @@ export default function Dashboard() {
     setOpenAdminCard(null)
   }
 
+  // Boutons du menu, identiques en disposition horizontale et latérale.
+  const renderTabs = () => TABS.filter((tab) => {
+    if (tab.id === 'admin') return can('membres.admin')
+    if (tab.id === 'droitsBureau') return can('roles.admin')
+    if (tab.id === 'journal') return can('journal.voir')
+    return true
+  }).map((tab) => (
+    <button
+      key={tab.id}
+      className={`adh-tab-btn${activeTab === tab.id ? ' active' : ''}`}
+      onClick={() => { switchTab(tab.id); setDrawerOpen(false) }}
+    >
+      {tab.label}
+      {tab.id === 'chat' && chat.unreadTotal > 0 && (
+        <span className="adh-tab-badge" aria-label={`${chat.unreadTotal} message${chat.unreadTotal > 1 ? 's' : ''} à lire`}>
+          {chat.unreadTotal > 99 ? '99+' : chat.unreadTotal}
+        </span>
+      )}
+      {tab.badge && (
+        <span style={{ marginLeft: '0.4rem', fontSize: '0.6rem', padding: '0.1rem 0.35rem', background: 'var(--vermilion)', color: '#fff', borderRadius: 2 }}>
+          {tab.badge}
+        </span>
+      )}
+    </button>
+  ))
+
   const filteredReseau = useMemo(() => {
     return RESEAU_POSTS.filter((p) => nature === 'Toutes' || p.nature === nature)
   }, [nature])
@@ -438,6 +486,11 @@ export default function Dashboard() {
       <header className="adherent-header">
         <div className="shell adherent-top-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            {menuLayout === 'lateral' && (
+              <button type="button" className="adh-burger" onClick={() => setDrawerOpen((v) => !v)} aria-label="Ouvrir le menu" aria-expanded={drawerOpen}>
+                ☰ <span>Menu</span>
+              </button>
+            )}
             <button onClick={() => navigate('/')} className="link-button">
               ← Site public
             </button>
@@ -479,6 +532,12 @@ export default function Dashboard() {
                     Tes informations
                   </button>
                   <button
+                    onClick={() => { changeMenuLayout(menuLayout === 'lateral' ? 'horizontal' : 'lateral'); setProfileMenuOpen(false) }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '0.7rem 0.9rem', cursor: 'pointer', color: 'var(--ink)', borderTop: '1px solid var(--line)' }}
+                  >
+                    {menuLayout === 'lateral' ? 'Menu en haut (horizontal)' : 'Menu à gauche (latéral)'}
+                  </button>
+                  <button
                     onClick={() => { setActiveTab('documents'); setProfileMenuOpen(false) }}
                     style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '0.7rem 0.9rem', cursor: 'pointer', color: 'var(--ink)', borderTop: '1px solid var(--line)' }}
                   >
@@ -493,34 +552,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="shell">
-          <nav className="adherent-tabs-nav">
-            {TABS.filter((tab) => {
-              if (tab.id === 'admin') return can('membres.admin')
-              if (tab.id === 'droitsBureau') return can('roles.admin')
-              if (tab.id === 'journal') return can('journal.voir')
-              return true
-            }).map((tab) => (
-              <button
-                key={tab.id}
-                className={`adh-tab-btn${activeTab === tab.id ? ' active' : ''}`}
-                onClick={() => switchTab(tab.id)}
-              >
-                {tab.label}
-                {tab.id === 'chat' && chat.unreadTotal > 0 && (
-                  <span className="adh-tab-badge" aria-label={`${chat.unreadTotal} message${chat.unreadTotal > 1 ? 's' : ''} à lire`}>
-                    {chat.unreadTotal > 99 ? '99+' : chat.unreadTotal}
-                  </span>
-                )}
-                {tab.badge && (
-                  <span style={{ marginLeft: '0.4rem', fontSize: '0.6rem', padding: '0.1rem 0.35rem', background: 'var(--vermilion)', color: '#fff', borderRadius: 2 }}>
-                    {tab.badge}
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
-        </div>
+        {menuLayout !== 'lateral' && (
+          <div className="shell">
+            <nav className="adherent-tabs-nav">
+              {renderTabs()}
+            </nav>
+          </div>
+        )}
       </header>
 
       {profileMenuOpen && (
@@ -530,6 +568,15 @@ export default function Dashboard() {
         <div onClick={() => setProfileMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />
       )}
 
+      <div className={`adh-body${menuLayout === 'lateral' ? ' adh-body--lateral' : ''}`}>
+      {menuLayout === 'lateral' && (
+        <>
+          {drawerOpen && <div className="adh-side-backdrop" onClick={() => setDrawerOpen(false)} />}
+          <aside className={`adh-side${drawerOpen ? ' is-open' : ''}`} aria-label="Menu de l'espace adhérent">
+            <nav className="adh-side-nav">{renderTabs()}</nav>
+          </aside>
+        </>
+      )}
       <main className="shell" style={{ paddingBlock: '2rem', flex: 1 }}>
         {activeTab === 'overview' && !me && (
           <p style={{ color: 'var(--stone)' }}>Chargement de votre profil…</p>
@@ -995,9 +1042,10 @@ export default function Dashboard() {
         )}
 
         {activeTab === 'profil' && (
-          <ProfilPanel token={token} me={me} onMeUpdate={handleMeUpdate} onPasswordChanged={handlePasswordChanged} />
+          <ProfilPanel token={token} me={me} onMeUpdate={handleMeUpdate} onPasswordChanged={handlePasswordChanged} menuLayout={menuLayout} onMenuLayoutChange={changeMenuLayout} />
         )}
       </main>
+      </div>
 
       <footer style={{ borderTop: '1px solid var(--line)', background: 'var(--surface)', padding: '1rem', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--stone)' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.6rem 1.2rem', marginBottom: '0.6rem' }}>
@@ -1038,7 +1086,7 @@ function infoRow(label, value) {
   )
 }
 
-function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
+function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onMenuLayoutChange }) {
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
@@ -1254,6 +1302,31 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged }) {
             >
               <b style={{ fontSize: '0.85rem' }}>{opt.label}</b>
               <span style={{ fontSize: '0.72rem', fontWeight: 'normal', opacity: 0.85 }}>{opt.hint}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', marginBottom: '1.5rem' }}>
+        <span className="eyebrow" style={{ fontWeight: 'bold' }}>Disposition du menu</span>
+        <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1rem' }}>
+          Choisis où afficher le menu de l'espace adhérent. Ce choix est enregistré sur ton profil : tu le retrouves sur tous tes appareils.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.8rem' }}>
+          {[
+            { value: 'horizontal', label: 'Horizontal', hint: 'Les onglets en haut de la page.' },
+            { value: 'lateral', label: 'Latéral', hint: 'Le menu à gauche, toujours visible (tiroir sur téléphone).' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onMenuLayoutChange(opt.value)}
+              aria-pressed={menuLayout === opt.value}
+              className={`menu-choix${menuLayout === opt.value ? ' is-on' : ''}`}
+            >
+              <span className={`menu-choix__apercu menu-choix__apercu--${opt.value}`} aria-hidden="true"><i /><i /><i /></span>
+              <b>{opt.label}</b>
+              <span>{opt.hint}</span>
             </button>
           ))}
         </div>

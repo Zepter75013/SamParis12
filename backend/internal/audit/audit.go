@@ -101,6 +101,7 @@ type route struct {
 var routes = map[string]route{
 	"PUT /api/members/me":                             {"Modification de ses informations personnelles", ""},
 	"PUT /api/members/me/email":                       {"Changement de sa propre adresse email", ""},
+	"PUT /api/members/me/preferences":                 {"Changement de ses préférences d'affichage (menu)", ""},
 	"PUT /api/members/me/trombi":                      {"Modification de sa fiche trombinoscope", ""},
 	"POST /api/members/me/photo":                      {"Changement de sa photo", ""},
 	"GET /api/admin/members":                          {"Consultation de la liste des adhérents (administration)", ""},

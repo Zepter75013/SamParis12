@@ -63,16 +63,18 @@ type RoleRef struct {
 // informations confidentielles (éditables par l'adhérent) et informations
 // administratives (lecture seule pour l'adhérent, gérées par le bureau).
 type Member struct {
-	ID       int64  `json:"id"`
-	Email    string `json:"email"`
-	Prenom   string `json:"prenom"`
-	Nom      string `json:"nom"`
-	Role     string `json:"role"`
-	Groupe   string `json:"groupe"`
-	Statut   string `json:"statut"`
-	Sexe     string `json:"sexe"` // 'F', 'H' ou '' (non renseigné)
-	PhotoURL string `json:"photoUrl"`
-	IsBureau bool   `json:"isBureau"`
+	ID     int64  `json:"id"`
+	Email  string `json:"email"`
+	Prenom string `json:"prenom"`
+	Nom    string `json:"nom"`
+	Role   string `json:"role"`
+	Groupe string `json:"groupe"`
+	Statut string `json:"statut"`
+	Sexe   string `json:"sexe"` // 'F', 'H' ou '' (non renseigné)
+	// MenuLayout : disposition du menu de l'espace adhérent choisie par l'adhérent ('horizontal' ou 'lateral').
+	MenuLayout string `json:"menuLayout"`
+	PhotoURL   string `json:"photoUrl"`
+	IsBureau   bool   `json:"isBureau"`
 	// IsSuperAdmin est seul-e à pouvoir modifier les fonctionnalités (droits
 	// des autres membres du bureau) — is_bureau seul ne suffit pas.
 	IsSuperAdmin bool `json:"isSuperAdmin"`
@@ -254,7 +256,7 @@ func NewRepository(db *sql.DB) *Repository {
 // Go (le pilote MySQL, avec parseTime=true, renverrait sinon un time.Time non
 // scannable dans un **string).
 const memberColumns = `
-	id, email, prenom, nom, role, groupe, statut, sexe, photo_path, is_bureau, is_super_admin,
+	id, email, prenom, nom, role, groupe, statut, sexe, menu_layout, photo_path, is_bureau, is_super_admin,
 	DATE_FORMAT(welcome_email_sent_at, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(activated_at, '%Y-%m-%d %H:%i:%s'),
 	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
 	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio,
@@ -284,7 +286,7 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 		anneePremiereAdhesion, anneeDerniereAdhesion                                                sql.NullInt64
 	)
 	err := scan(
-		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.Sexe, &m.PhotoURL, &m.IsBureau, &m.IsSuperAdmin,
+		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.Sexe, &m.MenuLayout, &m.PhotoURL, &m.IsBureau, &m.IsSuperAdmin,
 		&welcomeEmailSentAt, &activatedAt,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
 		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
@@ -852,6 +854,32 @@ func (h *Handler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.repo.UpdateConfidential(memberID, u); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer vos informations")
+		return
+	}
+	m, err := h.repo.GetByID(memberID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, m)
+}
+
+// UpdatePreferences : préférences d'affichage de l'adhérent connecté (disposition du menu).
+func (h *Handler) UpdatePreferences(w http.ResponseWriter, r *http.Request) {
+	memberID, ok := MemberIDFromContext(r.Context())
+	if !ok {
+		httpx.Error(w, http.StatusUnauthorized, "non authentifié")
+		return
+	}
+	var req struct {
+		MenuLayout string `json:"menuLayout"`
+	}
+	if err := decodeJSON(r, &req); err != nil || (req.MenuLayout != "horizontal" && req.MenuLayout != "lateral") {
+		httpx.Error(w, http.StatusBadRequest, "disposition du menu invalide (horizontal ou lateral)")
+		return
+	}
+	if _, err := h.repo.db.Exec(`UPDATE members SET menu_layout = ? WHERE id = ?`, req.MenuLayout, memberID); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "impossible d'enregistrer la préférence")
 		return
 	}
 	m, err := h.repo.GetByID(memberID)

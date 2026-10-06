@@ -42,6 +42,7 @@ export const api = {
 
   getMe: (token) => request('/members/me', { token }),
   updateMe: (token, data) => request('/members/me', { method: 'PUT', token, body: JSON.stringify(data) }),
+  updatePreferences: (token, data) => request('/members/me/preferences', { method: 'PUT', token, body: JSON.stringify(data) }),
   updateTrombi: (token, data) => request('/members/me/trombi', { method: 'PUT', token, body: JSON.stringify(data) }),
   updateEmail: (token, newEmail) =>
     request('/members/me/email', { method: 'PUT', token, body: JSON.stringify({ newEmail }) }),

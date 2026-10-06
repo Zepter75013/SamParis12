@@ -76,6 +76,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/members/me", authService.RequireAuth(memberHandler.Me))
 	mux.HandleFunc("PUT /api/members/me", authService.RequireAuth(memberHandler.UpdateMe))
 	mux.HandleFunc("PUT /api/members/me/email", authService.RequireAuth(memberHandler.UpdateEmail))
+	mux.HandleFunc("PUT /api/members/me/preferences", authService.RequireAuth(memberHandler.UpdatePreferences))
 	mux.HandleFunc("PUT /api/members/me/trombi", authService.RequireAuth(memberHandler.UpdateTrombi))
 	mux.HandleFunc("POST /api/members/me/photo", authService.RequireAuth(memberHandler.UploadPhoto))
 

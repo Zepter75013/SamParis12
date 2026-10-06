@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.29.0',
+    date: '7 octobre 2026',
+    notes: "Disposition du menu au choix de chaque adhérent : horizontal (en haut, comme avant) ou latéral (à gauche, en tiroir « ☰ Menu » sur téléphone). Le choix se fait dans « Tes informations » ou depuis le menu du profil, il est enregistré sur ta fiche et suit sur tous tes appareils (migration 0025).",
+  },
+  {
     version: '1.28.0',
     date: '7 octobre 2026',
     notes: "Rôles et droits : sélection multiple avec Ctrl/Cmd et Shift, glisser-déposer entre les deux listes, et un rôle ne peut plus être supprimé tant qu'un adhérent l'a. Nouvel écran Journal d'activité (rôles autorisés, par défaut le Super administrateur) : qui a fait quoi, avec son rôle, et si l'action a réussi, avec filtres et export CSV (migration 0024).",
