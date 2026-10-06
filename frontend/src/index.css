@@ -1076,3 +1076,16 @@ footer {
 
 .chat-create { border-radius: 8px; }
 .chat-modal .chat-search { border-radius: 8px; }
+
+/* Messagerie : menu de la discussion (archiver, supprimer) et rubrique « Archivées » */
+.chat-menu-wrap { position: relative; margin-left: auto; }
+.chat-menu-btn { border: 0; background: none; font-size: 1.4rem; line-height: 1; padding: 0.2rem 0.5rem; border-radius: 8px; }
+.chat-menu-btn:hover { background: var(--c-sel); }
+.chat-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 15rem; padding: 0.3rem; background: var(--c-panel); border: 1.5px solid var(--vermilion); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; }
+.chat-menu button { text-align: left; padding: 0.55rem 0.7rem; border: 0; background: none; border-radius: 8px; font-size: 0.9rem; color: var(--c-text); }
+.chat-menu button:hover { background: var(--c-sel); }
+.chat-menu button.is-danger { color: #d92d20; }
+.chat-list__back { border: 0; background: none; font: 700 1.1rem var(--font-display); text-transform: uppercase; letter-spacing: 0.05em; padding: 0; }
+.chat-room--archives .chat-room__last { font-weight: 500; }
+.chat-badge--muted { background: var(--c-sub); }
+.chat-conv__title { flex: 0 1 auto; }

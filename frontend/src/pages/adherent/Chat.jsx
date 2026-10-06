@@ -263,13 +263,14 @@ function Participants({ room, conv, token, members, me, onClose, chat }) {
   )
 }
 
-function Conversation({ chat, room, token, me, members, onBack }) {
+function Conversation({ chat, room, token, me, members, onBack, onUnarchived }) {
   const conv = chat.convs[room.id] || { messages: [], participants: [], otherRead: 0, more: false, loading: false, loaded: false }
   const [texte, setTexte] = useState('')
   const [reply, setReply] = useState(null)
   const [editing, setEditing] = useState(null)
   const [emoji, setEmoji] = useState(false)
   const [infos, setInfos] = useState(false)
+  const [menu, setMenu] = useState(false)
   const [err, setErr] = useState('')
   const zone = useRef(null)
   const input = useRef(null)
@@ -287,6 +288,14 @@ function Conversation({ chat, room, token, me, members, onBack }) {
     }
     prevH.current = z.scrollHeight
   }, [conv.messages])
+
+  useEffect(() => { setMenu(false) }, [room.id])
+  useEffect(() => {
+    if (!menu) return undefined
+    const close = (e) => { if (!e.target.closest('.chat-menu, .chat-menu-btn')) setMenu(false) }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [menu])
 
   useEffect(() => { bas.current = true; setReply(null); setEditing(null); setTexte(''); setErr(''); input.current?.focus() }, [room.id])
 
@@ -343,6 +352,19 @@ function Conversation({ chat, room, token, me, members, onBack }) {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); envoyer() }
     if (e.key === 'Escape' && editing) { e.preventDefault(); e.stopPropagation(); annulerEdition() }
   }
+  async function archiver() {
+    setMenu(false)
+    try {
+      await chat.archive(room.id, !room.archived)
+      if (!room.archived) onBack() // archivée : on referme la conversation ; désarchivée : elle reste ouverte
+      else onUnarchived()
+    } catch (e) { setErr(e.message) }
+  }
+  async function supprimerDiscussion() {
+    setMenu(false)
+    if (!window.confirm('Supprimer cette discussion ?\n\nElle disparaîtra de ton écran (les autres participants la gardent). Elle reste conservée en base : seul l\'administrateur peut la réactiver.')) return
+    try { await chat.removeRoom(room.id) } catch (e) { setErr(e.message) }
+  }
   async function supprimer(m) {
     if (!window.confirm('Supprimer ce message pour tout le monde ?')) return
     try { await chat.remove(m.id) } catch (e) { setErr(e.message) }
@@ -372,6 +394,16 @@ function Conversation({ chat, room, token, me, members, onBack }) {
           <b>{room.nom}</b>
           <span>{sousTitre}</span>
         </button>
+        <div className="chat-menu-wrap">
+          <button type="button" className="chat-menu-btn" onClick={() => setMenu((v) => !v)} aria-label="Options de la discussion" aria-expanded={menu}>⋮</button>
+          {menu && (
+            <div className="chat-menu" role="menu">
+              {room.kind !== 'dm' && <button type="button" role="menuitem" onClick={() => { setMenu(false); setInfos(true) }}>👥 Participants</button>}
+              <button type="button" role="menuitem" onClick={archiver}>{room.archived ? '📤 Désarchiver la discussion' : '🗄️ Archiver la discussion'}</button>
+              {room.canDelete && <button type="button" role="menuitem" className="is-danger" onClick={supprimerDiscussion}>🗑️ Supprimer la discussion</button>}
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="chat-scroll" ref={zone} onScroll={onScroll}>
@@ -424,6 +456,7 @@ function Conversation({ chat, room, token, me, members, onBack }) {
 export default function ChatPanel({ chat, token, me, members }) {
   const [q, setQ] = useState('')
   const [nouveau, setNouveau] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const { setPanelOpen } = chat
 
   useEffect(() => {
@@ -434,6 +467,7 @@ export default function ChatPanel({ chat, token, me, members }) {
   const rooms = useMemo(() => {
     const t = q.trim().toLowerCase()
     return [...chat.rooms]
+      .filter((r) => !!r.archived === showArchived)
       .filter((r) => !t || (r.nom || '').toLowerCase().includes(t))
       // les messages privés vides n'apparaissent pas tant qu'on n'a pas écrit
       .filter((r) => r.kind !== 'dm' || r.last || r.id === chat.openId)
@@ -442,7 +476,10 @@ export default function ChatPanel({ chat, token, me, members }) {
         const tb = b.last ? new Date(b.last.createdAt).getTime() : 0
         return tb - ta || (a.nom || '').localeCompare(b.nom || '', 'fr')
       })
-  }, [chat.rooms, chat.openId, q])
+  }, [chat.rooms, chat.openId, q, showArchived])
+
+  const archivees = chat.rooms.filter((r) => r.archived)
+  const archiveesNonLues = archivees.reduce((n, r) => n + (r.unread || 0), 0)
 
   const current = chat.rooms.find((r) => r.id === chat.openId)
 
@@ -455,13 +492,27 @@ export default function ChatPanel({ chat, token, me, members }) {
       <div className={`chat${current ? ' has-conv' : ''}`}>
         <aside className="chat-list">
           <div className="chat-list__head">
-            <b>Discussions</b>
+            {showArchived
+              ? <button type="button" className="chat-list__back" onClick={() => setShowArchived(false)}>← Archivées</button>
+              : <b>Discussions</b>}
             <button type="button" className="chat-new" onClick={() => setNouveau(true)} title="Nouvelle discussion" aria-label="Nouvelle discussion">＋</button>
           </div>
           <input className="chat-search" placeholder="Rechercher une discussion" value={q} onChange={(e) => setQ(e.target.value)} />
           {!chat.online && <p className="chat-offline">Connexion perdue, reconnexion…</p>}
           <div className="chat-list__rows">
             {!chat.loaded && <p className="chat-empty">Chargement…</p>}
+            {!showArchived && archivees.length > 0 && (
+              <button type="button" className="chat-room chat-room--archives" onClick={() => setShowArchived(true)}>
+                <span className="chat-avatar chat-avatar--groupe" style={{ width: 46, height: 46, fontSize: 20 }}>🗄️</span>
+                <span className="chat-room__main">
+                  <span className="chat-room__top"><b>Archivées</b></span>
+                  <span className="chat-room__bottom">
+                    <span className="chat-room__last">{archivees.length} discussion{archivees.length > 1 ? 's' : ''}</span>
+                    {archiveesNonLues > 0 && <i className="chat-badge chat-badge--muted">{archiveesNonLues > 99 ? '99+' : archiveesNonLues}</i>}
+                  </span>
+                </span>
+              </button>
+            )}
             {rooms.map((r) => (
               <button type="button" key={r.id} className={`chat-room${r.id === chat.openId ? ' is-on' : ''}`} onClick={() => chat.openRoom(r.id)}>
                 <Avatar photoUrl={r.photoUrl} nom={r.nom} groupe={r.kind !== 'dm'} size={46} />
@@ -476,12 +527,12 @@ export default function ChatPanel({ chat, token, me, members }) {
                 </span>
               </button>
             ))}
-            {chat.loaded && rooms.length === 0 && <p className="chat-empty">Aucune discussion.</p>}
+            {chat.loaded && rooms.length === 0 && <p className="chat-empty">{showArchived ? 'Aucune discussion archivée.' : 'Aucune discussion.'}</p>}
           </div>
         </aside>
 
         {current
-          ? <Conversation key={current.id} chat={chat} room={current} token={token} me={me} members={members} onBack={() => chat.openRoom(null)} />
+          ? <Conversation key={current.id} chat={chat} room={current} token={token} me={me} members={members} onBack={() => chat.openRoom(null)} onUnarchived={() => setShowArchived(false)} />
           : <section className="chat-conv chat-conv--vide"><p>Sélectionne une discussion<br />ou démarre-en une avec ＋</p></section>}
       </div>
       {nouveau && <NouvelleDiscussion chat={chat} token={token} me={me} members={members} onClose={() => setNouveau(false)} />}

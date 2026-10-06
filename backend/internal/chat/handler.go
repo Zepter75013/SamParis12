@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -77,6 +78,8 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) *Person {
 
 func (h *Handler) fail(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, ErrRoomDeleted):
+		httpx.Error(w, http.StatusConflict, err.Error())
 	case errors.Is(err, ErrAlreadyRead):
 		httpx.Error(w, http.StatusConflict, err.Error())
 	case errors.Is(err, ErrForbidden):
@@ -84,8 +87,18 @@ func (h *Handler) fail(w http.ResponseWriter, err error) {
 	case errors.Is(err, ErrNotFound):
 		httpx.Error(w, http.StatusNotFound, "introuvable")
 	default:
+		log.Printf("chat: %v", err)
 		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
 	}
+}
+
+// failMsg : erreurs métier affichables telles quelles (409 pour une discussion supprimée, 400 sinon).
+func (h *Handler) failMsg(w http.ResponseWriter, err error) {
+	if errors.Is(err, ErrRoomDeleted) {
+		h.fail(w, err)
+		return
+	}
+	httpx.Error(w, http.StatusBadRequest, err.Error())
 }
 
 func pathID(r *http.Request, name string) int64 {
@@ -218,7 +231,7 @@ func (h *Handler) Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ids, err := h.repo.MemberIDs(rr); err == nil {
-		h.hub.publish(ids, "message", map[string]any{"roomId": rr.id, "message": msg})
+		h.hub.publish(h.repo.Visible(rr.id, ids), "message", map[string]any{"roomId": rr.id, "message": msg})
 	}
 	httpx.JSON(w, http.StatusCreated, msg)
 }
@@ -244,7 +257,7 @@ func (h *Handler) Read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ids, err := h.repo.MemberIDs(rr); err == nil {
-		h.hub.publish(ids, "read", map[string]any{"roomId": rr.id, "memberId": p.ID, "upTo": in.UpTo})
+		h.hub.publish(h.repo.Visible(rr.id, ids), "read", map[string]any{"roomId": rr.id, "memberId": p.ID, "upTo": in.UpTo})
 	}
 	httpx.JSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
@@ -273,7 +286,7 @@ func (h *Handler) Edit(w http.ResponseWriter, r *http.Request) {
 	rr, err := h.repo.loadRoom(msg.RoomID)
 	if err == nil {
 		if ids, err := h.repo.MemberIDs(rr); err == nil {
-			h.hub.publish(ids, "edit", map[string]any{"roomId": rr.id, "message": msg})
+			h.hub.publish(h.repo.Visible(rr.id, ids), "edit", map[string]any{"roomId": rr.id, "message": msg})
 		}
 	}
 	httpx.JSON(w, http.StatusOK, msg)
@@ -299,7 +312,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ids, err := h.repo.MemberIDs(rr); err == nil {
-		h.hub.publish(ids, "delete", map[string]any{"roomId": rr.id, "messageId": msg.ID})
+		h.hub.publish(h.repo.Visible(rr.id, ids), "delete", map[string]any{"roomId": rr.id, "messageId": msg.ID})
 	}
 	httpx.JSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
@@ -318,7 +331,7 @@ func (h *Handler) OpenDM(w http.ResponseWriter, r *http.Request) {
 	}
 	id, err := h.repo.OpenDM(p.ID, in.MemberID)
 	if err != nil {
-		httpx.Error(w, http.StatusBadRequest, err.Error())
+		h.failMsg(w, err)
 		return
 	}
 	httpx.JSON(w, http.StatusOK, map[string]int64{"roomId": id})
@@ -375,5 +388,53 @@ func (h *Handler) AddMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.hub.publish(in.MemberIDs, "rooms", map[string]int64{"roomId": rr.id})
+	httpx.JSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// Archive range la discussion dans les archives de l'adhérent connecté, ou l'en sort.
+func (h *Handler) Archive(w http.ResponseWriter, r *http.Request) {
+	p := h.me(w, r)
+	if p == nil {
+		return
+	}
+	rr := h.room(w, r, p)
+	if rr == nil {
+		return
+	}
+	var in struct {
+		Archived bool `json:"archived"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<10)).Decode(&in); err != nil {
+		httpx.Error(w, http.StatusBadRequest, "requête invalide")
+		return
+	}
+	if err := h.repo.SetArchived(rr.id, p.ID, in.Archived); err != nil {
+		h.fail(w, err)
+		return
+	}
+	h.hub.publish([]int64{p.ID}, "rooms", map[string]int64{"roomId": rr.id}) // synchronise ses autres appareils
+	httpx.JSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// DeleteRoom « supprime » la discussion pour l'adhérent connecté (drapeau en base, réactivation par l'administrateur
+// de la base uniquement). Les salons automatiques du club ne sont pas supprimables.
+func (h *Handler) DeleteRoom(w http.ResponseWriter, r *http.Request) {
+	p := h.me(w, r)
+	if p == nil {
+		return
+	}
+	rr := h.room(w, r, p)
+	if rr == nil {
+		return
+	}
+	if rr.kind == "auto" {
+		httpx.Error(w, http.StatusForbidden, "ce salon du club ne peut pas être supprimé, seulement archivé")
+		return
+	}
+	if err := h.repo.HideRoom(rr.id, p.ID); err != nil {
+		h.fail(w, err)
+		return
+	}
+	h.hub.publish([]int64{p.ID}, "rooms", map[string]int64{"roomId": rr.id})
 	httpx.JSON(w, http.StatusOK, map[string]bool{"ok": true})
 }

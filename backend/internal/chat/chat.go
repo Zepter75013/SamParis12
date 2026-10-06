@@ -19,6 +19,7 @@ const (
 var (
 	ErrForbidden   = errors.New("accès refusé")
 	ErrNotFound    = errors.New("introuvable")
+	ErrRoomDeleted = errors.New("cette discussion a été supprimée de ton écran : seul l'administrateur peut la réactiver")
 	ErrAlreadyRead = errors.New("ce message a déjà été lu : il ne peut plus être modifié ni supprimé")
 )
 
@@ -43,15 +44,17 @@ type Last struct {
 }
 
 type Room struct {
-	ID       int64  `json:"id"`
-	Kind     string `json:"kind"` // auto | custom | dm
-	Nom      string `json:"nom"`
-	PhotoURL string `json:"photoUrl"`
-	OtherID  int64  `json:"otherId,omitempty"` // message privé : l'autre adhérent
-	Members  int    `json:"members"`
-	Unread   int    `json:"unread"`
-	Last     *Last  `json:"last"`
-	CanAdd   bool   `json:"canAdd"`
+	ID        int64  `json:"id"`
+	Kind      string `json:"kind"` // auto | custom | dm
+	Nom       string `json:"nom"`
+	PhotoURL  string `json:"photoUrl"`
+	OtherID   int64  `json:"otherId,omitempty"` // message privé : l'autre adhérent
+	Members   int    `json:"members"`
+	Unread    int    `json:"unread"`
+	Last      *Last  `json:"last"`
+	CanAdd    bool   `json:"canAdd"`
+	Archived  bool   `json:"archived"`
+	CanDelete bool   `json:"canDelete"`
 }
 
 type Reply struct {
@@ -131,8 +134,10 @@ func (r *Repository) loadRoom(id int64) (*roomRow, error) {
 // Access vérifie que l'adhérent fait partie du salon.
 func (r *Repository) Access(roomID int64, p *Person) (*roomRow, error) {
 	var one int
-	args := append(memberArgs(p), roomID)
-	err := r.db.QueryRow(`SELECT 1 FROM chat_rooms r WHERE `+memberOfRoom+` AND r.id = ?`, args...).Scan(&one)
+	args := memberArgs(p)
+	args = append(args, roomID, p.ID)
+	err := r.db.QueryRow(`SELECT 1 FROM chat_rooms r WHERE `+memberOfRoom+` AND r.id = ?
+		AND NOT EXISTS (SELECT 1 FROM chat_room_prefs pr WHERE pr.room_id = r.id AND pr.member_id = ? AND pr.deleted = TRUE)`, args...).Scan(&one)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrForbidden
 	}
@@ -181,26 +186,29 @@ func (r *Repository) MemberIDs(rr *roomRow) ([]int64, error) {
 }
 
 func (r *Repository) Rooms(p *Person) ([]Room, error) {
-	args := []any{p.ID, p.ID}
+	// ordre des « ? » : sender_id, reads.member_id, prefs.member_id, puis le prédicat d'appartenance
+	args := []any{p.ID, p.ID, p.ID}
 	args = append(args, memberArgs(p)...)
 	rows, err := r.db.Query(`
-		SELECT `+r.roomCols()+`,
+		SELECT `+r.roomCols()+`, COALESCE(pr.archived, FALSE),
 			(SELECT COUNT(*) FROM chat_messages m
 			  WHERE m.room_id = r.id AND m.id > COALESCE(rd.last_read_id, 0) AND m.sender_id <> ? AND m.deleted_at IS NULL)
 		FROM chat_rooms r
 		LEFT JOIN chat_reads rd ON rd.room_id = r.id AND rd.member_id = ?
-		WHERE `+memberOfRoom, args...)
+		LEFT JOIN chat_room_prefs pr ON pr.room_id = r.id AND pr.member_id = ?
+		WHERE `+memberOfRoom+` AND COALESCE(pr.deleted, FALSE) = FALSE`, args...)
 	if err != nil {
 		return nil, err
 	}
 	type tmp struct {
-		rr     roomRow
-		unread int
+		rr       roomRow
+		unread   int
+		archived bool
 	}
 	var list []tmp
 	for rows.Next() {
 		var t tmp
-		if err := rows.Scan(&t.rr.id, &t.rr.kind, &t.rr.rule, &t.rr.nom, &t.rr.createdBy, &t.unread); err != nil {
+		if err := rows.Scan(&t.rr.id, &t.rr.kind, &t.rr.rule, &t.rr.nom, &t.rr.createdBy, &t.archived, &t.unread); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -213,7 +221,8 @@ func (r *Repository) Rooms(p *Person) ([]Room, error) {
 
 	out := make([]Room, 0, len(list))
 	for _, t := range list {
-		room := Room{ID: t.rr.id, Kind: t.rr.kind, Nom: t.rr.nom, Unread: t.unread}
+		room := Room{ID: t.rr.id, Kind: t.rr.kind, Nom: t.rr.nom, Unread: t.unread, Archived: t.archived,
+			CanDelete: t.rr.kind != "auto"} // les salons automatiques du club peuvent être archivés, pas supprimés
 		ids, err := r.MemberIDs(&t.rr)
 		if err != nil {
 			return nil, err
@@ -432,6 +441,10 @@ func (r *Repository) OpenDM(me, other int64) (int64, error) {
 	var id int64
 	err := r.db.QueryRow(`SELECT id FROM chat_rooms WHERE dm_key = ?`, key).Scan(&id)
 	if err == nil {
+		var gone bool
+		if e := r.db.QueryRow(`SELECT deleted FROM chat_room_prefs WHERE room_id = ? AND member_id = ?`, id, me).Scan(&gone); e == nil && gone {
+			return 0, ErrRoomDeleted
+		}
 		return id, nil
 	}
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -512,4 +525,44 @@ func (r *Repository) Participants(rr *roomRow) ([]Participant, error) {
 		out = append(out, p)
 	}
 	return out, rows.Err()
+}
+
+// SetArchived range ou sort une discussion des archives de l'adhérent.
+func (r *Repository) SetArchived(roomID, memberID int64, archived bool) error {
+	_, err := r.db.Exec(`
+		INSERT INTO chat_room_prefs (room_id, member_id, archived) VALUES (?, ?, ?)
+		ON DUPLICATE KEY UPDATE archived = VALUES(archived)`, roomID, memberID, archived)
+	return err
+}
+
+// HideRoom « supprime » la discussion pour l'adhérent : elle disparaît de son écran mais reste en base (drapeau
+// deleted) ; seul l'administrateur de la base peut la réactiver, par requête SQL.
+func (r *Repository) HideRoom(roomID, memberID int64) error {
+	_, err := r.db.Exec(`
+		INSERT INTO chat_room_prefs (room_id, member_id, deleted, deleted_at) VALUES (?, ?, TRUE, CURRENT_TIMESTAMP)
+		ON DUPLICATE KEY UPDATE deleted = TRUE, deleted_at = CURRENT_TIMESTAMP`, roomID, memberID)
+	return err
+}
+
+// Visible retire de la liste les adhérents qui ont supprimé la discussion (ils ne reçoivent plus rien).
+func (r *Repository) Visible(roomID int64, ids []int64) []int64 {
+	rows, err := r.db.Query(`SELECT member_id FROM chat_room_prefs WHERE room_id = ? AND deleted = TRUE`, roomID)
+	if err != nil {
+		return ids
+	}
+	defer rows.Close()
+	gone := map[int64]bool{}
+	for rows.Next() {
+		var id int64
+		if rows.Scan(&id) == nil {
+			gone[id] = true
+		}
+	}
+	out := make([]int64, 0, len(ids))
+	for _, id := range ids {
+		if !gone[id] {
+			out = append(out, id)
+		}
+	}
+	return out
 }

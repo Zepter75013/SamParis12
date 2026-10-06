@@ -5,6 +5,11 @@ export const APP_VERSION = '1.19.1'
 
 export const CHANGELOG = [
   {
+    version: '1.23.0',
+    date: '6 octobre 2026',
+    notes: "Messagerie : archiver et désarchiver une discussion (rubrique « Archivées »), et la supprimer de son écran. Une discussion supprimée reste conservée en base avec un drapeau ; seul l'administrateur de la base peut la réactiver, par requête SQL (migration 0020).",
+  },
+  {
     version: '1.22.0',
     date: '6 octobre 2026',
     notes: "Messagerie : panneau et fenêtres aux coins arrondis avec liseré rouge. Création d'un salon : sélection un par un, par type (Running ou Marche nordique) ou tout d'un coup, avec le petit bonhomme SAM qui court ou qui marche (avec ses bâtons) dans la liste.",

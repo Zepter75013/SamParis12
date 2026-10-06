@@ -202,7 +202,22 @@ export function useChat(token, meId) {
     refreshRooms().catch(() => {})
   }, [token, patchConv, refreshRooms])
 
-  const unreadTotal = rooms.reduce((n, r) => n + (r.unread || 0), 0)
+  // Archiver / désarchiver : propre à chaque adhérent.
+  const archive = useCallback(async (roomId, archived) => {
+    await api.chatArchive(token, roomId, archived)
+    setRooms((rs) => rs.map((r) => (r.id === roomId ? { ...r, archived } : r)))
+  }, [token])
 
-  return { rooms, canCreate, loaded, convs, openId, openRoom, loadMore, send, remove, edit, refreshRooms, unreadTotal, setPanelOpen, online }
+  // Supprimer : la discussion disparaît de l'écran (elle reste en base, réactivable uniquement par l'administrateur de la base).
+  const removeRoom = useCallback(async (roomId) => {
+    await api.chatDeleteRoom(token, roomId)
+    setRooms((rs) => rs.filter((r) => r.id !== roomId))
+    setConvs((c) => { const next = { ...c }; delete next[roomId]; return next })
+    if (openRef.current === roomId) setOpenIdState(null)
+  }, [token])
+
+  // les discussions archivées ne comptent pas dans la pastille de l'onglet
+  const unreadTotal = rooms.reduce((n, r) => n + (r.archived ? 0 : r.unread || 0), 0)
+
+  return { rooms, canCreate, loaded, convs, openId, openRoom, loadMore, send, remove, edit, archive, removeRoom, refreshRooms, unreadTotal, setPanelOpen, online }
 }
