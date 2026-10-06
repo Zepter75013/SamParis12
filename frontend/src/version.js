@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.39.1',
+    date: '7 octobre 2026',
+    notes: "Anniversaires : plus de case à cocher. Un adhérent est fêté dans le trombinoscope le jour de son anniversaire s'il a renseigné sa date de naissance dans ses informations visibles des autres adhérents (« Je suis né »), sinon rien ne se passe. L'écran Tes informations indique si la date est reconnue (« 23 juillet 1967 », « 23/07/1967 »…). La migration 0029 n'existe plus.",
+  },
+  {
     version: '1.39.0',
     date: '7 octobre 2026',
     notes: "Anniversaires : le jour de son anniversaire, l'adhérent est fêté dans le trombinoscope (gâteau avec bougies, bouteille et flûte de champagne, petit feu d'artifice animé) sur sa carte et sur sa fiche. Seul le fait que ce soit son anniversaire aujourd'hui est visible des autres (jamais la date ni l'âge), et chacun peut refuser dans « Tes informations » (migration 0029).",

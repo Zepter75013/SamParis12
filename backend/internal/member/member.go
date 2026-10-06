@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	_ "time/tzdata" // fuseau Europe/Paris disponible même dans l'image Docker minimale
 	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
@@ -102,8 +101,6 @@ type Member struct {
 	TrombiEmployeur        string `json:"trombiEmployeur"`
 	TrombiDistanceFavorite string `json:"trombiDistanceFavorite"`
 	TrombiBio              string `json:"trombiBio"`
-	// TrombiAnniversaire : accepte d'être fêté dans le trombinoscope le jour de son anniversaire.
-	TrombiAnniversaire bool `json:"trombiAnniversaire"`
 
 	DateNaissance     *string  `json:"dateNaissance"`
 	LieuNaissance     string   `json:"lieuNaissance"`
@@ -155,7 +152,7 @@ type PublicMember struct {
 	TrombiEmployeur        string `json:"trombiEmployeur"`
 	TrombiDistanceFavorite string `json:"trombiDistanceFavorite"`
 	TrombiBio              string `json:"trombiBio"`
-	// Anniversaire : c'est son anniversaire aujourd'hui (et il accepte d'être fêté). La date de naissance n'est jamais transmise.
+	// Anniversaire : c'est son anniversaire aujourd'hui, d'après la date de naissance qu'il a choisi de montrer aux autres adhérents.
 	Anniversaire bool `json:"anniversaire"`
 }
 
@@ -171,7 +168,6 @@ type TrombiUpdate struct {
 	TrombiEmployeur        string `json:"trombiEmployeur"`
 	TrombiDistanceFavorite string `json:"trombiDistanceFavorite"`
 	TrombiBio              string `json:"trombiBio"`
-	TrombiAnniversaire     *bool  `json:"trombiAnniversaire"`
 }
 
 // ConfidentialUpdate est le sous-ensemble de champs que l'adhérent peut modifier lui-même.
@@ -265,7 +261,7 @@ const memberColumns = `
 	id, email, prenom, nom, role, groupe, statut, sexe, menu_layout, photo_path, is_bureau, is_super_admin,
 	DATE_FORMAT(welcome_email_sent_at, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(activated_at, '%Y-%m-%d %H:%i:%s'),
 	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
-	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio, trombi_anniversaire,
+	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio,
 	DATE_FORMAT(date_naissance, '%Y-%m-%d'), lieu_naissance, adresse, code_postal, ville,
 	telephone_domicile, telephone_portable, nationalite, urgence_nom, urgence_telephone,
 	taille_maillot, vma, DATE_FORMAT(vma_date, '%Y-%m-%d'),
@@ -295,7 +291,7 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 		&m.ID, &m.Email, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.Sexe, &m.MenuLayout, &m.PhotoURL, &m.IsBureau, &m.IsSuperAdmin,
 		&welcomeEmailSentAt, &activatedAt,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
-		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio, &m.TrombiAnniversaire,
+		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
 		&dateNaissance, &m.LieuNaissance, &m.Adresse, &m.CodePostal, &m.Ville,
 		&m.TelephoneDomicile, &m.TelephonePortable, &m.Nationalite, &m.UrgenceNom, &m.UrgenceTelephone,
 		&m.TailleMaillot, &vma, &vmaDate,
@@ -417,41 +413,24 @@ func (r *Repository) getAuth(email string) (id int64, passwordHash string, mustC
 const publicMemberColumns = `
 	id, prenom, nom, role, groupe, statut, sexe, photo_path,
 	trombi_habite, trombi_naissance, trombi_origine, trombi_email, trombi_telephone,
-	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio,
-	trombi_anniversaire, DATE_FORMAT(date_naissance, '%m-%d')
+	trombi_profession, trombi_employeur, trombi_distance_favorite, trombi_bio
 `
 
 func scanPublicMember(scan func(...any) error) (*PublicMember, error) {
 	var m PublicMember
-	var fete bool
-	var jourNaissance sql.NullString // « MM-JJ » : sert uniquement à calculer l'indicateur, jamais renvoyé
 	err := scan(
 		&m.ID, &m.Prenom, &m.Nom, &m.Role, &m.Groupe, &m.Statut, &m.Sexe, &m.PhotoURL,
 		&m.TrombiHabite, &m.TrombiNaissance, &m.TrombiOrigine, &m.TrombiEmail, &m.TrombiTelephone,
 		&m.TrombiProfession, &m.TrombiEmployeur, &m.TrombiDistanceFavorite, &m.TrombiBio,
-		&fete, &jourNaissance,
 	)
 	if err != nil {
 		return nil, err
 	}
-	m.Anniversaire = fete && jourNaissance.Valid && estAnniversaire(jourNaissance.String, time.Now())
+	// Fêté si l'adhérent a choisi de montrer sa date de naissance (champ « Je suis né » de ses informations visibles).
+	if jour, ok := jourAnniversaire(m.TrombiNaissance); ok {
+		m.Anniversaire = estAnniversaire(jour, time.Now())
+	}
 	return &m, nil
-}
-
-var fuseauParis = func() *time.Location {
-	if l, err := time.LoadLocation("Europe/Paris"); err == nil {
-		return l
-	}
-	return time.Local
-}()
-
-// estAnniversaire : « MM-JJ » est-il le jour d'aujourd'hui à Paris ? Un 29 février est fêté le 28 février les années non bissextiles.
-func estAnniversaire(mmjj string, maintenant time.Time) bool {
-	j := maintenant.In(fuseauParis)
-	if j.Format("01-02") == mmjj {
-		return true
-	}
-	return mmjj == "02-29" && j.Format("01-02") == "02-28" && j.AddDate(0, 0, 1).Month() == time.March
 }
 
 func (r *Repository) ListPublic() ([]PublicMember, error) {
@@ -487,11 +466,11 @@ func (r *Repository) UpdateTrombi(id int64, t TrombiUpdate) error {
 		UPDATE members SET
 			trombi_habite = ?, trombi_naissance = ?, trombi_origine = ?, trombi_email = ?,
 			trombi_telephone = ?, trombi_profession = ?, trombi_employeur = ?,
-			trombi_distance_favorite = ?, trombi_bio = ?, trombi_anniversaire = COALESCE(?, trombi_anniversaire)
+			trombi_distance_favorite = ?, trombi_bio = ?
 		WHERE id = ?`,
 		t.TrombiHabite, t.TrombiNaissance, t.TrombiOrigine, t.TrombiEmail,
 		t.TrombiTelephone, t.TrombiProfession, t.TrombiEmployeur,
-		t.TrombiDistanceFavorite, t.TrombiBio, t.TrombiAnniversaire,
+		t.TrombiDistanceFavorite, t.TrombiBio,
 		id,
 	)
 	return err

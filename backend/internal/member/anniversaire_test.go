@@ -29,3 +29,46 @@ func TestEstAnniversaire(t *testing.T) {
 		}
 	}
 }
+
+func TestJourAnniversaire(t *testing.T) {
+	cas := []struct {
+		texte string
+		want  string // « MM-JJ », ou vide si non reconnu
+	}{
+		{"23 Juillet 1967", "07-23"},
+		{"23 juillet", "07-23"},
+		{"1er janvier 1980", "01-01"},
+		{"1 Janv. 1980", "01-01"},
+		{"23/07/1967", "07-23"},
+		{"23-07-67", "07-23"},
+		{"23.07", "07-23"},
+		{"Né le 5 mars", "03-05"},
+		{"5 mars 1985 à Paris", "03-05"},
+		{"le 12 février", "02-12"},
+		{"14 décembre 1990", "12-14"},
+		{"3 aout", "08-03"},
+		{"3 août 1971", "08-03"},
+		{"29 février 1980", "02-29"},
+		{"1967-07-23", "07-23"},
+		{"2 SEPT 1999", "09-02"},
+		{"", ""},
+		{"1967", ""},
+		{"juillet 1967", ""},
+		{"31 avril 1980", ""},
+		{"31/02/1980", ""},
+		{"12/13/1980", ""},
+		{"inconnu", ""},
+	}
+	for _, c := range cas {
+		got, ok := jourAnniversaire(c.texte)
+		if c.want == "" {
+			if ok {
+				t.Errorf("jourAnniversaire(%q) = %q, attendu : non reconnu", c.texte, got)
+			}
+			continue
+		}
+		if !ok || got != c.want {
+			t.Errorf("jourAnniversaire(%q) = (%q, %v), attendu %q", c.texte, got, ok, c.want)
+		}
+	}
+}

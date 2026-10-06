@@ -18,6 +18,7 @@ import CalculateurPanel from './CalculateurPanel.jsx'
 const AidePanel = lazy(() => import('./AidePanel.jsx'))
 import Bascule from '../../components/Bascule.jsx'
 import { DecorAnniversaire, FeuArtifice } from '../../components/Anniversaire.jsx'
+import { estAnniversaireAujourdhui, jourAnniversaire, libelleJour } from '../../lib/anniversaire.js'
 import { useChat } from '../../lib/chat.js'
 
 const THEME_OPTIONS = [
@@ -255,13 +256,6 @@ function CourseLigne({ r }) {
 
 // Fiche détaillée d'un adhérent (Trombinoscope). Ses prochaines courses et ses résultats s'ouvrent, si on le désire,
 // dans un « rideau » qui coulisse sur la droite de la fiche (par-dessus la fiche sur téléphone).
-// Aujourd'hui est-il l'anniversaire de cette date de naissance (AAAA-MM-JJ) ? Sert à mettre à jour la liste après une modification du profil.
-function estAujourdhui(dateNaissance) {
-  if (!dateNaissance) return false
-  const j = new Date()
-  return dateNaissance.slice(5, 10) === `${String(j.getMonth() + 1).padStart(2, '0')}-${String(j.getDate()).padStart(2, '0')}`
-}
-
 function MemberDetailModal({ member, token, onClose }) {
   const [results, setResults] = useState([])
   const [upcoming, setUpcoming] = useState([])
@@ -535,7 +529,7 @@ export default function Dashboard() {
           trombiHabite: updated.trombiHabite, trombiNaissance: updated.trombiNaissance, trombiOrigine: updated.trombiOrigine,
           trombiEmail: updated.trombiEmail, trombiTelephone: updated.trombiTelephone, trombiProfession: updated.trombiProfession,
           trombiEmployeur: updated.trombiEmployeur, trombiDistanceFavorite: updated.trombiDistanceFavorite, trombiBio: updated.trombiBio,
-          anniversaire: updated.trombiAnniversaire !== false && estAujourdhui(updated.dateNaissance),
+          anniversaire: estAnniversaireAujourdhui(updated.trombiNaissance),
         }
         : m
     )))
@@ -1306,7 +1300,6 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
       trombiEmployeur: me.trombiEmployeur || '',
       trombiDistanceFavorite: me.trombiDistanceFavorite || '',
       trombiBio: me.trombiBio || '',
-      trombiAnniversaire: me.trombiAnniversaire !== false,
     })
   }, [me])
 
@@ -1541,6 +1534,13 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
             <div>
               {fieldLabel('Je suis né')}
               <input type="text" style={inputStyle} placeholder="Ex : 23 Juillet 1967" value={trombiForm.trombiNaissance} onChange={(e) => updateTrombiField('trombiNaissance', e.target.value)} />
+              {(() => {
+                const j = jourAnniversaire(trombiForm.trombiNaissance)
+                const style = { fontSize: '0.78rem', margin: '0.35rem 0 0', color: j ? '#2f7d6d' : 'var(--stone)' }
+                if (!trombiForm.trombiNaissance.trim()) return <p style={style}>Indique ta date de naissance pour être fêté le jour de ton anniversaire : gâteau, champagne et feu d'artifice sur ta carte du trombinoscope. Sans date, tu n'es pas fêté. Tu peux n'écrire que le jour et le mois (« 23 juillet ») : ton âge reste privé.</p>
+                if (j) return <p style={style}>🎂 Anniversaire reconnu : le {libelleJour(j)}. Tu seras fêté ce jour-là dans le trombinoscope. Cette date est visible des autres adhérents.</p>
+                return <p style={style}>Date non reconnue : écris-la par exemple « 23 juillet 1967 » ou « 23/07/1967 » pour être fêté le jour de ton anniversaire.</p>
+              })()}
             </div>
             <div>
               {fieldLabel('Originaire de')}
@@ -1572,13 +1572,6 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
               {fieldLabel('Je me présente')}
               <textarea rows={4} style={{ ...inputStyle, resize: 'vertical' }} value={trombiForm.trombiBio} onChange={(e) => updateTrombiField('trombiBio', e.target.value)} />
             </div>
-
-            <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--ink-soft)', cursor: 'pointer' }}>
-              <input type="checkbox" checked={trombiForm.trombiAnniversaire} onChange={(e) => updateTrombiField('trombiAnniversaire', e.target.checked)} style={{ marginTop: '0.2rem' }} />
-              <span>
-                <b style={{ color: 'var(--ink)' }}>Me fêter le jour de mon anniversaire</b> dans le trombinoscope (gâteau, champagne et feu d'artifice). Seul le fait que ce soit mon anniversaire aujourd'hui est visible : ni ma date de naissance, ni mon âge. Nécessite ta date de naissance dans les informations confidentielles.
-              </span>
-            </label>
 
             {trombiMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{trombiMessage}</p>}
             <button type="submit" disabled={savingTrombi} className="btn btn--solid" style={{ justifyContent: 'center' }}>

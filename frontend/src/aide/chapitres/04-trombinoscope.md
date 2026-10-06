@@ -42,7 +42,7 @@ Pour refermer le rideau : bouton **‹**, bouton **Refermer le rideau**, ou touc
 Le jour de son anniversaire, un adhérent est fêté : sa carte se pare d'un **gâteau avec ses bougies**, d'une **bouteille** et d'une **flûte de champagne**, avec un petit **feu d'artifice** animé et la mention « Joyeux anniversaire ! ». Sa fiche affiche le même décor. Un 29 février est fêté le 28 février les années non bissextiles.
 
 :::info
-Seul le fait que **ce soit son anniversaire aujourd'hui** est visible des autres adhérents : jamais sa date de naissance ni son âge. Chacun peut refuser d'être fêté (voir [Mes informations](aide:mes-informations)). La fête suppose que la date de naissance soit renseignée dans les informations confidentielles.
+Un adhérent n'est fêté que s'il a **choisi de montrer sa date de naissance** aux autres adhérents (champ **Je suis né** de ses informations visibles, voir [Mes informations](aide:mes-informations)). S'il ne l'a pas renseignée, rien ne se passe. Sa date de naissance confidentielle n'est jamais utilisée.
 :::
 
 :::astuce
