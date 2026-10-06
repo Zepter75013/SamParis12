@@ -9,11 +9,13 @@ l'écran affiche « La liaison Strava n'est pas encore activée par le club » e
 - **Données privées à l'adhérent** : depuis novembre 2024, une application ne peut montrer les données Strava d'un athlète
   qu'à cet athlète. L'écran respecte cette règle : aucune route ne renvoie l'activité d'un autre adhérent. Pas de classement,
   pas de totaux visibles du bureau.
-- **Capacité** : une application Strava toute neuve ne peut connecter qu'**un seul athlète** (le propriétaire de l'application).
-  Strava la passe à **10 athlètes** sur simple demande ; au-delà, il faut déposer une demande d'examen auprès de Strava
-  (réponse non garantie pour une application de club). Le formulaire est accessible depuis la page de l'application
-  (https://www.strava.com/settings/api) et la documentation : https://developers.strava.com/docs/getting-started/ .
-- **Limites d'appels** : 100 requêtes / 15 min et 1 000 / jour à l'origine (200 / 2 000 après passage à 10 athlètes). L'écran
+- **Capacité** : une application Strava toute neuve est en **« Single Player Mode »** : elle ne peut connecter qu'**un seul
+  athlète**, son propriétaire. Un autre compte qui tente de se connecter voit l'erreur « 403 : limite d'athlètes connectés
+  dépassée » (page de Strava, pas du site du club). Pour connecter plus d'adhérents, il faut **déposer une demande** : formulaire
+  « Developer Program » indiqué sur https://developers.strava.com/docs/rate-limits/ . Strava l'examine en **7 à 10 jours
+  ouvrés** et ne garantit pas la réponse (il attend notamment une gestion soignée de la capacité et, de préférence, l'usage des
+  webhooks). Contact en cas de silence : developers@strava.com .
+- **Limites d'appels** : 100 requêtes / 15 min et 1 000 / jour à l'origine (plus après augmentation de capacité). L'écran
   garde les réponses en mémoire 5 minutes pour les ménager.
 
 ## 1. Créer l'application Strava
@@ -58,7 +60,7 @@ commandes habituelles de déploiement.
 ## 4. Tester
 
 Se connecter à l'espace adhérent avec le compte propriétaire de l'application Strava, ouvrir **Mon activité** et cliquer sur
-**Se connecter avec Strava**. Un autre adhérent ne pourra se connecter qu'après le passage à 10 athlètes (étape ci-dessus).
+**Se connecter avec Strava**. Un autre adhérent ne pourra se connecter qu'après acceptation de la demande d'augmentation de capacité (voir plus haut).
 
 ## Sécurité et confidentialité
 
