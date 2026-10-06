@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.31.2',
+    date: '7 octobre 2026',
+    notes: "Trombinoscope : la barre « Tous, A à Z » s'étend sur toute la largeur de l'écran et les 8 filtres (4 activités, 4 statuts) tiennent sur une seule ligne ; sur téléphone ils passent à la ligne.",
+  },
+  {
     version: '1.31.1',
     date: '7 octobre 2026',
     notes: "L'espace adhérent exploite désormais toute la largeur de l'écran (plus de grandes marges blanches sur Mac et PC) ; la grille des documents s'adapte au nombre de colonnes possibles. Les bascules du profil ont un fond blanc.",

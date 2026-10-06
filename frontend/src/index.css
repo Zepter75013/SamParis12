@@ -1328,6 +1328,14 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .bascule-aide { margin: 0.7rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
 @media (prefers-reduced-motion: reduce) { .bascule__pastille { transition: none; } }
 
+/* Trombinoscope : alphabet et filtres sur toute la largeur */
+.trombi-alpha { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 1.2rem; }
+.trombi-alpha > .btn { flex: 1 1 0; min-width: 1.9rem; justify-content: center; text-align: center; }
+.trombi-alpha > .btn:first-child { flex: 2 1 0; min-width: 3.4rem; }
+.trombi-filtres { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; }
+.trombi-filtres__groupe { display: flex; flex-wrap: wrap; flex: 1 1 24rem; gap: 0.4rem; }
+.trombi-filtres__groupe > .btn { flex: 1 1 auto; justify-content: center; text-align: center; }
+
 /* ---- Statistiques ---- */
 .camembert { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.2rem; }
 .camembert__svg { flex: 0 1 15rem; width: 15rem; max-width: 100%; height: auto; overflow: visible; }

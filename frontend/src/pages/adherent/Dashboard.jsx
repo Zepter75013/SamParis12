@@ -722,7 +722,7 @@ export default function Dashboard() {
               <p style={{ fontSize: '0.95rem', color: 'var(--ink-soft)', marginTop: '0.3rem' }}>Faites connaissance avec les adhérents, le bureau et les entraîneurs bénévoles diplômés du club.</p>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '1.2rem' }}>
+            <div className="trombi-alpha">
               <button
                 type="button"
                 onClick={() => setLetter(null)}
@@ -756,7 +756,8 @@ export default function Dashboard() {
                 onChange={(e) => setSearch(e.target.value)}
                 style={{ padding: '0.6rem 0.8rem', background: '#fff', color: '#1C1917', border: '1px solid var(--line)', minWidth: 280, width: '100%', fontFamily: 'inherit', fontSize: 'inherit', marginBottom: '0.8rem' }}
               />
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
+              <div className="trombi-filtres">
+              <div className="trombi-filtres__groupe">
                 {ACTIVITY_FILTERS.map((a) => (
                   <button
                     key={a}
@@ -768,7 +769,7 @@ export default function Dashboard() {
                   </button>
                 ))}
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+              <div className="trombi-filtres__groupe">
                 <button
                   onClick={() => setStatus(null)}
                   className={`btn ${!status ? 'btn--solid' : 'btn--ghost'}`}
@@ -786,6 +787,7 @@ export default function Dashboard() {
                     {s}
                   </button>
                 ))}
+              </div>
               </div>
             </div>
 
