@@ -456,10 +456,12 @@ export default function Dashboard() {
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setProfileMenuOpen((v) => !v)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', maxWidth: '100%' }}
+                aria-label="Mon profil"
               >
-                <span>
-                  <b style={{ display: 'block' }}>{me ? `${me.prenom} ${me.nom[0]}.` : '…'}</b>
+                {me && <Avatar photoUrl={me.photoUrl} nom={`${me.prenom} ${me.nom}`} size={40} />}
+                <span style={{ minWidth: 0 }}>
+                  <b style={{ display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '15rem' }}>{me ? `${me.prenom} ${me.nom}` : '…'}</b>
                   <span style={{ color: 'var(--ink-soft)', fontSize: '0.66rem' }}>
                     {!me ? 'Chargement…' : (me.numeroLicence ? `FFA N° ${me.numeroLicence}` : 'Licence non renseignée')}
                   </span>

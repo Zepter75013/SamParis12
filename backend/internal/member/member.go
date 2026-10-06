@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -352,6 +353,52 @@ func (r *Repository) GetByEmail(email string) (*Member, error) {
 	return m, r.decorate([]*Member{m})
 }
 
+var prefixeLicence = regexp.MustCompile(`(?i)^(ffa)?[\s:.\-]*(n°|nº|no\.?\s|n\s)?[\s:.\-]*`)
+
+// licenceKey normalise un numéro de licence saisi : sans « FFA », « N° », espaces ni ponctuation, en majuscules.
+func licenceKey(s string) string {
+	s = prefixeLicence.ReplaceAllString(strings.TrimSpace(s), "")
+	var b strings.Builder
+	for _, c := range strings.ToUpper(s) {
+		if (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') {
+			b.WriteRune(c)
+		}
+	}
+	return b.String()
+}
+
+// resolveLogin transforme l'identifiant saisi à la connexion en adresse email du compte : une adresse email telle quelle,
+// sinon un numéro de licence (« 1760320 », « FFA N° 1 760 320 »…). Un numéro inconnu ou partagé par plusieurs adhérents
+// ne donne rien (connexion refusée), comme une adresse inconnue.
+func (r *Repository) resolveLogin(ident string) string {
+	ident = strings.ToLower(strings.TrimSpace(ident))
+	if strings.Contains(ident, "@") {
+		return ident
+	}
+	key := licenceKey(ident)
+	if key == "" {
+		return ""
+	}
+	rows, err := r.db.Query(`
+		SELECT email FROM members
+		WHERE numero_licence <> '' AND UPPER(REGEXP_REPLACE(numero_licence, '[^A-Za-z0-9]', '')) = ? LIMIT 2`, key)
+	if err != nil {
+		return ""
+	}
+	defer rows.Close()
+	var emails []string
+	for rows.Next() {
+		var e string
+		if rows.Scan(&e) == nil {
+			emails = append(emails, e)
+		}
+	}
+	if len(emails) != 1 {
+		return ""
+	}
+	return strings.ToLower(emails[0])
+}
+
 func (r *Repository) getAuth(email string) (id int64, passwordHash string, mustChange bool, err error) {
 	err = r.db.QueryRow(`SELECT id, password_hash, must_change_password FROM members WHERE email = ?`, email).
 		Scan(&id, &passwordHash, &mustChange)
@@ -583,11 +630,12 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "requête invalide")
 		return
 	}
-	email := strings.ToLower(strings.TrimSpace(req.Email))
+	// L'identifiant est une adresse email ou un numéro de licence.
+	email := h.repo.resolveLogin(req.Email)
 
 	id, passwordHash, mustChange, err := h.repo.getAuth(email)
 	if err == sql.ErrNoRows {
-		httpx.Error(w, http.StatusUnauthorized, "email ou mot de passe incorrect")
+		httpx.Error(w, http.StatusUnauthorized, "identifiant ou mot de passe incorrect")
 		return
 	}
 	if err != nil {
@@ -596,7 +644,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)) != nil {
-		httpx.Error(w, http.StatusUnauthorized, "email ou mot de passe incorrect")
+		httpx.Error(w, http.StatusUnauthorized, "identifiant ou mot de passe incorrect")
 		return
 	}
 
@@ -632,7 +680,7 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "requête invalide")
 		return
 	}
-	email := strings.ToLower(strings.TrimSpace(req.Email))
+	email := h.repo.resolveLogin(req.Email) // adresse email ou numéro de licence
 
 	m, err := h.repo.GetByEmail(email)
 	if err == nil {
@@ -649,7 +697,7 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		log.Printf("mailer: demande de code pour %s — aucun compte trouvé avec cet email", email)
+		log.Printf("mailer: demande de code pour %q — aucun compte trouvé avec cet identifiant", req.Email)
 	}
 	// Toujours 204, que l'email existe ou non, pour ne pas révéler les comptes existants.
 	httpx.JSON(w, http.StatusNoContent, nil)
@@ -671,7 +719,7 @@ func (h *Handler) VerifyCode(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "requête invalide")
 		return
 	}
-	email := strings.ToLower(strings.TrimSpace(req.Email))
+	email := h.repo.resolveLogin(req.Email)
 	m, err := h.repo.GetByEmail(email)
 	if err != nil {
 		httpx.Error(w, http.StatusBadRequest, "code invalide ou expiré")
@@ -701,7 +749,7 @@ func (h *Handler) ConfirmCode(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusBadRequest, "requête invalide")
 		return
 	}
-	email := strings.ToLower(strings.TrimSpace(req.Email))
+	email := h.repo.resolveLogin(req.Email)
 	if len(req.NewPassword) < 8 {
 		httpx.Error(w, http.StatusBadRequest, "le mot de passe doit contenir au moins 8 caractères")
 		return

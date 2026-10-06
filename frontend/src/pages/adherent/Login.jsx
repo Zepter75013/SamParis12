@@ -55,14 +55,14 @@ export default function Login() {
 
   async function handleForgotPassword() {
     if (!email) {
-      setError('Renseignez votre adresse email ci-dessus avant de demander un code.')
+      setError('Renseignez votre email ou votre n° de licence ci-dessus avant de demander un code.')
       return
     }
     setError('')
     setLoading(true)
     try {
       await api.requestCode(email)
-      setInfo('Si un compte existe avec cette adresse, un code vient de vous être envoyé par email.')
+      setInfo('Si un compte existe avec cet identifiant, un code vient de vous être envoyé par email.')
       setCodeVerified(false)
       setStep('code')
     } catch (err) {
@@ -137,9 +137,20 @@ export default function Login() {
             <form onSubmit={handleLogin} style={{ display: 'grid', gap: '1.2rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
               <div>
                 <label style={{ display: 'block', textTransform: 'uppercase', color: 'var(--stone)', letterSpacing: '0.1em', fontSize: '0.7rem' }}>
-                  Email
+                  Email ou n° de licence
                 </label>
-                <input type="email" className="login-input" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <input
+                  type="text"
+                  className="login-input"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="prenom.nom@exemple.fr ou 1760320"
+                  required
+                />
               </div>
 
               <div>

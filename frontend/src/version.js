@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.27.0',
+    date: '7 octobre 2026',
+    notes: "Connexion à l'espace adhérent avec l'email OU le numéro de licence (« 1760320 », « FFA N° 1760320 »…) et le mot de passe, y compris pour « mot de passe oublié ». L'en-tête affiche la photo de l'adhérent à gauche de son nom et prénom en entier et de son numéro de licence.",
+  },
+  {
     version: '1.26.0',
     date: '7 octobre 2026',
     notes: "Nouvel écran Rôles et droits, sur le modèle de la personnalisation du ruban d'Excel : on choisit un rôle, les fonctionnalités disponibles sont à gauche, celles accordées au rôle à droite. Chaque adhérent a désormais un rôle dans l'application (champ de sa fiche) ; le rôle Adhérent, le plus simple, n'a aucune fonctionnalité d'administration. Remplace l'écran Fonctionnalités (migration 0023, les anciens droits sont repris).",
