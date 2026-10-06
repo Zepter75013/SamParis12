@@ -34,6 +34,7 @@ Ce bloc alimente ta fiche du [Trombinoscope](aide:trombinoscope). **Tout est fac
 - **E-mail** et **Téléphone** affichés aux autres adhérents (ils peuvent être différents de tes coordonnées personnelles) ;
 - **Profession**, **Employeur**, **Distance favorite** ;
 - **Je me présente** : quelques mots pour te présenter.
+- **Me fêter le jour de mon anniversaire** : case cochée par défaut. Le jour de ton anniversaire, ta carte du [Trombinoscope](aide:trombinoscope) s'orne d'un gâteau, de champagne et d'un feu d'artifice. Seul le fait que ce soit ton anniversaire aujourd'hui est visible : ni ta date de naissance, ni ton âge. Décoche la case si tu préfères ne pas être fêté. Cette fête nécessite ta **date de naissance** dans les informations confidentielles.
 
 Clique sur **Enregistrer** pour valider.
 

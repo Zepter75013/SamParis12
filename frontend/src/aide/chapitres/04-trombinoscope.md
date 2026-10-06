@@ -37,6 +37,14 @@ Dans la fiche, le bouton **Voir ses courses et résultats ›** ouvre un **ridea
 
 Pour refermer le rideau : bouton **‹**, bouton **Refermer le rideau**, ou touche **Échap**. Un second appui sur **Échap** ferme la fiche.
 
+## Les anniversaires
+
+Le jour de son anniversaire, un adhérent est fêté : sa carte se pare d'un **gâteau avec ses bougies**, d'une **bouteille** et d'une **flûte de champagne**, avec un petit **feu d'artifice** animé et la mention « Joyeux anniversaire ! ». Sa fiche affiche le même décor. Un 29 février est fêté le 28 février les années non bissextiles.
+
+:::info
+Seul le fait que **ce soit son anniversaire aujourd'hui** est visible des autres adhérents : jamais sa date de naissance ni son âge. Chacun peut refuser d'être fêté (voir [Mes informations](aide:mes-informations)). La fête suppose que la date de naissance soit renseignée dans les informations confidentielles.
+:::
+
 :::astuce
 Tu peux aussi ouvrir la fiche d'un adhérent en cliquant sur sa **photo** dans [Nos Courses](aide:courses), [Résultats](aide:resultats) ou [Records du Club](aide:records).
 :::

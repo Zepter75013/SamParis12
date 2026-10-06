@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.39.0',
+    date: '7 octobre 2026',
+    notes: "Anniversaires : le jour de son anniversaire, l'adhérent est fêté dans le trombinoscope (gâteau avec bougies, bouteille et flûte de champagne, petit feu d'artifice animé) sur sa carte et sur sa fiche. Seul le fait que ce soit son anniversaire aujourd'hui est visible des autres (jamais la date ni l'âge), et chacun peut refuser dans « Tes informations » (migration 0029).",
+  },
+  {
     version: '1.38.1',
     date: '7 octobre 2026',
     notes: "Tous les champs de saisie de l'application (zones de texte, menus déroulants, dates, recherche, connexion, formulaires et fenêtres) ont maintenant des angles arrondis, comme les boutons.",

@@ -17,6 +17,7 @@ import CalculateurPanel from './CalculateurPanel.jsx'
 // L'aide (chapitres + moteur Markdown) est chargée à la demande : elle n'alourdit pas le reste de l'espace adhérent.
 const AidePanel = lazy(() => import('./AidePanel.jsx'))
 import Bascule from '../../components/Bascule.jsx'
+import { DecorAnniversaire, FeuArtifice } from '../../components/Anniversaire.jsx'
 import { useChat } from '../../lib/chat.js'
 
 const THEME_OPTIONS = [
@@ -254,6 +255,13 @@ function CourseLigne({ r }) {
 
 // Fiche détaillée d'un adhérent (Trombinoscope). Ses prochaines courses et ses résultats s'ouvrent, si on le désire,
 // dans un « rideau » qui coulisse sur la droite de la fiche (par-dessus la fiche sur téléphone).
+// Aujourd'hui est-il l'anniversaire de cette date de naissance (AAAA-MM-JJ) ? Sert à mettre à jour la liste après une modification du profil.
+function estAujourdhui(dateNaissance) {
+  if (!dateNaissance) return false
+  const j = new Date()
+  return dateNaissance.slice(5, 10) === `${String(j.getMonth() + 1).padStart(2, '0')}-${String(j.getDate()).padStart(2, '0')}`
+}
+
 function MemberDetailModal({ member, token, onClose }) {
   const [results, setResults] = useState([])
   const [upcoming, setUpcoming] = useState([])
@@ -307,6 +315,14 @@ function MemberDetailModal({ member, token, onClose }) {
           >
             ✕
           </button>
+
+          {member.anniversaire && (
+            <div className="anniv-bandeau">
+              <FeuArtifice />
+              <DecorAnniversaire grand />
+              <b>Aujourd'hui, c'est l'anniversaire de {member.prenom} !</b>
+            </div>
+          )}
 
         <div style={{ margin: '0 auto 1rem', display: 'flex', justifyContent: 'center' }}>
           <Avatar photoUrl={member.photoUrl} nom={`${member.prenom} ${member.nom}`} size={84} />
@@ -519,6 +535,7 @@ export default function Dashboard() {
           trombiHabite: updated.trombiHabite, trombiNaissance: updated.trombiNaissance, trombiOrigine: updated.trombiOrigine,
           trombiEmail: updated.trombiEmail, trombiTelephone: updated.trombiTelephone, trombiProfession: updated.trombiProfession,
           trombiEmployeur: updated.trombiEmployeur, trombiDistanceFavorite: updated.trombiDistanceFavorite, trombiBio: updated.trombiBio,
+          anniversaire: updated.trombiAnniversaire !== false && estAujourdhui(updated.dateNaissance),
         }
         : m
     )))
@@ -892,15 +909,19 @@ export default function Dashboard() {
                 <button
                   key={m.id}
                   type="button"
+                  className={`trombi-carte${m.anniversaire ? ' trombi-carte--anniv' : ''}`}
                   onClick={() => setOpenMember(m)}
                   style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
                   onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--vermilion)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--line)' }}
                 >
+                  {m.anniversaire && <FeuArtifice />}
+                  {m.anniversaire && <DecorAnniversaire />}
                   <div style={{ marginBottom: '0.8rem' }}>
                     <Avatar photoUrl={m.photoUrl} nom={`${m.prenom} ${m.nom}`} size={60} />
                   </div>
                   <h4 style={{ fontSize: '1.2rem', textTransform: 'uppercase' }}>{m.prenom} {m.nom}</h4>
+                  {m.anniversaire && <span className="anniv-voeux">Joyeux anniversaire !</span>}
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--vermilion)', fontWeight: 'bold', marginTop: '0.2rem' }}>{m.role}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--stone)', textTransform: 'uppercase', marginTop: '0.6rem', padding: '0.15rem 0.5rem', background: 'var(--surface-2)' }}>{m.groupe} · {m.statut}</span>
                 </button>
@@ -1285,6 +1306,7 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
       trombiEmployeur: me.trombiEmployeur || '',
       trombiDistanceFavorite: me.trombiDistanceFavorite || '',
       trombiBio: me.trombiBio || '',
+      trombiAnniversaire: me.trombiAnniversaire !== false,
     })
   }, [me])
 
@@ -1550,6 +1572,13 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
               {fieldLabel('Je me présente')}
               <textarea rows={4} style={{ ...inputStyle, resize: 'vertical' }} value={trombiForm.trombiBio} onChange={(e) => updateTrombiField('trombiBio', e.target.value)} />
             </div>
+
+            <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--ink-soft)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={trombiForm.trombiAnniversaire} onChange={(e) => updateTrombiField('trombiAnniversaire', e.target.checked)} style={{ marginTop: '0.2rem' }} />
+              <span>
+                <b style={{ color: 'var(--ink)' }}>Me fêter le jour de mon anniversaire</b> dans le trombinoscope (gâteau, champagne et feu d'artifice). Seul le fait que ce soit mon anniversaire aujourd'hui est visible : ni ma date de naissance, ni mon âge. Nécessite ta date de naissance dans les informations confidentielles.
+              </span>
+            </label>
 
             {trombiMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)' }}>{trombiMessage}</p>}
             <button type="submit" disabled={savingTrombi} className="btn btn--solid" style={{ justifyContent: 'center' }}>

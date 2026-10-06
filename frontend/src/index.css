@@ -1404,6 +1404,33 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .calc-equiv caption { text-align: left; padding: 0 0 0.4rem; font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
 @media (max-width: 860px) { .calc-grille { grid-template-columns: minmax(0, 1fr); } }
 
+/* ---- Anniversaire dans le trombinoscope ---- */
+.trombi-carte { position: relative; overflow: hidden; }
+.trombi-carte--anniv { border-color: #e2b33c !important; background: linear-gradient(180deg, color-mix(in srgb, #f8e08a 24%, var(--surface)), var(--surface) 60%) !important; box-shadow: 0 0 0 2px rgba(226, 179, 60, 0.35), 0 8px 24px rgba(226, 179, 60, 0.22); }
+.anniv-voeux { margin-top: 0.3rem; font: 700 0.95rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: #b8860b; }
+.anniv-decor { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 0.5rem; height: 3.6rem; margin-bottom: 0.5rem; }
+.anniv-decor--grand { height: 5.6rem; gap: 1rem; margin-bottom: 0.4rem; }
+.anniv-svg { height: 100%; width: auto; overflow: visible; }
+.anniv-svg--bouteille { margin-bottom: 0; }
+.anniv-flamme { transform-box: fill-box; transform-origin: 50% 100%; animation: anniv-flamme 0.35s ease-in-out infinite alternate; }
+@keyframes anniv-flamme { from { transform: scale(1, 1) rotate(-5deg); } to { transform: scale(0.85, 1.18) rotate(5deg); } }
+.anniv-bulle { opacity: 0; animation: anniv-bulle 2.6s linear infinite; }
+@keyframes anniv-bulle { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 0.95; } 100% { transform: translateY(-26px); opacity: 0; } }
+.anniv-bouchon { transform-box: fill-box; transform-origin: 50% 50%; animation: anniv-bouchon 3.4s ease-out infinite; }
+@keyframes anniv-bouchon { 0%, 68% { transform: translateY(0) rotate(0); opacity: 1; } 80% { transform: translateY(-16px) rotate(24deg); opacity: 1; } 100% { transform: translateY(-34px) rotate(70deg); opacity: 0; } }
+.anniv-mousse { opacity: 0; animation: anniv-mousse 3.4s ease-out infinite; }
+.anniv-mousse--2 { animation-name: anniv-mousse2; }
+@keyframes anniv-mousse { 0%, 72% { opacity: 0; transform: translate(0, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-8px, -16px); } }
+@keyframes anniv-mousse2 { 0%, 72% { opacity: 0; transform: translate(0, 0); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(8px, -18px); } }
+.anniv-bandeau { position: relative; overflow: hidden; margin: -2rem -2rem 1.2rem; padding: 1.2rem 1rem 1rem; text-align: center; background: linear-gradient(180deg, color-mix(in srgb, #f8e08a 30%, var(--surface)), var(--surface)); border-bottom: 1px solid color-mix(in srgb, #e2b33c 50%, var(--line)); }
+.anniv-bandeau b { display: block; font: 700 1.1rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; color: #b8860b; }
+.feu { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+.feu__rafale { position: absolute; width: 0; height: 0; }
+.feu__rafale i { position: absolute; left: -1.5px; top: -5px; width: 3px; height: 10px; border-radius: 2px; background: var(--c); opacity: 0; animation: feu 3.6s ease-out infinite; animation-delay: var(--d); }
+@keyframes feu { 0% { opacity: 0; transform: rotate(var(--a)) translateY(-2px) scaleY(0.4); } 4% { opacity: 1; } 22% { opacity: 1; transform: rotate(var(--a)) translateY(-24px) scaleY(1); } 40%, 100% { opacity: 0; transform: rotate(var(--a)) translateY(-34px) scaleY(0.4); } }
+@media (max-width: 860px) { .anniv-bandeau { margin: -1.5rem -1.2rem 1.2rem; } }
+@media (prefers-reduced-motion: reduce) { .feu { display: none; } .anniv-flamme, .anniv-bulle, .anniv-bouchon, .anniv-mousse { animation: none; } .anniv-bulle { opacity: 0.8; } }
+
 /* ---- Champ date (saisie JJ/MM/AAAA + calendrier) ---- */
 .champ-date { position: relative; display: flex; flex-direction: column; gap: 0.25rem; }
 .champ-date__label { font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
