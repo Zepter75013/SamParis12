@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.31.3',
+    date: '7 octobre 2026',
+    notes: "Les boutons d'action de toute l'application et les lettres de l'alphabet du trombinoscope ont des angles arrondis ; l'alphabet tient sur une seule ligne dès les écrans de tablette.",
+  },
+  {
     version: '1.31.2',
     date: '7 octobre 2026',
     notes: "Trombinoscope : la barre « Tous, A à Z » s'étend sur toute la largeur de l'écran et les 8 filtres (4 activités, 4 statuts) tiennent sur une seule ligne ; sur téléphone ils passent à la ligne.",
