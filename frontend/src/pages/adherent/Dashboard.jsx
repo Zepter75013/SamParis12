@@ -11,7 +11,19 @@ import ChatPanel from './Chat.jsx'
 import RolesPanel from './RolesPanel.jsx'
 import JournalPanel from './JournalPanel.jsx'
 import StatsPanel from './StatsPanel.jsx'
+import Bascule from '../../components/Bascule.jsx'
 import { useChat } from '../../lib/chat.js'
+
+const THEME_OPTIONS = [
+  { value: 'dark', label: 'Sombre', hint: 'Fond sombre.' },
+  { value: 'light', label: 'Clair', hint: 'Fond clair pour un usage de jour.' },
+  { value: 'system', label: 'Système', hint: 'Suit le réglage de ton appareil.' },
+]
+
+const MENU_OPTIONS = [
+  { value: 'horizontal', label: 'Horizontal', hint: 'Les onglets en haut de la page.' },
+  { value: 'lateral', label: 'Latéral', hint: 'Le menu à gauche, toujours visible (tiroir sur téléphone).' },
+]
 
 const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
@@ -1294,24 +1306,8 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
         <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1rem' }}>
           Thème de l'application sur cet appareil.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.8rem' }}>
-          {[
-            { value: 'dark', label: 'Sombre', hint: 'Fond sombre, comme aujourd’hui.' },
-            { value: 'light', label: 'Clair', hint: 'Fond clair pour un usage de jour.' },
-            { value: 'system', label: 'Système', hint: 'Suit le réglage de ton appareil.' },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => handleThemeChange(opt.value)}
-              className={`btn ${theme === opt.value ? 'btn--solid' : 'btn--ghost'}`}
-              style={{ flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', padding: '0.9rem 1rem', gap: '0.2rem', height: 'auto' }}
-            >
-              <b style={{ fontSize: '0.85rem' }}>{opt.label}</b>
-              <span style={{ fontSize: '0.72rem', fontWeight: 'normal', opacity: 0.85 }}>{opt.hint}</span>
-            </button>
-          ))}
-        </div>
+        <Bascule label="Thème de l'application" options={THEME_OPTIONS} value={theme} onChange={handleThemeChange} />
+        <p className="bascule-aide">{THEME_OPTIONS.find((o) => o.value === theme)?.hint}</p>
       </div>
 
       <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', marginBottom: '1.5rem' }}>
@@ -1319,24 +1315,8 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
         <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', margin: '0.3rem 0 1rem' }}>
           Choisis où afficher le menu de l'espace adhérent. Ce choix est enregistré sur ton profil : tu le retrouves sur tous tes appareils.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.8rem' }}>
-          {[
-            { value: 'horizontal', label: 'Horizontal', hint: 'Les onglets en haut de la page.' },
-            { value: 'lateral', label: 'Latéral', hint: 'Le menu à gauche, toujours visible (tiroir sur téléphone).' },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => onMenuLayoutChange(opt.value)}
-              aria-pressed={menuLayout === opt.value}
-              className={`menu-choix${menuLayout === opt.value ? ' is-on' : ''}`}
-            >
-              <span className={`menu-choix__apercu menu-choix__apercu--${opt.value}`} aria-hidden="true"><i /><i /><i /></span>
-              <b>{opt.label}</b>
-              <span>{opt.hint}</span>
-            </button>
-          ))}
-        </div>
+        <Bascule label="Disposition du menu" options={MENU_OPTIONS} value={menuLayout} onChange={onMenuLayoutChange} />
+        <p className="bascule-aide">{MENU_OPTIONS.find((o) => o.value === menuLayout)?.hint}</p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>

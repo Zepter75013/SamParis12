@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.30.1',
+    date: '7 octobre 2026',
+    notes: "Préférences du profil : le thème (Sombre / Clair / Système) et la disposition du menu (Horizontal / Latéral) se choisissent avec des bascules coulissantes à la place des cartes.",
+  },
+  {
     version: '1.30.0',
     date: '7 octobre 2026',
     notes: "Nouvel écran Statistiques, affiché selon le rôle : trois fonctionnalités à accorder dans « Rôles et droits » (Statistiques : effectifs, courses, engagement). Effectifs (statut, groupe, sexe, âge, historique des adhésions), Courses (participation, résultats, kilomètres, podiums, assiduité, filtre par saison) et Engagement (connexions, messagerie, jeu, fiches incomplètes), avec exports CSV des listes nominatives, tracés dans le journal d'activité. Le rôle Adhérent ne voit pas l'écran ; les rôles du bureau reçoivent les trois droits par défaut (migration 0026).",
