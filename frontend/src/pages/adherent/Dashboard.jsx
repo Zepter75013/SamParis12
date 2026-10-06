@@ -2648,7 +2648,7 @@ function DocumentsPanel({ token, me }) {
       {loadError && <p style={{ color: 'var(--vermilion)' }}>{loadError}</p>}
 
       {!loading && !loadError && (
-        <div className="doc-slots-grid" style={{ width: '100vw', position: 'relative', left: '50%', marginLeft: '-50vw', paddingInline: 'var(--edge)', boxSizing: 'border-box', display: 'grid', gap: '1.2rem' }}>
+        <div className="doc-slots-grid" style={{ display: 'grid', gap: '1.2rem' }}>
           {DOCUMENT_SLOTS.map((slot) => {
             const doc = docs.find((d) => d.categorie === slot.categorie)
             const isEditing = editingCategorie === slot.categorie
@@ -2993,9 +2993,8 @@ function AdminMembersPanel({ token, me, onMembersChanged }) {
       {actionError && !createdMember && <p style={{ color: 'var(--vermilion)' }}>{actionError}</p>}
 
       {!loading && !loadError && (
-        // Sort de la largeur de .shell (max-width: 1180px) pour profiter de
-        // tout l'écran disponible sur un tableau à nombreuses colonnes.
-        <div style={{ width: '100vw', position: 'relative', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw', paddingInline: 'var(--edge)', boxSizing: 'border-box' }}>
+        // L'espace adhérent occupe déjà toute la largeur de l'écran.
+        <div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', marginBottom: '1.2rem', alignItems: 'center' }}>
             <button type="button" onClick={openCreateForm} className="btn btn--solid" style={{ padding: '0.65rem 1.2rem', fontSize: '0.8rem' }}>
               + Nouvel adhérent

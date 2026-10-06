@@ -266,6 +266,7 @@ header {
 .login-input:focus { outline: none; border-color: var(--vermilion); }
 
 /* ---------- Espace adhérent (tableau de bord) ---------- */
+.adherent-layout .shell { max-width: none; padding-inline: clamp(1rem, 2.5vw, 2.5rem); } /* l'espace adhérent exploite toute la largeur de l'écran */
 .adherent-layout { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
 .adherent-header {
   position: sticky;
@@ -538,7 +539,7 @@ footer {
 .foot .sep { flex: 1; }
 .foot .partner { display: flex; align-items: center; gap: 0.6rem; }
 
-.doc-slots-grid { grid-template-columns: repeat(2, 1fr); }
+.doc-slots-grid { grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr)); }
 
 @media (max-width: 860px) {
   .doc-slots-grid { grid-template-columns: 1fr; }
@@ -1318,12 +1319,12 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 
 /* Bascule (interrupteur coulissant) : préférences du profil */
 .bascule { position: relative; display: inline-grid; grid-template-columns: repeat(var(--n), minmax(7.5rem, 1fr)); max-width: 100%; padding: 3px; border-radius: 999px; background: linear-gradient(90deg, #8a1c13, var(--vermilion)); }
-.bascule::before { content: ''; position: absolute; inset: 3px; border-radius: 999px; background: #1a1210; }
+.bascule::before { content: ''; position: absolute; inset: 3px; border-radius: 999px; background: var(--surface); }
 .bascule__pastille { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n)); border-radius: 999px; background: linear-gradient(135deg, #f0584a, #b8281d); box-shadow: 0 0 14px rgba(222, 51, 39, 0.5); transform: translateX(calc(var(--i) * 100%)); transition: transform 0.3s cubic-bezier(0.4, 1.25, 0.5, 1); }
-.bascule button { position: relative; z-index: 1; padding: 0.8rem 1.1rem; border: 0; border-radius: 999px; background: none; color: #c9c9da; font: 700 0.85rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: color 0.2s; }
-.bascule button:hover { color: #fff; }
-.bascule button[aria-checked='true'] { color: #fff; }
-.bascule button:focus-visible { outline: 2px solid #fff; outline-offset: -5px; }
+.bascule button { position: relative; z-index: 1; padding: 0.8rem 1.1rem; border: 0; border-radius: 999px; background: none; color: var(--ink-soft); font: 700 0.85rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: color 0.2s; }
+.bascule button:hover { color: var(--vermilion); }
+.bascule button[aria-checked='true'], .bascule button[aria-checked='true']:hover { color: #fff; }
+.bascule button:focus-visible { outline: 2px solid var(--ink); outline-offset: -5px; }
 .bascule-aide { margin: 0.7rem 0 0; font-size: 0.8rem; color: var(--ink-soft); }
 @media (prefers-reduced-motion: reduce) { .bascule__pastille { transition: none; } }
 

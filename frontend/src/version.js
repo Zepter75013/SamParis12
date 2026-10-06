@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.31.1',
+    date: '7 octobre 2026',
+    notes: "L'espace adhérent exploite désormais toute la largeur de l'écran (plus de grandes marges blanches sur Mac et PC) ; la grille des documents s'adapte au nombre de colonnes possibles. Les bascules du profil ont un fond blanc.",
+  },
+  {
     version: '1.31.0',
     date: '7 octobre 2026',
     notes: "Statistiques : camemberts en 3D (statut, groupe, sexe, type et distance des courses, état des comptes et des fiches) et colonnes en 3D. La section Courses s'enrichit : allure moyenne et par distance, plus longue distance, adhérents ayant couru, régularité, courses les plus suivies, résultats par saison. Les bascules du profil passent au rouge SAM.",
