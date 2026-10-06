@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
 
 // Écran « Rôles et droits », sur le modèle de la personnalisation du ruban d'Excel : on choisit un rôle en haut ;
@@ -15,22 +15,75 @@ const ICONES = {
   'roles.admin': '🔑',
 }
 
-function Liste({ titre, items, selection, onSelect, onMove, disabled, vide }) {
+const TYPE_GLISSER = 'application/x-sam-fonctionnalites'
+
+// Liste de fonctionnalités : clic = sélection, Cmd/Ctrl + clic = ajouter ou retirer, Shift + clic = plage, double-clic = déplacer,
+// glisser-déposer vers l'autre liste (plusieurs éléments à la fois si plusieurs sont sélectionnés).
+function Liste({ titre, zone, items, selection, setSelection, onMove, onDropCodes, disabled, vide }) {
+  const ancre = useRef(null)
+  const [dessus, setDessus] = useState(false)
+
+  function cliquer(e, code, index) {
+    // mises à jour fonctionnelles : plusieurs clics très rapprochés ne s'écrasent pas
+    if (e.shiftKey && ancre.current) {
+      const a = items.findIndex((f) => f.code === ancre.current)
+      const debut = Math.min(a < 0 ? index : a, index)
+      const fin = Math.max(a < 0 ? index : a, index)
+      const plage = items.slice(debut, fin + 1).map((f) => f.code)
+      setSelection((cur) => (e.metaKey || e.ctrlKey ? [...new Set([...cur, ...plage])] : plage))
+      return
+    }
+    ancre.current = code
+    if (e.metaKey || e.ctrlKey) setSelection((cur) => (cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code]))
+    else setSelection((cur) => (cur.length === 1 && cur[0] === code ? [] : [code]))
+  }
+
+  function glisser(e, code) {
+    if (disabled) { e.preventDefault(); return }
+    const codes = selection.includes(code) ? selection : [code]
+    if (!selection.includes(code)) setSelection([code])
+    e.dataTransfer.setData(TYPE_GLISSER, JSON.stringify({ zone, codes }))
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
   return (
     <div className="roles-col">
       <b className="roles-col__titre">{titre}</b>
-      <div className="roles-liste" role="listbox" aria-multiselectable="true" aria-label={titre}>
-        {items.map((f) => (
+      <div
+        className={`roles-liste${dessus ? ' is-over' : ''}`}
+        role="listbox"
+        aria-multiselectable="true"
+        aria-label={titre}
+        onDragOver={(e) => { if (!disabled && e.dataTransfer.types.includes(TYPE_GLISSER)) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; setDessus(true) } }}
+        onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDessus(false) }}
+        onDrop={(e) => {
+          setDessus(false)
+          const raw = e.dataTransfer.getData(TYPE_GLISSER)
+          if (!raw || disabled) return
+          e.preventDefault()
+          try {
+            const d = JSON.parse(raw)
+            if (d.zone !== zone) onDropCodes(d.codes)
+          } catch { /* glisser-déposer étranger à l'écran */ }
+        }}
+      >
+        {items.map((f, i) => (
           <div
             key={f.code}
             role="option"
             aria-selected={selection.includes(f.code)}
             tabIndex={0}
+            draggable={!disabled}
             className={`roles-item${selection.includes(f.code) ? ' is-on' : ''}${disabled ? ' is-disabled' : ''}`}
             title={f.description}
-            onClick={(e) => onSelect(f.code, e.metaKey || e.ctrlKey || e.shiftKey)}
-            onDoubleClick={() => !disabled && onMove([f.code])}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); !disabled && onMove([f.code]) } if (e.key === ' ') { e.preventDefault(); onSelect(f.code, true) } }}
+            onClick={(e) => cliquer(e, f.code, i)}
+            onDoubleClick={() => !disabled && onMove(selection.includes(f.code) ? selection : [f.code])}
+            onDragStart={(e) => glisser(e, f.code)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); !disabled && onMove(selection.length ? selection : [f.code]) }
+              if (e.key === ' ') { e.preventDefault(); setSelection(selection.includes(f.code) ? selection.filter((c) => c !== f.code) : [...selection, f.code]) }
+              if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); setSelection(items.map((x) => x.code)) }
+            }}
           >
             <span className="roles-item__ico">{ICONES[f.code] || '⚙️'}</span>
             <span className="roles-item__txt"><b>{f.label}</b><small>{f.description}</small></span>
@@ -100,9 +153,6 @@ export default function RolesPanel({ token }) {
   const disponibles = catalogue.filter((f) => draft && !draft.features.includes(f.code))
   const accordees = catalogue.filter((f) => draft && draft.features.includes(f.code))
 
-  const selectionner = (liste, setListe) => (code, multiple) => {
-    setListe((cur) => (multiple ? (cur.includes(code) ? cur.filter((c) => c !== code) : [...cur, code]) : (cur.length === 1 && cur[0] === code ? [] : [code])))
-  }
   const deplacer = (codes, vers) => {
     if (!codes.length || verrouille || !canEdit) return
     setDraft((d) => ({ ...d, features: vers === 'droite' ? [...new Set([...d.features, ...codes])] : d.features.filter((f) => !codes.includes(f)) }))
@@ -143,11 +193,8 @@ export default function RolesPanel({ token }) {
   }
 
   async function supprimer() {
-    const n = role.membres
-    const txt = n > 0
-      ? `Supprimer le rôle « ${role.nom} » ?\n\n${n} adhérent${n > 1 ? 's' : ''} ${n > 1 ? 'repasseront' : 'repassera'} au rôle Adhérent (aucune fonctionnalité d'administration).`
-      : `Supprimer le rôle « ${role.nom} » ?`
-    if (!window.confirm(txt)) return
+    if (role.membres > 0) return
+    if (!window.confirm(`Supprimer le rôle « ${role.nom} » ?`)) return
     setSaving(true)
     setErreur('')
     try {
@@ -186,7 +233,17 @@ export default function RolesPanel({ token }) {
               </select>
             </label>
             {canEdit && !nouveau && <button type="button" className="btn btn--ghost roles-btn" onClick={() => setNouveau(true)}>＋ Nouveau rôle</button>}
-            {canEdit && !role.systeme && <button type="button" className="btn btn--ghost roles-btn roles-btn--danger" onClick={supprimer} disabled={saving}>Supprimer ce rôle</button>}
+            {canEdit && !role.systeme && (
+              <button
+                type="button"
+                className="btn btn--ghost roles-btn roles-btn--danger"
+                onClick={supprimer}
+                disabled={saving || role.membres > 0}
+                title={role.membres > 0 ? 'Ce rôle est encore attribué : change d’abord le rôle de ses adhérents.' : 'Supprimer ce rôle'}
+              >
+                Supprimer ce rôle
+              </button>
+            )}
           </div>
 
           {nouveau && (
@@ -208,7 +265,10 @@ export default function RolesPanel({ token }) {
               <input type="checkbox" checked={draft.estBureau} disabled={role.systeme || !canEdit} onChange={(e) => setDraft((d) => ({ ...d, estBureau: e.target.checked }))} />
               Les adhérents de ce rôle font partie du bureau (salon Bureau, badge)
             </label>
-            <small>{role.membres} adhérent{role.membres > 1 ? 's ont' : ' a'} ce rôle.</small>
+            <small>
+              {role.membres} adhérent{role.membres > 1 ? 's ont' : ' a'} ce rôle{role.nomsMembres?.length ? ` : ${role.nomsMembres.join(', ')}${role.membres > role.nomsMembres.length ? '…' : ''}` : ''}.
+              {!role.systeme && role.membres > 0 && ' Pour supprimer ce rôle, change d’abord celui de ces adhérents (fiche adhérent, Admin Club).'}
+            </small>
           </div>
 
           {role.estSuper && <p className="roles-info">Ce rôle a <b>toutes les fonctionnalités</b>, y compris celles qui seront ajoutées plus tard. Il ne peut pas être modifié.</p>}
@@ -218,10 +278,12 @@ export default function RolesPanel({ token }) {
           <div className="roles-transfert">
             <Liste
               titre="Fonctionnalités disponibles"
+              zone="gauche"
               items={disponibles}
               selection={selGauche}
-              onSelect={selectionner(selGauche, setSelGauche)}
+              setSelection={setSelGauche}
               onMove={(c) => deplacer(c, 'droite')}
+              onDropCodes={(c) => deplacer(c, 'gauche')}
               disabled={verrouille || !canEdit}
               vide={role.estSuper ? 'Toutes les fonctionnalités sont accordées.' : 'Toutes les fonctionnalités sont déjà accordées à ce rôle.'}
             />
@@ -233,15 +295,17 @@ export default function RolesPanel({ token }) {
             </div>
             <Liste
               titre={`Fonctionnalités accordées au rôle « ${draft.nom || role.nom} »`}
+              zone="droite"
               items={accordees}
               selection={selDroite}
-              onSelect={selectionner(selDroite, setSelDroite)}
+              setSelection={setSelDroite}
               onMove={(c) => deplacer(c, 'gauche')}
+              onDropCodes={(c) => deplacer(c, 'droite')}
               disabled={verrouille || !canEdit}
               vide="Aucune fonctionnalité d'administration : un simple adhérent."
             />
           </div>
-          <p className="roles-aide">Clique sur une fonctionnalité pour la sélectionner (Cmd ou Ctrl pour en choisir plusieurs), puis utilise les boutons au centre ; un double-clic la déplace directement.</p>
+          <p className="roles-aide">Clique pour sélectionner une fonctionnalité, Cmd ou Ctrl + clic pour en ajouter ou en retirer une, Shift + clic pour en choisir plusieurs d'un coup. Glisse-les d'une liste à l'autre, ou utilise les boutons au centre ; un double-clic déplace directement.</p>
 
           {canEdit && (
             <div className="roles-pied">

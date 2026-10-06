@@ -117,6 +117,8 @@ export const api = {
   chatAddMembers: (token, roomId, memberIds) =>
     request(`/chat/rooms/${roomId}/members`, { method: 'POST', token, body: JSON.stringify({ memberIds }) }),
 
+  getAudit: (token, params) => request(`/audit?${new URLSearchParams(params).toString()}`, { token }),
+
   getRoles: (token) => request('/roles', { token }),
   createRole: (token, data) => request('/roles', { method: 'POST', token, body: JSON.stringify(data) }),
   updateRole: (token, id, data) => request(`/roles/${id}`, { method: 'PUT', token, body: JSON.stringify(data) }),

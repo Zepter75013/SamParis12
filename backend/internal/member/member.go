@@ -18,6 +18,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
+	"samparis12/backend/internal/audit"
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/mailer"
 	"samparis12/backend/internal/perm"
@@ -604,11 +605,34 @@ func (r *Repository) consumeResetCode(id int64) error {
 
 // ---------------------------------------------------------------------------
 
+// SetAudit branche le journal d'activité (connexions, codes de réinitialisation).
+func (h *Handler) SetAudit(l *audit.Logger) { h.audit = l }
+
+// masque : un identifiant inconnu n'est jamais conservé en entier dans le journal (il peut contenir une faute de frappe de mot de passe).
+func masque(s string) string {
+	s = strings.TrimSpace(s)
+	r := []rune(s)
+	if len(r) <= 3 {
+		return "***"
+	}
+	return string(r[:3]) + "…"
+}
+
+func (h *Handler) journalConnexion(r *http.Request, memberID int64, saisie, detail string, ok bool, status int) {
+	e := audit.Entry{MemberID: memberID, Action: "Connexion", Detail: detail, Success: ok, Status: status, IP: audit.ClientIP(r)}
+	if memberID == 0 {
+		e.Nom = "(identifiant inconnu)"
+		e.Detail = strings.TrimSpace("identifiant saisi : " + masque(saisie) + " " + detail)
+	}
+	h.audit.Record(e)
+}
+
 type Handler struct {
 	repo        *Repository
 	mailer      *mailer.Mailer
 	auth        *AuthService
 	frontendURL string
+	audit       *audit.Logger
 }
 
 func NewHandler(repo *Repository, m *mailer.Mailer, auth *AuthService, frontendURL string) *Handler {
@@ -635,6 +659,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	id, passwordHash, mustChange, err := h.repo.getAuth(email)
 	if err == sql.ErrNoRows {
+		h.journalConnexion(r, 0, req.Email, "", false, http.StatusUnauthorized)
 		httpx.Error(w, http.StatusUnauthorized, "identifiant ou mot de passe incorrect")
 		return
 	}
@@ -643,12 +668,18 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	par := "par email"
+	if !strings.Contains(req.Email, "@") {
+		par = "par n° de licence"
+	}
 	if bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(req.Password)) != nil {
+		h.journalConnexion(r, id, req.Email, par+" : mot de passe incorrect", false, http.StatusUnauthorized)
 		httpx.Error(w, http.StatusUnauthorized, "identifiant ou mot de passe incorrect")
 		return
 	}
 
 	if mustChange {
+		h.journalConnexion(r, id, req.Email, par+" : première connexion, mot de passe à définir", false, http.StatusForbidden)
 		httpx.JSON(w, http.StatusForbidden, map[string]any{
 			"error":              "vous devez définir votre mot de passe avant de continuer",
 			"mustChangePassword": true,
@@ -667,6 +698,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
 		return
 	}
+	h.journalConnexion(r, m.ID, req.Email, par, true, http.StatusOK)
 	httpx.JSON(w, http.StatusOK, map[string]any{"token": token, "member": m})
 }
 
@@ -688,6 +720,7 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 		codeHash, hashErr := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
 		if hashErr == nil {
 			_ = h.repo.InvalidateResetCodes(m.ID)
+			h.audit.Record(audit.Entry{MemberID: m.ID, Action: "Demande de code de réinitialisation du mot de passe", Success: true, Status: http.StatusNoContent, IP: audit.ClientIP(r)})
 			if err := h.repo.CreateResetCode(m.ID, string(codeHash), time.Now().Add(15*time.Minute)); err == nil {
 				if sendErr := h.mailer.SendCode(m.Email, code); sendErr != nil {
 					log.Printf("mailer: échec envoi code à %s : %v", m.Email, sendErr)
@@ -698,6 +731,7 @@ func (h *Handler) RequestCode(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		log.Printf("mailer: demande de code pour %q — aucun compte trouvé avec cet identifiant", req.Email)
+		h.audit.Record(audit.Entry{Nom: "(identifiant inconnu)", Action: "Demande de code de réinitialisation du mot de passe", Detail: "identifiant saisi : " + masque(req.Email), Success: false, Status: http.StatusNoContent, IP: audit.ClientIP(r)})
 	}
 	// Toujours 204, que l'email existe ou non, pour ne pas révéler les comptes existants.
 	httpx.JSON(w, http.StatusNoContent, nil)
@@ -781,6 +815,7 @@ func (h *Handler) ConfirmCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = h.repo.consumeResetCode(codeID)
+	h.audit.Record(audit.Entry{MemberID: m.ID, Action: "Mot de passe défini grâce à un code", Success: true, Status: http.StatusOK, IP: audit.ClientIP(r)})
 
 	token, err := h.auth.IssueToken(m.ID, m.IsBureau)
 	if err != nil {

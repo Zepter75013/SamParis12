@@ -16,6 +16,7 @@ const (
 	SalonsCreer       = "messagerie.salons"
 	MessagerieModerer = "messagerie.moderer"
 	RolesAdmin        = "roles.admin"
+	JournalVoir       = "journal.voir"
 )
 
 type Feature struct {
@@ -32,6 +33,7 @@ var Catalog = []Feature{
 	{ResultatsSaisie, "Saisir les résultats", "Saisir, modifier et supprimer les résultats des courses."},
 	{SalonsCreer, "Créer des salons de discussion", "Créer des salons dans la messagerie et choisir leurs participants."},
 	{MessagerieModerer, "Modérer la messagerie", "Supprimer les messages des autres adhérents."},
+	{JournalVoir, "Consulter le journal d'activité", "Écran Journal d'activité : voir qui a fait quoi dans l'application, et si l'action a réussi."},
 	{RolesAdmin, "Gérer les rôles et les droits", "Écran Rôles et droits : créer des rôles, choisir leurs fonctionnalités et les attribuer aux adhérents."},
 }
 

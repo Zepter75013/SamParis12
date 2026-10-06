@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.28.0',
+    date: '7 octobre 2026',
+    notes: "Rôles et droits : sélection multiple avec Ctrl/Cmd et Shift, glisser-déposer entre les deux listes, et un rôle ne peut plus être supprimé tant qu'un adhérent l'a. Nouvel écran Journal d'activité (rôles autorisés, par défaut le Super administrateur) : qui a fait quoi, avec son rôle, et si l'action a réussi, avec filtres et export CSV (migration 0024).",
+  },
+  {
     version: '1.27.0',
     date: '7 octobre 2026',
     notes: "Connexion à l'espace adhérent avec l'email OU le numéro de licence (« 1760320 », « FFA N° 1760320 »…) et le mot de passe, y compris pour « mot de passe oublié ». L'en-tête affiche la photo de l'adhérent à gauche de son nom et prénom en entier et de son numéro de licence.",

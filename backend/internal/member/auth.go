@@ -106,3 +106,17 @@ func generateCode() string {
 	n := (int(b[0])<<24 | int(b[1])<<16 | int(b[2])<<8 | int(b[3])) & 0x7fffffff
 	return fmt.Sprintf("%06d", n%1000000)
 }
+
+// MemberIDFromRequest identifie l'adhérent d'une requête d'après son jeton (utilisé par le journal d'activité,
+// avant même que RequireAuth ait pu poser l'identifiant dans le contexte).
+func (a *AuthService) MemberIDFromRequest(r *http.Request) (int64, bool) {
+	token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if !ok || token == "" {
+		return 0, false
+	}
+	c, err := a.parse(token)
+	if err != nil {
+		return 0, false
+	}
+	return c.MemberID, true
+}

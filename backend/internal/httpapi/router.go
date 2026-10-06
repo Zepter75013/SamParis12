@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
+	"samparis12/backend/internal/audit"
 	"samparis12/backend/internal/chat"
 	"samparis12/backend/internal/config"
 	"samparis12/backend/internal/contact"
@@ -51,6 +52,9 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 		})
 	}
 	roleHandler := role.NewHandler(db)
+	auditLog := audit.New(db)
+	auditHandler := audit.NewHandler(auditLog)
+	go auditLog.PurgeLoop()
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -74,6 +78,9 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("PUT /api/members/me/email", authService.RequireAuth(memberHandler.UpdateEmail))
 	mux.HandleFunc("PUT /api/members/me/trombi", authService.RequireAuth(memberHandler.UpdateTrombi))
 	mux.HandleFunc("POST /api/members/me/photo", authService.RequireAuth(memberHandler.UploadPhoto))
+
+	// Journal d'activité (fonctionnalité « Consulter le journal d'activité »)
+	mux.HandleFunc("GET /api/audit", requireFeature(perm.JournalVoir, auditHandler.List))
 
 	// Rôles et droits
 	mux.HandleFunc("GET /api/roles", authService.RequireAuth(roleHandler.List))
@@ -143,5 +150,6 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.Handle("GET /uploads/photos/", http.StripPrefix("/uploads/photos/", http.FileServer(http.Dir("uploads/photos"))))
 	mux.Handle("GET /uploads/documents/", http.StripPrefix("/uploads/documents/", http.FileServer(http.Dir("uploads/documents"))))
 
-	return httpx.CORS(cfg.FrontendURL, mux)
+	memberHandler.SetAudit(auditLog)
+	return httpx.CORS(cfg.FrontendURL, audit.Wrap(mux, auditLog, authService.MemberIDFromRequest))
 }

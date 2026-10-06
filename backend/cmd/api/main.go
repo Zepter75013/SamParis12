@@ -43,6 +43,7 @@ func checkSchema(conn *sql.DB) {
 		{"members", "sexe", "0021_member_sexe.sql"},
 		{"chat_attachments", "kind", "0022_chat_rich.sql"},
 		{"members", "role_app_id", "0023_roles.sql"},
+		{"audit_log", "action", "0024_audit_log.sql"},
 		{"game_scores", "best_meters", "0017_game_scores.sql"},
 	}
 	for _, c := range columns {

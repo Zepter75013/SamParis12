@@ -8,6 +8,7 @@ import AboutContent from '../../components/AboutContent.jsx'
 import { ord } from '../../components/Ord.jsx'
 import ChatPanel from './Chat.jsx'
 import RolesPanel from './RolesPanel.jsx'
+import JournalPanel from './JournalPanel.jsx'
 import { useChat } from '../../lib/chat.js'
 
 const TABS = [
@@ -22,6 +23,7 @@ const TABS = [
   { id: 'vieduclub', label: 'Vie du Club' },
   { id: 'admin', label: 'Admin Club', badge: 'Bureau' },
   { id: 'droitsBureau', label: 'Rôles et droits', badge: 'Admin' },
+  { id: 'journal', label: "Journal d'activité", badge: 'Admin' },
 ]
 
 // Reprend les rubriques réelles de "Le Club > Vie du Club" et "Préparation".
@@ -496,6 +498,7 @@ export default function Dashboard() {
             {TABS.filter((tab) => {
               if (tab.id === 'admin') return can('membres.admin')
               if (tab.id === 'droitsBureau') return can('roles.admin')
+              if (tab.id === 'journal') return can('journal.voir')
               return true
             }).map((tab) => (
               <button
@@ -982,6 +985,13 @@ export default function Dashboard() {
         )}
         {activeTab === 'droitsBureau' && can('roles.admin') && (
           <RolesPanel token={token} />
+        )}
+
+        {activeTab === 'journal' && !can('journal.voir') && (
+          <p style={{ color: 'var(--stone)' }}>Cette section est réservée aux adhérents dont le rôle comprend « Consulter le journal d'activité ».</p>
+        )}
+        {activeTab === 'journal' && can('journal.voir') && (
+          <JournalPanel token={token} />
         )}
 
         {activeTab === 'profil' && (

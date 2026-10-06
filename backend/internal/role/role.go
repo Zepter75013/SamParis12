@@ -24,6 +24,7 @@ type Role struct {
 	Systeme     bool     `json:"systeme"`
 	Features    []string `json:"features"`
 	Membres     int      `json:"membres"`
+	NomsMembres []string `json:"nomsMembres"` // quelques noms, pour savoir qui a ce rôle
 }
 
 type Repository struct{ db *sql.DB }
@@ -57,6 +58,18 @@ func (r *Repository) List() ([]Role, error) {
 			return nil, err
 		}
 		out[i].Features = f
+		out[i].NomsMembres = []string{}
+		nrows, err := r.db.Query(`SELECT CONCAT(prenom, ' ', nom) FROM members WHERE role_app_id = ? ORDER BY nom, prenom LIMIT 12`, out[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		for nrows.Next() {
+			var n string
+			if nrows.Scan(&n) == nil {
+				out[i].NomsMembres = append(out[i].NomsMembres, n)
+			}
+		}
+		nrows.Close()
 	}
 	// « Adhérent » en premier : c'est le rôle le plus simple
 	for i := range out {
@@ -122,26 +135,10 @@ func (r *Repository) Save(ro *Role, nom, description string, estBureau bool, fea
 	return tx.Commit()
 }
 
-// Delete supprime un rôle : ses adhérents repassent au rôle « Adhérent ».
-func (r *Repository) Delete(id int64) (int, error) {
-	tx, err := r.db.Begin()
-	if err != nil {
-		return 0, err
-	}
-	defer tx.Rollback()
-	var base int64
-	if err := tx.QueryRow(`SELECT id FROM app_roles WHERE systeme = TRUE AND est_super = FALSE AND nom = 'Adhérent'`).Scan(&base); err != nil {
-		return 0, err
-	}
-	res, err := tx.Exec(`UPDATE members SET role_app_id = ?, is_bureau = FALSE, is_super_admin = FALSE WHERE role_app_id = ?`, base, id)
-	if err != nil {
-		return 0, err
-	}
-	moved, _ := res.RowsAffected()
-	if _, err := tx.Exec(`DELETE FROM app_roles WHERE id = ?`, id); err != nil {
-		return 0, err
-	}
-	return int(moved), tx.Commit()
+// Delete supprime un rôle ; il ne doit plus être attribué à aucun adhérent (vérifié par le gestionnaire HTTP).
+func (r *Repository) Delete(id int64) error {
+	_, err := r.db.Exec(`DELETE FROM app_roles WHERE id = ?`, id)
+	return err
 }
 
 // ---- HTTP ----
@@ -307,18 +304,16 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusConflict, "ce rôle de base ne peut pas être supprimé")
 		return
 	}
-	if has(ro.Features, perm.RolesAdmin) {
-		if n, err := perm.CountWith(h.db, perm.RolesAdmin, ro.ID); err != nil || n == 0 {
-			httpx.Error(w, http.StatusConflict, "au moins un adhérent doit pouvoir gérer les rôles et les droits")
-			return
-		}
+	// Un rôle ne se supprime que si plus aucun adhérent ne l'a : il faut d'abord changer leur rôle.
+	if ro.Membres > 0 {
+		httpx.Error(w, http.StatusConflict, fmt.Sprintf("ce rôle est encore attribué à %d adhérent%s : change d'abord leur rôle dans leur fiche", ro.Membres, map[bool]string{true: "s", false: ""}[ro.Membres > 1]))
+		return
 	}
-	moved, err := h.repo.Delete(id)
-	if err != nil {
+	if err := h.repo.Delete(id); err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "impossible de supprimer le rôle")
 		return
 	}
-	httpx.JSON(w, http.StatusOK, map[string]int{"adherentsReclasses": moved})
+	httpx.JSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
 func has(list []string, f string) bool {
