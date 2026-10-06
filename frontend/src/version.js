@@ -5,6 +5,11 @@ export const APP_VERSION = '1.19.1'
 
 export const CHANGELOG = [
   {
+    version: '1.20.0',
+    date: '6 octobre 2026',
+    notes: "Nouvel onglet Messagerie dans l'espace adhérent, façon WhatsApp : salons par groupe (Tous, Running, Marche nordique, Bureau), messages privés, réponses, coches de lecture, messages non lus et temps réel. La création de salons se règle dans Fonctionnalités (migration 0018).",
+  },
+  {
     version: '1.19.1',
     date: '4 octobre 2026',
     notes: "Sur téléphone, la page ne déborde plus de l'écran : elle était deux fois trop large (et donc dézoomée) à cause du menu mobile rangé hors de l'écran. Toucher à côté du menu ouvert le referme désormais.",

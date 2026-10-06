@@ -6,9 +6,12 @@ import { getTheme, setTheme as applyThemeChoice } from '../../lib/theme.js'
 import PasswordField from '../../components/PasswordField.jsx'
 import AboutContent from '../../components/AboutContent.jsx'
 import { ord } from '../../components/Ord.jsx'
+import ChatPanel from './Chat.jsx'
+import { useChat } from '../../lib/chat.js'
 
 const TABS = [
   { id: 'overview', label: 'Tableau de bord' },
+  { id: 'chat', label: 'Messagerie' },
   { id: 'trombi', label: 'Trombinoscope' },
   { id: 'courses', label: 'Nos Courses' },
   { id: 'resultats', label: 'Résultats' },
@@ -324,6 +327,7 @@ export default function Dashboard() {
   const [me, setMe] = useState(null)
   const [members, setMembers] = useState([])
   const [myUpcomingRaces, setMyUpcomingRaces] = useState([])
+  const chat = useChat(token, me?.id)
 
   useEffect(() => {
     if (!token) {
@@ -480,6 +484,11 @@ export default function Dashboard() {
                 onClick={() => switchTab(tab.id)}
               >
                 {tab.label}
+                {tab.id === 'chat' && chat.unreadTotal > 0 && (
+                  <span style={{ marginLeft: '0.4rem', fontSize: '0.62rem', padding: '0.05rem 0.4rem', background: '#00a884', color: '#fff', borderRadius: 999, fontWeight: 700 }}>
+                    {chat.unreadTotal > 99 ? '99+' : chat.unreadTotal}
+                  </span>
+                )}
                 {tab.badge && (
                   <span style={{ marginLeft: '0.4rem', fontSize: '0.6rem', padding: '0.1rem 0.35rem', background: 'var(--vermilion)', color: '#fff', borderRadius: 2 }}>
                     {tab.badge}
@@ -716,6 +725,10 @@ export default function Dashboard() {
               <MemberDetailModal member={openMember} token={token} onClose={() => setOpenMember(null)} />
             )}
           </div>
+        )}
+
+        {activeTab === 'chat' && me && (
+          <ChatPanel chat={chat} token={token} me={me} members={members} />
         )}
 
         {activeTab === 'courses' && (
@@ -2621,7 +2634,7 @@ function adminFormFromMember(m) {
     urgenceTelephone: m.urgenceTelephone || '', tailleMaillot: m.tailleMaillot || '', vma: m.vma ?? '', vmaDate: m.vmaDate || '',
 
     numeroLicence: m.numeroLicence || '', licenciePar: m.licenciePar || '', fonctionBureau: m.fonctionBureau || '',
-    droitAdminEvenements: !!m.droitAdminEvenements, droitUploadDocuments: !!m.droitUploadDocuments, droitSaisieResultats: !!m.droitSaisieResultats, origineContact: m.origineContact || '',
+    droitAdminEvenements: !!m.droitAdminEvenements, droitUploadDocuments: !!m.droitUploadDocuments, droitSaisieResultats: !!m.droitSaisieResultats, droitCreerSalons: !!m.droitCreerSalons, origineContact: m.origineContact || '',
     anneePremiereAdhesion: m.anneePremiereAdhesion ?? '', datePremiereAdhesion: m.datePremiereAdhesion || '',
     dateDernierCertificat: m.dateDernierCertificat || '', anneeDerniereAdhesion: m.anneeDerniereAdhesion ?? '',
     activiteSaison: m.activiteSaison || '', licenceFfaType: m.licenceFfaType || '',
@@ -2673,6 +2686,7 @@ const BUREAU_FEATURES = [
   { field: 'droitAdminEvenements', label: 'Administrer les événements' },
   { field: 'droitUploadDocuments', label: 'Ajouter des documents' },
   { field: 'droitSaisieResultats', label: 'Saisir les résultats' },
+  { field: 'droitCreerSalons', label: 'Créer des salons de discussion' },
 ]
 
 function BureauRightsPanel({ token }) {

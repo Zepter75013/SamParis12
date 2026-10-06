@@ -19,6 +19,8 @@ async function request(path, { token, headers, ...options } = {}) {
   return res.json()
 }
 
+export const chatStreamUrl = () => `${BASE_URL}/chat/stream`
+
 export const api = {
   getPartners: () => request('/partners'),
   getPublicRaces: () => request('/public/races'),
@@ -83,6 +85,17 @@ export const api = {
 
   getGameLeaderboard: (token) => request('/game/leaderboard', { token }),
   postGameScore: (token, meters) => request('/game/score', { method: 'POST', token, body: JSON.stringify({ meters }) }),
+
+  chatRooms: (token) => request('/chat/rooms', { token }),
+  chatMessages: (token, roomId, before) => request(`/chat/rooms/${roomId}/messages${before ? `?before=${before}` : ''}`, { token }),
+  chatSend: (token, roomId, texte, replyTo) =>
+    request(`/chat/rooms/${roomId}/messages`, { method: 'POST', token, body: JSON.stringify({ texte, replyTo: replyTo || 0 }) }),
+  chatRead: (token, roomId, upTo) => request(`/chat/rooms/${roomId}/read`, { method: 'POST', token, body: JSON.stringify({ upTo }) }),
+  chatDelete: (token, messageId) => request(`/chat/messages/${messageId}`, { method: 'DELETE', token }),
+  chatOpenDM: (token, memberId) => request('/chat/dm', { method: 'POST', token, body: JSON.stringify({ memberId }) }),
+  chatCreateRoom: (token, nom, memberIds) => request('/chat/rooms', { method: 'POST', token, body: JSON.stringify({ nom, memberIds }) }),
+  chatAddMembers: (token, roomId, memberIds) =>
+    request(`/chat/rooms/${roomId}/members`, { method: 'POST', token, body: JSON.stringify({ memberIds }) }),
 
   listDocuments: (token) => request('/documents', { token }),
   uploadDocument: (token, formData) => request('/documents', { method: 'POST', token, body: formData }),

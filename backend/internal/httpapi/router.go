@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
+	"samparis12/backend/internal/chat"
 	"samparis12/backend/internal/config"
 	"samparis12/backend/internal/contact"
 	"samparis12/backend/internal/document"
@@ -34,6 +35,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	raceHandler := race.NewHandler(race.NewRepository(db), member.NewRepository(db))
 	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
 	gameHandler := game.NewHandler(game.NewRepository(db))
+	chatHandler := chat.NewHandler(chat.NewRepository(db))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		httpx.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -91,6 +93,17 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	// Mini-jeu « SAM Run » : classement réservé aux adhérents connectés.
 	mux.HandleFunc("GET /api/game/leaderboard", authService.RequireAuth(gameHandler.Leaderboard))
 	mux.HandleFunc("POST /api/game/score", authService.RequireAuth(gameHandler.SubmitScore))
+
+	// Messagerie de l'espace adhérent (salons par groupe, salons créés, messages privés).
+	mux.HandleFunc("GET /api/chat/stream", authService.RequireAuth(chatHandler.Stream))
+	mux.HandleFunc("GET /api/chat/rooms", authService.RequireAuth(chatHandler.Rooms))
+	mux.HandleFunc("POST /api/chat/rooms", authService.RequireAuth(chatHandler.CreateRoom))
+	mux.HandleFunc("POST /api/chat/dm", authService.RequireAuth(chatHandler.OpenDM))
+	mux.HandleFunc("GET /api/chat/rooms/{id}/messages", authService.RequireAuth(chatHandler.Messages))
+	mux.HandleFunc("POST /api/chat/rooms/{id}/messages", authService.RequireAuth(chatHandler.Send))
+	mux.HandleFunc("POST /api/chat/rooms/{id}/read", authService.RequireAuth(chatHandler.Read))
+	mux.HandleFunc("POST /api/chat/rooms/{id}/members", authService.RequireAuth(chatHandler.AddMembers))
+	mux.HandleFunc("DELETE /api/chat/messages/{id}", authService.RequireAuth(chatHandler.Delete))
 
 	mux.HandleFunc("GET /api/documents", authService.RequireAuth(documentHandler.List))
 	mux.HandleFunc("POST /api/documents", authService.RequireAuth(documentHandler.Upload))

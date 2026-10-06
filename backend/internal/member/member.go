@@ -95,6 +95,7 @@ type Member struct {
 	DroitAdminEvenements   bool     `json:"droitAdminEvenements"`
 	DroitUploadDocuments   bool     `json:"droitUploadDocuments"`
 	DroitSaisieResultats   bool     `json:"droitSaisieResultats"`
+	DroitCreerSalons       bool     `json:"droitCreerSalons"`
 	OrigineContact         string   `json:"origineContact"`
 	AnneePremiereAdhesion  *int     `json:"anneePremiereAdhesion"`
 	DatePremiereAdhesion   *string  `json:"datePremiereAdhesion"`
@@ -193,6 +194,7 @@ type AdminMemberUpdate struct {
 	DroitAdminEvenements   bool     `json:"droitAdminEvenements"`
 	DroitUploadDocuments   bool     `json:"droitUploadDocuments"`
 	DroitSaisieResultats   bool     `json:"droitSaisieResultats"`
+	DroitCreerSalons       bool     `json:"droitCreerSalons"`
 	OrigineContact         string   `json:"origineContact"`
 	AnneePremiereAdhesion  *int     `json:"anneePremiereAdhesion"`
 	DatePremiereAdhesion   *string  `json:"datePremiereAdhesion"`
@@ -240,7 +242,7 @@ const memberColumns = `
 	DATE_FORMAT(date_naissance, '%Y-%m-%d'), lieu_naissance, adresse, code_postal, ville,
 	telephone_domicile, telephone_portable, nationalite, urgence_nom, urgence_telephone,
 	taille_maillot, vma, DATE_FORMAT(vma_date, '%Y-%m-%d'),
-	numero_licence, licencie_par, fonction_bureau, droit_admin_evenements, droit_upload_documents, droit_saisie_resultats, origine_contact,
+	numero_licence, licencie_par, fonction_bureau, droit_admin_evenements, droit_upload_documents, droit_saisie_resultats, droit_creer_salons, origine_contact,
 	annee_premiere_adhesion, DATE_FORMAT(date_premiere_adhesion, '%Y-%m-%d'),
 	DATE_FORMAT(date_dernier_certificat, '%Y-%m-%d'), annee_derniere_adhesion,
 	activite_saison, licence_ffa_type, montant_cotisation, DATE_FORMAT(date_paiement_cotisation, '%Y-%m-%d'), mode_paiement
@@ -270,7 +272,7 @@ func scanMemberFunc(scan func(...any) error) (*Member, error) {
 		&dateNaissance, &m.LieuNaissance, &m.Adresse, &m.CodePostal, &m.Ville,
 		&m.TelephoneDomicile, &m.TelephonePortable, &m.Nationalite, &m.UrgenceNom, &m.UrgenceTelephone,
 		&m.TailleMaillot, &vma, &vmaDate,
-		&m.NumeroLicence, &m.LicenciePar, &m.FonctionBureau, &m.DroitAdminEvenements, &m.DroitUploadDocuments, &m.DroitSaisieResultats, &m.OrigineContact,
+		&m.NumeroLicence, &m.LicenciePar, &m.FonctionBureau, &m.DroitAdminEvenements, &m.DroitUploadDocuments, &m.DroitSaisieResultats, &m.DroitCreerSalons, &m.OrigineContact,
 		&anneePremiereAdhesion, &datePremiereAdhesion, &dateDernierCertificat, &anneeDerniereAdhesion,
 		&m.ActiviteSaison, &m.LicenceFFAType, &montantCotisation, &datePaiementCotisation, &m.ModePaiement,
 	)
@@ -455,7 +457,7 @@ func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 			date_naissance = ?, lieu_naissance = ?, adresse = ?, code_postal = ?, ville = ?,
 			telephone_domicile = ?, telephone_portable = ?, nationalite = ?,
 			urgence_nom = ?, urgence_telephone = ?, taille_maillot = ?, vma = ?, vma_date = ?,
-			numero_licence = ?, licencie_par = ?, fonction_bureau = ?, droit_admin_evenements = ?, droit_upload_documents = ?, droit_saisie_resultats = ?,
+			numero_licence = ?, licencie_par = ?, fonction_bureau = ?, droit_admin_evenements = ?, droit_upload_documents = ?, droit_saisie_resultats = ?, droit_creer_salons = ?,
 			origine_contact = ?, annee_premiere_adhesion = ?, date_premiere_adhesion = ?,
 			date_dernier_certificat = ?, annee_derniere_adhesion = ?, activite_saison = ?,
 			licence_ffa_type = ?, montant_cotisation = ?, date_paiement_cotisation = ?, mode_paiement = ?
@@ -464,7 +466,7 @@ func (r *Repository) UpdateAdmin(id int64, u AdminMemberUpdate) error {
 		u.DateNaissance, u.LieuNaissance, u.Adresse, u.CodePostal, u.Ville,
 		u.TelephoneDomicile, u.TelephonePortable, u.Nationalite,
 		u.UrgenceNom, u.UrgenceTelephone, u.TailleMaillot, u.VMA, u.VMADate,
-		u.NumeroLicence, u.LicenciePar, u.FonctionBureau, u.DroitAdminEvenements, u.DroitUploadDocuments, u.DroitSaisieResultats,
+		u.NumeroLicence, u.LicenciePar, u.FonctionBureau, u.DroitAdminEvenements, u.DroitUploadDocuments, u.DroitSaisieResultats, u.DroitCreerSalons,
 		u.OrigineContact, u.AnneePremiereAdhesion, u.DatePremiereAdhesion,
 		u.DateDernierCertificat, u.AnneeDerniereAdhesion, u.ActiviteSaison,
 		u.LicenceFFAType, u.MontantCotisation, u.DatePaiementCotisation, u.ModePaiement,
@@ -1137,6 +1139,7 @@ func (h *Handler) AdminUpdateMember(w http.ResponseWriter, r *http.Request) {
 	featuresChanged := u.DroitAdminEvenements != current.DroitAdminEvenements ||
 		u.DroitUploadDocuments != current.DroitUploadDocuments ||
 		u.DroitSaisieResultats != current.DroitSaisieResultats ||
+		u.DroitCreerSalons != current.DroitCreerSalons ||
 		u.IsSuperAdmin != current.IsSuperAdmin
 	if featuresChanged {
 		callerID, _ := MemberIDFromContext(r.Context())
