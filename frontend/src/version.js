@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.37.1',
+    date: '7 octobre 2026',
+    notes: "Mon activité (Strava) : le graphique des kilomètres par sport retrouve l'effet 3D (épaisseur, dessus et côté) comme les autres graphiques de l'application.",
+  },
+  {
     version: '1.37.0',
     date: '7 octobre 2026',
     notes: "Mon activité (Strava) : une couleur par sport (course à pied, trail, marche et randonnée, vélo, natation, renforcement, autres) dans la liste des activités, avec un liseré coloré, et dans le graphique des kilomètres, désormais en colonnes empilées par sport. Des pastilles colorées, avec le nombre de sorties et les kilomètres de chaque sport, servent de légende et de filtre en un clic.",

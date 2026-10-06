@@ -35,15 +35,23 @@ const FAMILLE_DE = {
 const famille = (sport) => FAMILLES[FAMILLE_DE[sport]] || FAMILLES.autre
 const ORDRE_FAMILLES = Object.keys(FAMILLES)
 
-// Colonnes empilées : chaque colonne se décompose par famille de sport (une couleur chacune).
+// Éclaircit (k > 1) ou assombrit (k < 1) une couleur #RRGGBB, pour les faces du dessus et du côté des colonnes 3D.
+function teinte(hex, k) {
+  const n = parseInt(hex.slice(1), 16)
+  const c = (v) => Math.max(0, Math.min(255, Math.round(k < 1 ? v * k : v + (255 - v) * (k - 1)))).toString(16).padStart(2, '0')
+  return `#${c((n >> 16) & 255)}${c((n >> 8) & 255)}${c(n & 255)}`
+}
+
+// Colonnes 3D empilées : chaque colonne se décompose par famille de sport (une couleur chacune).
 function ColonnesEmpilees({ data, titre, libelle, familles }) {
   const W = 640
   const H = 180
   const bas = 26
-  const haut = 14
+  const haut = 24
   const max = Math.max(1, ...data.map((d) => d.total))
   const pas = W / Math.max(data.length, 1)
   const larg = Math.max(2, Math.min(34, pas * 0.62))
+  const prof = Math.min(7, larg * 0.4) // profondeur de la colonne (effet 3D)
   const saut = Math.ceil((data.length * 56) / W)
   return (
     <section className="stats-bloc stats-bloc--large">
@@ -52,17 +60,27 @@ function ColonnesEmpilees({ data, titre, libelle, familles }) {
         <svg className="stats-colonnes" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={titre}>
           <line x1="0" x2={W} y1={H - bas} y2={H - bas} className="stats-axe" />
           {data.map((d, i) => {
-            const x = i * pas + (pas - larg) / 2
+            const x = i * pas + (pas - larg - prof) / 2
+            const segs = familles.filter((f) => d.parts[f.id] > 0)
             let y = H - bas
             return (
               <g key={d.label}>
-                {familles.filter((f) => d.parts[f.id] > 0).map((f) => {
-                  const h = ((H - bas - haut) * d.parts[f.id]) / max
+                {segs.map((f, k) => {
+                  const h = Math.max(((H - bas - haut) * d.parts[f.id]) / max, 1)
+                  const y0 = y
                   y -= h
-                  return <rect key={f.id} x={x} y={y} width={larg} height={Math.max(h, 1)} fill={f.couleur} className="strava-seg"><title>{`${libelle(d.label)} · ${f.label} : ${nf.format(d.parts[f.id])} km`}</title></rect>
+                  const dernier = k === segs.length - 1
+                  return (
+                    <g key={f.id} className="strava-seg">
+                      <polygon points={`${x + larg},${y} ${x + larg + prof},${y - prof} ${x + larg + prof},${y0 - prof} ${x + larg},${y0}`} fill={teinte(f.couleur, 0.72)} />
+                      {dernier && <polygon points={`${x},${y} ${x + prof},${y - prof} ${x + larg + prof},${y - prof} ${x + larg},${y}`} fill={teinte(f.couleur, 1.3)} />}
+                      <rect x={x} y={y} width={larg} height={h} fill={f.couleur} />
+                      <title>{`${libelle(d.label)} · ${f.label} : ${nf.format(d.parts[f.id])} km`}</title>
+                    </g>
+                  )
                 })}
-                {d.total > 0 && data.length <= 14 && <text x={x + larg / 2} y={y - 4} textAnchor="middle" className="stats-val">{nf.format(d.total)}</text>}
-                {i % saut === 0 && <text x={x + larg / 2} y={H - 8} textAnchor="middle" className="stats-lib">{libelle(d.label)}</text>}
+                {d.total > 0 && data.length <= 14 && <text x={x + (larg + prof) / 2} y={y - prof - 4} textAnchor="middle" className="stats-val">{nf.format(d.total)}</text>}
+                {i % saut === 0 && <text x={x + (larg + prof) / 2} y={H - 8} textAnchor="middle" className="stats-lib">{libelle(d.label)}</text>}
               </g>
             )
           })}
