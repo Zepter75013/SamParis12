@@ -226,38 +226,79 @@ function AvatarButton({ photoUrl, nom, size, onClick }) {
   )
 }
 
+function CourseLigne({ r }) {
+  return (
+    <div style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', padding: '0.6rem 0.8rem', fontSize: '0.8rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <span><span style={{ fontFamily: 'var(--font-mono)', color: 'var(--stone)', marginRight: '0.5rem' }}>{formatRaceDate(r.raceDate || r.date)}</span><b>{r.raceTitre || r.titre}</b></span>
+        {r.tempsSecondes != null && <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>{formatTempsCourse(r.tempsSecondes)}</span>}
+      </div>
+      {(r.classementGeneral || r.categorie) && (
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
+          {r.classementGeneral && `Général : ${r.classementGeneral}${r.classementGeneralTotal ? `/${r.classementGeneralTotal}` : ''}`}
+          {r.classementGeneral && r.categorie && ' · '}
+          {r.categorie}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Fiche détaillée d'un adhérent (Trombinoscope). Ses prochaines courses et ses résultats s'ouvrent, si on le désire,
+// dans un « rideau » qui coulisse sur la droite de la fiche (par-dessus la fiche sur téléphone).
 function MemberDetailModal({ member, token, onClose }) {
   const [results, setResults] = useState([])
-  const [resultsLoading, setResultsLoading] = useState(true)
+  const [upcoming, setUpcoming] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [rideau, setRideau] = useState(false)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
-    if (!member) return
-    setResultsLoading(true)
-    api.getMemberResults(token, member.id, 5)
-      .then(setResults)
-      .catch(() => setResults([]))
-      .finally(() => setResultsLoading(false))
+    if (!member) return undefined
+    let actif = true
+    setLoading(true)
+    setRideau(false)
+    setShowAll(false)
+    Promise.all([
+      api.getMemberUpcomingRaces(token, member.id).catch(() => []),
+      api.getMemberResults(token, member.id).catch(() => []),
+    ]).then(([u, r]) => { if (actif) { setUpcoming(u); setResults(r) } })
+      .finally(() => { if (actif) setLoading(false) })
+    return () => { actif = false }
   }, [member, token])
 
+  // Échap : referme d'abord le rideau, puis la fiche.
+  useEffect(() => {
+    if (!member) return undefined
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return
+      if (rideau) setRideau(false)
+      else onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [member, rideau, onClose])
+
   if (!member) return null
+  const visibles = showAll ? results : results.slice(0, 5)
+  const resume = loading ? 'Chargement…' : `${upcoming.length} prochaine${upcoming.length > 1 ? 's' : ''} course${upcoming.length > 1 ? 's' : ''} · ${results.length} résultat${results.length > 1 ? 's' : ''}`
+
   return (
     <div
       role="dialog" aria-modal="true"
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem' }}
       onClick={onClose}
     >
-      <div
-        style={{ background: 'var(--surface)', border: '1px solid var(--line)', maxWidth: 480, width: '100%', maxHeight: '85vh', overflowY: 'auto', padding: '2rem', position: 'relative', textAlign: 'center' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Fermer"
-          style={{ position: 'absolute', top: '1rem', right: '1rem', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink)' }}
-        >
-          ✕
-        </button>
+      <div className={`mdetail${rideau ? ' is-open' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className="mdetail__fiche">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fermer"
+            style={{ position: 'absolute', top: '1rem', right: '1rem', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: '1px solid var(--line)', cursor: 'pointer', color: 'var(--ink)' }}
+          >
+            ✕
+          </button>
 
         <div style={{ margin: '0 auto 1rem', display: 'flex', justifyContent: 'center' }}>
           <Avatar photoUrl={member.photoUrl} nom={`${member.prenom} ${member.nom}`} size={84} />
@@ -291,37 +332,45 @@ function MemberDetailModal({ member, token, onClose }) {
           </div>
         )}
 
-        <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
-          <span className="eyebrow">Agenda</span>
-          <p style={{ fontSize: '0.9rem', color: 'var(--ink-soft)', marginTop: '0.4rem' }}>Aucune course à venir renseignée pour le moment.</p>
+
+          <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
+            <span className="eyebrow">Courses et résultats</span>
+            <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)', margin: '0.4rem 0 0.8rem' }}>{resume}</p>
+            <button type="button" className="btn btn--ghost" aria-expanded={rideau} onClick={() => setRideau((v) => !v)} style={{ padding: '0.5rem 0.9rem', fontSize: '0.72rem' }}>
+              {rideau ? '‹ Refermer le rideau' : 'Voir ses courses et résultats ›'}
+            </button>
+          </div>
         </div>
 
-        <div style={{ textAlign: 'left', marginTop: '1.2rem', paddingTop: '1.2rem', borderTop: '1px solid var(--line)' }}>
-          <span className="eyebrow">Derniers résultats</span>
-          {resultsLoading ? (
-            <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem' }}>Chargement…</p>
-          ) : results.length === 0 ? (
-            <p style={{ fontSize: '0.85rem', color: 'var(--stone)', marginTop: '0.4rem' }}>Aucun résultat enregistré pour le moment.</p>
-          ) : (
-            <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.6rem' }}>
-              {results.map((r) => (
-                <div key={r.raceId} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', padding: '0.6rem 0.8rem', fontSize: '0.8rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.6rem', flexWrap: 'wrap' }}>
-                    <span><span style={{ fontFamily: 'var(--font-mono)', color: 'var(--stone)', marginRight: '0.5rem' }}>{formatRaceDate(r.raceDate)}</span><b>{r.raceTitre}</b></span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>{formatTempsCourse(r.tempsSecondes)}</span>
-                  </div>
-                  {(r.classementGeneral || r.categorie) && (
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--ink-soft)', marginTop: '0.25rem' }}>
-                      {r.classementGeneral && `Général : ${r.classementGeneral}${r.classementGeneralTotal ? `/${r.classementGeneralTotal}` : ''}`}
-                      {r.classementGeneral && r.categorie && ' · '}
-                      {r.categorie}
-                    </div>
-                  )}
-                </div>
-              ))}
+        <aside className="mdetail__rideau" aria-hidden={!rideau} aria-label={`Courses et résultats de ${member.prenom} ${member.nom}`}>
+          <div className="mdetail__rideau-in">
+            <div className="mdetail__rideau-tete">
+              <b>Courses et résultats</b>
+              <button type="button" onClick={() => setRideau(false)} aria-label="Refermer le rideau" tabIndex={rideau ? 0 : -1}>‹</button>
             </div>
-          )}
-        </div>
+
+            <span className="eyebrow">Prochaines courses</span>
+            {upcoming.length === 0 ? (
+              <p className="mdetail__vide">Aucune course à venir renseignée.</p>
+            ) : (
+              <div className="mdetail__liste">{upcoming.map((r) => <CourseLigne key={r.id} r={r} />)}</div>
+            )}
+
+            <span className="eyebrow" style={{ marginTop: '1.4rem', display: 'block' }}>Résultats{!showAll && results.length > 5 ? ' (5 plus récents)' : ''}</span>
+            {results.length === 0 ? (
+              <p className="mdetail__vide">Aucun résultat enregistré pour le moment.</p>
+            ) : (
+              <>
+                <div className="mdetail__liste">{visibles.map((r) => <CourseLigne key={r.raceId} r={r} />)}</div>
+                {results.length > 5 && (
+                  <button type="button" onClick={() => setShowAll((v) => !v)} className="link-button" style={{ fontSize: '0.78rem', marginTop: '0.6rem' }} tabIndex={rideau ? 0 : -1}>
+                    {showAll ? 'Voir moins' : `Voir tous les résultats (${results.length})`}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   )

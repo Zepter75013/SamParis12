@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.32.0',
+    date: '7 octobre 2026',
+    notes: "Trombinoscope : la fiche d'un adhérent affiche maintenant ses prochaines courses (auparavant toujours « aucune ») et tous ses résultats. Ils s'ouvrent, si on le désire, dans un rideau qui coulisse sur la droite de la fiche (par-dessus la fiche sur téléphone) ; Échap referme le rideau puis la fiche.",
+  },
+  {
     version: '1.31.3',
     date: '7 octobre 2026',
     notes: "Les boutons d'action de toute l'application et les lettres de l'alphabet du trombinoscope ont des angles arrondis ; l'alphabet tient sur une seule ligne dès les écrans de tablette.",
