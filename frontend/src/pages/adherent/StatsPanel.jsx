@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
+import Camembert from '../../components/Camembert.jsx'
 
 // Statistiques du club. Chaque section (effectifs, courses, engagement) n'est proposée que si le rôle de l'adhérent a la
 // fonctionnalité correspondante ; le serveur refuse de toute façon les sections non autorisées.
@@ -80,12 +81,13 @@ function Barres({ data, titre, total, unite = '', large = false, vide = 'Aucune 
 // Colonnes en SVG (évolution dans le temps) ; une étiquette sur n pour rester lisible.
 function Colonnes({ data, titre, libelle = (l) => l, note, vide = 'Aucune donnée.' }) {
   const W = 640
-  const H = 170
+  const H = 180
   const bas = 26
-  const haut = 16
+  const haut = 24
   const max = Math.max(1, ...data.map((d) => d.n))
   const pas = W / Math.max(data.length, 1)
-  const larg = Math.max(2, Math.min(34, pas * 0.68))
+  const larg = Math.max(2, Math.min(34, pas * 0.62))
+  const prof = Math.min(7, larg * 0.4) // profondeur de la colonne (effet 3D)
   const saut = Math.ceil((data.length * 56) / W) // une étiquette tous les ~56 unités
   return (
     <section className="stats-bloc stats-bloc--large">
@@ -95,14 +97,20 @@ function Colonnes({ data, titre, libelle = (l) => l, note, vide = 'Aucune donné
           <line x1="0" x2={W} y1={H - bas} y2={H - bas} className="stats-axe" />
           {data.map((d, i) => {
             const h = ((H - bas - haut) * d.n) / max
-            const x = i * pas + (pas - larg) / 2
+            const x = i * pas + (pas - larg - prof) / 2
+            const yh = H - bas - h
             return (
               <g key={d.label}>
-                <rect x={x} y={H - bas - h} width={larg} height={Math.max(h, d.n > 0 ? 1.5 : 0)} className="stats-col">
-                  <title>{`${libelle(d.label)} : ${fmt(d.n)}`}</title>
-                </rect>
-                {d.n > 0 && data.length <= 14 && <text x={x + larg / 2} y={H - bas - h - 4} textAnchor="middle" className="stats-val">{fmt(d.n)}</text>}
-                {i % saut === 0 && <text x={x + larg / 2} y={H - 8} textAnchor="middle" className="stats-lib">{libelle(d.label)}</text>}
+                {d.n > 0 && (
+                  <g className="stats-col3d">
+                    <polygon points={`${x + larg},${yh} ${x + larg + prof},${yh - prof} ${x + larg + prof},${H - bas - prof} ${x + larg},${H - bas}`} className="stats-col-cote" />
+                    <polygon points={`${x},${yh} ${x + prof},${yh - prof} ${x + larg + prof},${yh - prof} ${x + larg},${yh}`} className="stats-col-dessus" />
+                    <rect x={x} y={yh} width={larg} height={Math.max(h, 1.5)} className="stats-col" />
+                    <title>{`${libelle(d.label)} : ${fmt(d.n)}`}</title>
+                  </g>
+                )}
+                {d.n > 0 && data.length <= 14 && <text x={x + (larg + prof) / 2} y={yh - prof - 4} textAnchor="middle" className="stats-val">{fmt(d.n)}</text>}
+                {i % saut === 0 && <text x={x + (larg + prof) / 2} y={H - 8} textAnchor="middle" className="stats-lib">{libelle(d.label)}</text>}
               </g>
             )
           })}
@@ -159,9 +167,9 @@ function Effectifs({ token }) {
             <Carte valeur={d.ageMoyen != null ? `${fmt1(d.ageMoyen)} ans` : '—'} label="Âge moyen" note="dates de naissance renseignées" />
           </div>
           <div className="stats-grille">
-            <Barres titre="Par statut" data={d.statuts} />
-            <Barres titre="Par groupe" data={d.groupes} />
-            <Barres titre="Femmes / hommes" data={d.sexes} />
+            <Camembert titre="Par statut" data={d.statuts} />
+            <Camembert titre="Par groupe" data={d.groupes} />
+            <Camembert titre="Femmes / hommes" data={d.sexes} />
             <Barres titre="Par tranche d'âge" data={d.ages} />
             <Colonnes titre="Nouveaux adhérents par année" data={d.premiereAdhesion} note="Année de première adhésion." />
             <Colonnes titre="Dernière adhésion enregistrée" data={d.derniereAdhesion} note="Les années anciennes correspondent aux adhérents qui n'ont pas renouvelé." />
@@ -199,10 +207,20 @@ function Courses({ token }) {
               <Carte valeur={`${fmt(Math.round(d.km))} km`} label="Kilomètres courus" note="distance des courses terminées" />
               <Carte valeur={fmt(d.podiumsCategorie)} label="Podiums de catégorie" note={`${fmt(d.podiumsGeneral)} au classement général`} />
               <Carte valeur={fmt(d.inscriptionsAVenir)} label="Inscriptions à venir" />
+              <Carte valeur={d.allureMoyenne ? `${fmt1(d.allureMoyenne)} km/h` : '—'} label="Allure moyenne" note="courses dont la distance est connue" />
+              <Carte valeur={`${fmt(d.classes)} / ${fmt(d.adherents)}`} label="Adhérents ayant couru" note={pct(d.classes, d.adherents)} />
+              <Carte valeur={d.plusLongue ? `${fmt1(d.plusLongue.km)} km` : '—'} label="Plus longue distance" note={d.plusLongue?.titre} />
             </div>
             <div className="stats-grille">
-              <Barres titre="Résultats par type de course" data={d.parType} total={d.resultats} large />
+              <Camembert titre="Résultats par type de course" data={d.parType} />
+              <Camembert titre="Résultats par distance" data={d.parDistance} />
+              <Camembert titre="Femmes / hommes" data={d.parSexe} />
+              <Camembert titre="Par groupe" data={d.parGroupe} />
+              <Barres titre="Régularité : adhérents selon leur nombre de courses" data={d.regularite} />
+              <Barres titre="Allure moyenne par distance" data={d.allureParDistance} unite=" km/h" total={0} />
               <Colonnes titre="Résultats par mois" data={completerMois(d.parMois)} libelle={libelleMois} />
+              {!saison && d.parSaison.length > 1 && <Colonnes titre="Résultats par saison" data={d.parSaison} note="Une saison va du 1er septembre au 31 août." />}
+              <Barres titre="Courses les plus suivies" data={d.topCourses} large vide="Aucun résultat saisi sur cette période." />
             </div>
 
             <section className="stats-bloc">
@@ -289,6 +307,17 @@ function Engagement({ token }) {
               <Carte valeur={fmt(d.comptes.nonInvites)} label="Jamais invités" note="aucun email de bienvenue" />
               <Carte valeur={fmt(d.connexions.actifs7j)} label="Connectés sur 7 jours" note="adhérents distincts" />
               <Carte valeur={fmt(d.connexions.actifs30j)} label="Connectés sur 30 jours" note={`${fmt(d.connexions.total30j)} connexions`} />
+            </div>
+            <div className="stats-grille">
+              <Camembert titre="État des comptes" data={[
+                { label: 'Activés', n: d.comptes.actives },
+                { label: 'Invités, pas encore activés', n: d.comptes.invites },
+                { label: 'Jamais invités', n: d.comptes.nonInvites },
+              ]} />
+              <Camembert titre="Fiches adhérents" data={[
+                { label: 'Complètes', n: d.fiches.completes },
+                { label: 'Incomplètes', n: d.fiches.incompletes.length },
+              ]} />
             </div>
             <Colonnes titre="Adhérents connectés par jour (30 derniers jours)" data={d.connexions.parJour} libelle={libelleJour}
               note={d.connexions.depuisLe ? `Le journal d'activité compte les connexions depuis le ${fmtDate(d.connexions.depuisLe)}.` : 'Aucune connexion enregistrée pour le moment.'} />

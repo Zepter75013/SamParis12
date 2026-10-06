@@ -155,13 +155,12 @@ func (h *Handler) Effectifs(w http.ResponseWriter, r *http.Request) {
 		fail(w, err)
 		return
 	}
-	e.Ages = ordonnerAges(e.Ages)
+	e.Ages = ordonner(e.Ages, []string{"Moins de 18 ans", "18-29 ans", "30-39 ans", "40-49 ans", "50-59 ans", "60-69 ans", "70 ans et plus", nonRenseigne})
 	httpx.JSON(w, http.StatusOK, e)
 }
 
-// ordonnerAges : les tranches d'âge dans l'ordre naturel (« Non renseigné » à la fin).
-func ordonnerAges(in []Count) []Count {
-	ordre := []string{"Moins de 18 ans", "18-29 ans", "30-39 ans", "40-49 ans", "50-59 ans", "60-69 ans", "70 ans et plus", nonRenseigne}
+// ordonner : les valeurs dans l'ordre donné (les libellés absents des données sont omis).
+func ordonner(in []Count, ordre []string) []Count {
 	par := map[string]int{}
 	for _, c := range in {
 		par[c.Label] = c.N
@@ -201,6 +200,24 @@ type Assidu struct {
 	Derniere string  `json:"derniere"`
 }
 
+// Mesure : une valeur décimale d'un graphique (libellé + mesure, ex. une allure en km/h).
+type Mesure struct {
+	Label string  `json:"label"`
+	N     float64 `json:"n"`
+}
+
+type PlusLongue struct {
+	Titre string  `json:"titre"`
+	Km    float64 `json:"km"`
+}
+
+// Tranches de distance (km) : libellé, borne haute incluse (0 : au-delà de la dernière borne).
+var tranchesDistance = []string{"Jusqu'à 5 km", "6 à 10 km", "11 à 21 km", "22 à 42 km", "Plus de 42 km"}
+
+const sqlTrancheDistance = `CASE WHEN ra.distance_km <= 0 THEN 'Distance inconnue'
+	WHEN ra.distance_km <= 5.5 THEN 'Jusqu''à 5 km' WHEN ra.distance_km <= 10.5 THEN '6 à 10 km'
+	WHEN ra.distance_km <= 21.5 THEN '11 à 21 km' WHEN ra.distance_km <= 42.5 THEN '22 à 42 km' ELSE 'Plus de 42 km' END`
+
 type Courses struct {
 	Saison             int           `json:"saison"` // année de départ (septembre) ; 0 : toutes
 	Saisons            []int         `json:"saisons"`
@@ -212,7 +229,17 @@ type Courses struct {
 	PodiumsCategorie   int           `json:"podiumsCategorie"`
 	PodiumsGeneral     int           `json:"podiumsGeneral"`
 	InscriptionsAVenir int           `json:"inscriptionsAVenir"`
+	Adherents          int           `json:"adherents"`     // adhérents en base (pour le taux de participation)
+	AllureMoyenne      float64       `json:"allureMoyenne"` // km/h, sur les résultats dont la distance est connue
+	PlusLongue         *PlusLongue   `json:"plusLongue"`
 	ParType            []Count       `json:"parType"`
+	ParDistance        []Count       `json:"parDistance"`
+	ParSexe            []Count       `json:"parSexe"`
+	ParGroupe          []Count       `json:"parGroupe"`
+	Regularite         []Count       `json:"regularite"` // adhérents selon leur nombre de courses
+	TopCourses         []Count       `json:"topCourses"`
+	ParSaison          []Count       `json:"parSaison"` // résultats par saison (toutes saisons)
+	AllureParDistance  []Mesure      `json:"allureParDistance"`
 	ParMois            []Count       `json:"parMois"`
 	Lignes             []CourseLigne `json:"lignes"`
 	Assidus            []Assidu      `json:"assidus"`
@@ -337,6 +364,7 @@ func (h *Handler) Courses(w http.ResponseWriter, r *http.Request) {
 		c.Assidus, x = h.assidus(du, au, 20)
 		return x
 	})
+	h.courseDetails(&c, du, au, step)
 	if err != nil {
 		fail(w, err)
 		return
@@ -604,4 +632,88 @@ func (h *Handler) FichesCSV(w http.ResponseWriter, r *http.Request) {
 		lignes = append(lignes, []string{f.Nom, f.Groupe, f.Statut, strings.Join(f.Manques, ", ")})
 	}
 	writeCSV(w, "fiches-incompletes", lignes)
+}
+
+// courseDetails : répartitions et indicateurs complémentaires de la section Courses.
+func (h *Handler) courseDetails(c *Courses, du, au string, step func(func() error)) {
+	const from = ` FROM race_results rr JOIN races ra ON ra.id = rr.race_id JOIN members m ON m.id = rr.member_id WHERE ra.race_date >= ? AND ra.race_date < ?`
+	step(func() (x error) {
+		c.Adherents, x = h.one(`SELECT COUNT(*) FROM members`)
+		return x
+	})
+	step(func() (x error) {
+		var a sql.NullFloat64
+		x = h.db.QueryRow(`SELECT AVG(ra.distance_km / (rr.temps_secondes / 3600))`+from+` AND ra.distance_km > 0 AND rr.temps_secondes > 0`, du, au).Scan(&a)
+		c.AllureMoyenne = float64(int(a.Float64*10+0.5)) / 10
+		return x
+	})
+	step(func() error {
+		var pl PlusLongue
+		x := h.db.QueryRow(`SELECT ra.titre, ra.distance_km`+from+` ORDER BY ra.distance_km DESC, ra.race_date DESC LIMIT 1`, du, au).Scan(&pl.Titre, &pl.Km)
+		if x == sql.ErrNoRows {
+			return nil
+		}
+		if pl.Km > 0 {
+			c.PlusLongue = &pl
+		}
+		return x
+	})
+	step(func() error {
+		l, x := h.counts(`SELECT `+sqlTrancheDistance+` AS l, COUNT(*)`+from+` GROUP BY l`, du, au)
+		c.ParDistance = ordonner(l, append(append([]string{}, tranchesDistance...), "Distance inconnue"))
+		return x
+	})
+	step(func() (x error) {
+		c.ParSexe, x = h.counts(`SELECT CASE m.sexe WHEN 'F' THEN 'Femmes' WHEN 'H' THEN 'Hommes' ELSE ? END AS l, COUNT(*)`+from+` GROUP BY l ORDER BY COUNT(*) DESC`, append([]any{nonRenseigne}, du, au)...)
+		return x
+	})
+	step(func() (x error) {
+		c.ParGroupe, x = h.counts(`SELECT COALESCE(NULLIF(m.groupe, ''), ?) AS l, COUNT(*)`+from+` GROUP BY l ORDER BY COUNT(*) DESC, l`, append([]any{nonRenseigne}, du, au)...)
+		return x
+	})
+	step(func() error {
+		l, x := h.counts(`
+			SELECT CASE WHEN t.c = 1 THEN '1 course' WHEN t.c <= 3 THEN '2 à 3 courses' WHEN t.c <= 6 THEN '4 à 6 courses' ELSE '7 courses et plus' END AS l, COUNT(*)
+			FROM (SELECT rr.member_id, COUNT(*) AS c FROM race_results rr JOIN races ra ON ra.id = rr.race_id
+			      WHERE ra.race_date >= ? AND ra.race_date < ? GROUP BY rr.member_id) t GROUP BY l`, du, au)
+		c.Regularite = ordonner(l, []string{"1 course", "2 à 3 courses", "4 à 6 courses", "7 courses et plus"})
+		return x
+	})
+	step(func() (x error) {
+		c.TopCourses, x = h.counts(`
+			SELECT CONCAT(ra.titre, ' (', DATE_FORMAT(ra.race_date, '%m/%Y'), ')'), COUNT(*)`+from+`
+			GROUP BY ra.id, ra.titre, ra.race_date ORDER BY COUNT(*) DESC, ra.race_date DESC LIMIT 8`, du, au)
+		return x
+	})
+	step(func() (x error) {
+		c.ParSaison, x = h.counts(`
+			SELECT CONCAT(t.s, '-', t.s + 1), t.n FROM (
+				SELECT YEAR(ra.race_date) - (MONTH(ra.race_date) < 9) AS s, COUNT(*) AS n
+				FROM race_results rr JOIN races ra ON ra.id = rr.race_id GROUP BY s) t ORDER BY t.s`)
+		return x
+	})
+	step(func() error {
+		rows, x := h.db.Query(`SELECT `+sqlTrancheDistance+` AS l, AVG(ra.distance_km / (rr.temps_secondes / 3600))`+from+`
+			AND ra.distance_km > 0 AND rr.temps_secondes > 0 GROUP BY l`, du, au)
+		if x != nil {
+			return x
+		}
+		defer rows.Close()
+		par := map[string]float64{}
+		for rows.Next() {
+			var l string
+			var v float64
+			if x = rows.Scan(&l, &v); x != nil {
+				return x
+			}
+			par[l] = float64(int(v*10+0.5)) / 10
+		}
+		c.AllureParDistance = []Mesure{}
+		for _, l := range tranchesDistance {
+			if v, ok := par[l]; ok {
+				c.AllureParDistance = append(c.AllureParDistance, Mesure{l, v})
+			}
+		}
+		return rows.Err()
+	})
 }

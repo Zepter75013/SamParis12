@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.31.0',
+    date: '7 octobre 2026',
+    notes: "Statistiques : camemberts en 3D (statut, groupe, sexe, type et distance des courses, état des comptes et des fiches) et colonnes en 3D. La section Courses s'enrichit : allure moyenne et par distance, plus longue distance, adhérents ayant couru, régularité, courses les plus suivies, résultats par saison. Les bascules du profil passent au rouge SAM.",
+  },
+  {
     version: '1.30.1',
     date: '7 octobre 2026',
     notes: "Préférences du profil : le thème (Sombre / Clair / Système) et la disposition du menu (Horizontal / Latéral) se choisissent avec des bascules coulissantes à la place des cartes.",

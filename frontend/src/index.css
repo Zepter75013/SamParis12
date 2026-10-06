@@ -1317,9 +1317,9 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 }
 
 /* Bascule (interrupteur coulissant) : préférences du profil */
-.bascule { position: relative; display: inline-grid; grid-template-columns: repeat(var(--n), minmax(7.5rem, 1fr)); max-width: 100%; padding: 3px; border-radius: 999px; background: linear-gradient(90deg, #5a4fd6, var(--vermilion)); }
-.bascule::before { content: ''; position: absolute; inset: 3px; border-radius: 999px; background: #14141d; }
-.bascule__pastille { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n)); border-radius: 999px; background: linear-gradient(135deg, #6d5fe6, var(--vermilion)); box-shadow: 0 0 14px rgba(222, 51, 39, 0.4); transform: translateX(calc(var(--i) * 100%)); transition: transform 0.3s cubic-bezier(0.4, 1.25, 0.5, 1); }
+.bascule { position: relative; display: inline-grid; grid-template-columns: repeat(var(--n), minmax(7.5rem, 1fr)); max-width: 100%; padding: 3px; border-radius: 999px; background: linear-gradient(90deg, #8a1c13, var(--vermilion)); }
+.bascule::before { content: ''; position: absolute; inset: 3px; border-radius: 999px; background: #1a1210; }
+.bascule__pastille { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--n)); border-radius: 999px; background: linear-gradient(135deg, #f0584a, #b8281d); box-shadow: 0 0 14px rgba(222, 51, 39, 0.5); transform: translateX(calc(var(--i) * 100%)); transition: transform 0.3s cubic-bezier(0.4, 1.25, 0.5, 1); }
 .bascule button { position: relative; z-index: 1; padding: 0.8rem 1.1rem; border: 0; border-radius: 999px; background: none; color: #c9c9da; font: 700 0.85rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; cursor: pointer; transition: color 0.2s; }
 .bascule button:hover { color: #fff; }
 .bascule button[aria-checked='true'] { color: #fff; }
@@ -1328,6 +1328,17 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) { .bascule__pastille { transition: none; } }
 
 /* ---- Statistiques ---- */
+.camembert { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.2rem; }
+.camembert__svg { flex: 0 1 15rem; width: 15rem; max-width: 100%; height: auto; overflow: visible; }
+.camembert__ombre { fill: rgba(0, 0, 0, 0.12); }
+.camembert__part { stroke: var(--surface); stroke-width: 1; transition: transform 0.18s; cursor: default; }
+.camembert__part:hover { transform: translateY(-5px); filter: brightness(1.1); }
+.camembert__legende { flex: 1 1 9rem; list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; min-width: 0; font-size: 0.86rem; }
+.camembert__legende li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 0.5rem; align-items: center; }
+.camembert__legende i { width: 0.8rem; height: 0.8rem; border-radius: 3px; }
+.camembert__legende span { overflow-wrap: anywhere; line-height: 1.25; }
+.camembert__legende b { font-variant-numeric: tabular-nums; }
+.camembert__legende small { color: var(--stone); min-width: 2.6rem; text-align: right; }
 .stats-onglets { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--line); }
 .stats-onglets button { padding: 0.6rem 1.1rem; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; color: var(--ink-soft); font: 600 0.82rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
 .stats-onglets button:hover { color: var(--ink); }
@@ -1362,7 +1373,9 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .stats-colonnes { display: block; width: 100%; min-width: 480px; height: auto; }
 .stats-axe { stroke: var(--line); stroke-width: 1; }
 .stats-col { fill: var(--vermilion); }
-.stats-col:hover { opacity: 0.8; }
+.stats-col-dessus { fill: #f0675b; }
+.stats-col-cote { fill: #9c231a; }
+.stats-col3d:hover { opacity: 0.85; }
 .stats-val { fill: var(--ink-soft); font: 600 11px var(--font-display); }
 .stats-lib { fill: var(--stone); font: 11px var(--font-display); }
 .stats-table-wrap { overflow: auto; max-height: 30rem; }
