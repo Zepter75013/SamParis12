@@ -98,6 +98,7 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("POST /api/strava/callback", authService.RequireAuth(stravaHandler.Callback))
 	mux.HandleFunc("DELETE /api/strava", authService.RequireAuth(stravaHandler.Disconnect))
 	mux.HandleFunc("GET /api/strava/activities", authService.RequireAuth(stravaHandler.Activities))
+	mux.HandleFunc("GET /api/strava/activities/{id}", authService.RequireAuth(stravaHandler.Detail))
 	mux.HandleFunc("GET /api/strava/stats", authService.RequireAuth(stravaHandler.Stats))
 
 	// Statistiques, par section (fonctionnalités « Statistiques : effectifs / courses / engagement »)

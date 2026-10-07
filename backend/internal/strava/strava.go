@@ -594,3 +594,89 @@ func (h *Handler) Stats(w http.ResponseWriter, r *http.Request) {
 	}
 	httpx.JSON(w, http.StatusOK, map[string]any{"course": sport("run"), "velo": sport("ride"), "natation": sport("swim")})
 }
+
+// Intermediaire : un kilomètre (ou le bout restant) ou un tour enregistré par la montre.
+type Intermediaire struct {
+	Nom        string  `json:"nom,omitempty"` // tours seulement (« Lap 3 », ou le nom donné sur la montre)
+	DistanceM  float64 `json:"distanceM"`
+	DureeS     int     `json:"dureeS"`     // temps en mouvement
+	TempsS     int     `json:"tempsS"`     // temps écoulé
+	Denivele   float64 `json:"denivele"`   // km : différence d'altitude (±) ; tour : dénivelé positif
+	VitesseMoy float64 `json:"vitesseMoy"` // m/s
+	FCMoyenne  float64 `json:"fcMoyenne"`
+}
+
+type brutIntermediaire struct {
+	Name     string  `json:"name"`
+	Distance float64 `json:"distance"`
+	Moving   int     `json:"moving_time"`
+	Elapsed  int     `json:"elapsed_time"`
+	ElevDiff float64 `json:"elevation_difference"`
+	ElevGain float64 `json:"total_elevation_gain"`
+	AvgSpeed float64 `json:"average_speed"`
+	AvgHR    float64 `json:"average_heartrate"`
+}
+
+// Detail : temps intermédiaires (par kilomètre et par tour) et tracé complet d'une activité de l'adhérent connecté.
+// Un appel Strava par activité ouverte (mis en cache 5 minutes) ; rien n'est conservé par le club.
+func (h *Handler) Detail(w http.ResponseWriter, r *http.Request) {
+	id, ok := idAdherent(w, r)
+	if !ok {
+		return
+	}
+	actID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || actID <= 0 {
+		httpx.Error(w, http.StatusBadRequest, "activité invalide")
+		return
+	}
+	l, err := h.lire(id)
+	if err != nil {
+		h.erreurStrava(w, err)
+		return
+	}
+	body, err := h.appeler(id, fmt.Sprintf("/activities/%d", actID))
+	if err != nil {
+		h.erreurStrava(w, err)
+		return
+	}
+	var brut struct {
+		Athlete struct {
+			ID int64 `json:"id"`
+		} `json:"athlete"`
+		Map struct {
+			Polyline        string `json:"polyline"`
+			SummaryPolyline string `json:"summary_polyline"`
+		} `json:"map"`
+		Splits []brutIntermediaire `json:"splits_metric"`
+		Laps   []brutIntermediaire `json:"laps"`
+	}
+	if err := json.Unmarshal(body, &brut); err != nil {
+		h.erreurStrava(w, err)
+		return
+	}
+	// Une activité publique d'un autre athlète est lisible avec n'importe quel jeton Strava : on ne montre que les siennes.
+	if brut.Athlete.ID != l.AthleteID {
+		httpx.Error(w, http.StatusNotFound, "activité introuvable")
+		return
+	}
+	conv := func(b brutIntermediaire, tour bool) Intermediaire {
+		i := Intermediaire{DistanceM: b.Distance, DureeS: b.Moving, TempsS: b.Elapsed, Denivele: b.ElevDiff, VitesseMoy: b.AvgSpeed, FCMoyenne: b.AvgHR}
+		if tour {
+			i.Nom, i.Denivele = b.Name, b.ElevGain
+		}
+		return i
+	}
+	kms := make([]Intermediaire, 0, len(brut.Splits))
+	for _, s := range brut.Splits {
+		kms = append(kms, conv(s, false))
+	}
+	tours := make([]Intermediaire, 0, len(brut.Laps))
+	for _, t := range brut.Laps {
+		tours = append(tours, conv(t, true))
+	}
+	trace := brut.Map.Polyline
+	if trace == "" {
+		trace = brut.Map.SummaryPolyline
+	}
+	httpx.JSON(w, http.StatusOK, map[string]any{"trace": trace, "kms": kms, "tours": tours})
+}

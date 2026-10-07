@@ -185,6 +185,7 @@ function Totaux({ titre, t }) {
 export default function StravaPanel({ token, flash, onFlashClear }) {
   const [carte, setCarte] = useState(null) // activité dont le tracé est ouvert sur la carte
   const fermerCarte = useCallback(() => setCarte(null), [])
+  const chargerDetail = useCallback(() => api.stravaActivite(token, carte?.id), [token, carte])
   const [statut, setStatut] = useState(null)
   const [stats, setStats] = useState(null)
   const [activites, setActivites] = useState([])
@@ -474,7 +475,7 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                               <td>{dateFr(a.debut)}</td>
                               <td className="strava-trace">
                                 {a.trace && (
-                                  <button type="button" className="strava-trace__btn" onClick={() => setCarte(a)} title="Voir le tracé sur la carte" aria-label={`Voir le tracé de « ${a.nom} » sur la carte`}>
+                                  <button type="button" className="strava-trace__btn" onClick={() => setCarte(a)} title="Voir le tracé et les temps intermédiaires" aria-label={`Voir le tracé et les temps intermédiaires de « ${a.nom} »`}>
                                     <TraceMini trace={a.trace} couleur={fam.couleur} />
                                   </button>
                                 )}
@@ -507,6 +508,9 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
             couleur={famille(carte.sport).couleur}
             titre={`${infoSport(carte.sport)[0]} ${carte.nom}`}
             details={[dateFr(carte.debut), carte.distanceM ? km(carte.distanceM) : '', duree(carte.dureeS), carte.denivelePos ? `D+ ${nf0.format(carte.denivelePos)} m` : ''].filter(Boolean).join(' · ')}
+            mode={infoSport(carte.sport)[2]}
+            fmtVitesse={{ vitesse, nage: allure100 }[infoSport(carte.sport)[2]] || allure}
+            charger={chargerDetail}
             onClose={fermerCarte}
           />
         </Suspense>

@@ -1572,18 +1572,47 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .trace-mini { display: block; }
 
 .trace-carte { position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; padding: 1.5rem; background: rgba(0, 0, 0, 0.6); }
-.trace-carte__boite { width: min(860px, 100%); max-height: calc(100dvh - 3rem); display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-btn); overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); }
+.trace-carte__boite { width: min(1120px, 100%); max-height: calc(100dvh - 3rem); display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-btn); overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45); }
 .trace-carte__tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 0.9rem 1.1rem; border-bottom: 1px solid var(--line); }
 .trace-carte__tete b { display: block; font: 700 1.15rem var(--font-display); text-transform: uppercase; letter-spacing: 0.02em; }
 .trace-carte__tete small { color: var(--ink-soft); font-size: 0.85rem; }
 .trace-carte__fermer { flex: none; width: 2rem; height: 2rem; border: 1px solid var(--ink); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; }
 .trace-carte__fermer:hover { background: var(--ink); color: var(--paper); }
+.trace-carte__corps { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); min-height: 0; }
 .trace-carte__carte { height: min(560px, 62dvh); background: #e8e4dc; }
+.trace-carte__inter { max-height: min(560px, 62dvh); overflow-y: auto; border-left: 1px solid var(--line); padding: 0.8rem 1rem; }
+.inter-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.6rem; }
+.inter-titre { font: 600 0.72rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); }
+.inter-onglets { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.inter-onglets button { padding: 0.3rem 0.8rem; border: 0; background: none; color: var(--ink-soft); font: 600 0.72rem var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.inter-onglets button.is-on { background: var(--ink); color: var(--paper); }
+.inter-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.inter-table th { text-align: left; padding: 0.35rem 0.4rem; font: 600 0.66rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); border-bottom: 2px solid var(--ink); }
+.inter-table td { padding: 0.4rem; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.inter-table td small { display: block; color: var(--stone); font-size: 0.72rem; }
+.inter-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.inter-table tbody tr { cursor: pointer; transition: background 0.12s; }
+.inter-table tbody tr:hover, .inter-table tbody tr.is-survol { background: var(--surface-2); }
+.inter-table tr.is-rapide td { font-weight: 700; }
+.inter-allure { position: relative; min-width: 7.5rem; }
+.inter-allure b { position: relative; font-weight: inherit; font-variant-numeric: tabular-nums; }
+.inter-barre { position: absolute; left: 0.4rem; top: 50%; height: 1.15rem; transform: translateY(-50%); border-radius: 3px; background: color-mix(in srgb, var(--vermilion) 18%, transparent); max-width: calc(100% - 0.8rem); }
+.inter-table tr.is-rapide .inter-barre { background: color-mix(in srgb, var(--vermilion) 38%, transparent); }
+.inter-allure b { padding-left: 0.35rem; }
+.inter-note { margin: 0.6rem 0 0; font-size: 0.75rem; color: var(--stone); }
+/* Leaflet (chargé après) impose display: block aux icônes : on centre le numéro par la hauteur de ligne. */
+.leaflet-marker-icon.inter-borne { box-sizing: border-box; text-align: center; line-height: 16px; border-radius: 50%; background: #fff; border: 2px solid #1C1917; font: 700 11px/1 var(--font-display); color: #1C1917; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
 .trace-carte__pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; padding: 0.7rem 1.1rem; font-size: 0.82rem; color: var(--ink-soft); }
 .trace-carte__pied i { display: inline-block; width: 0.7rem; height: 0.7rem; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #b8b2ab; vertical-align: -1px; margin: 0 0.2rem 0 0.6rem; }
 .trace-carte__pied i:first-child { margin-left: 0; }
+@media (max-width: 860px) {
+  .trace-carte__boite { overflow-y: auto; }
+  .trace-carte__boite > * { flex-shrink: 0; }
+  .trace-carte__corps { grid-template-columns: 1fr; }
+  .trace-carte__inter { max-height: none; overflow: visible; border-left: 0; border-top: 1px solid var(--line); }
+}
 @media (max-width: 600px) {
   .trace-carte { padding: 0.6rem; }
-  .trace-carte__carte { height: 58dvh; }
+  .trace-carte__carte { height: 46dvh; }
 }
 
