@@ -33,21 +33,25 @@ export default function NotificationsPanel({ token }) {
   async function basculerAppareil() {
     setOccupe(true)
     setMsg(null)
+    const etape = (texte) => setMsg({ ok: true, texte, enCours: true })
     try {
       if (etat === 'actif') {
+        etape('Désactivation…')
         const endpoint = await desactiverPush()
         if (endpoint) await api.notifDesabonner(token, endpoint)
+        setEtat('possible')
         setMsg({ ok: true, texte: 'Notifications désactivées sur cet appareil.' })
       } else {
-        const abo = await activerPush(config.vapidPublicKey)
+        const abo = await activerPush(config.vapidPublicKey, etape)
+        etape('Enregistrement…')
         await api.notifAbonner(token, abo)
-        setMsg({ ok: true, texte: 'Notifications activées sur cet appareil.' })
+        setEtat('actif')
+        setMsg({ ok: true, texte: 'Notifications activées sur cet appareil. Clique sur « Tester » pour vérifier.' })
       }
-      setEtat(await etatPush())
-      setPrefs(await api.notifPrefs(token))
+      api.notifPrefs(token).then(setPrefs).catch(() => {}) // nombre d'appareils, sans faire attendre
     } catch (e) {
       setMsg({ ok: false, texte: e.message || 'Impossible de changer ce réglage.' })
-      setEtat(await etatPush().catch(() => 'indisponible'))
+      etatPush().then(setEtat).catch(() => setEtat('indisponible'))
     } finally {
       setOccupe(false)
     }
@@ -99,8 +103,9 @@ export default function NotificationsPanel({ token }) {
         {pushDispo && (etat === 'possible' || etat === 'actif') && (
           <div className="notif-actions">
             {actif && <button type="button" className="btn btn--ghost notif-btn" onClick={tester} disabled={occupe}>Tester</button>}
-            <button type="button" className={`btn notif-btn ${actif ? 'btn--ghost' : 'btn--solid'}`} onClick={basculerAppareil} disabled={occupe}>
-              {actif ? 'Désactiver' : 'Activer'}
+            <button type="button" className={`btn notif-btn ${actif ? 'btn--ghost' : 'btn--solid'}`} onClick={basculerAppareil} disabled={occupe} aria-busy={occupe}>
+              {occupe ? <span className="notif-roue" aria-hidden="true" /> : null}
+              {occupe ? 'Un instant…' : actif ? 'Désactiver' : 'Activer'}
             </button>
           </div>
         )}
@@ -128,7 +133,7 @@ export default function NotificationsPanel({ token }) {
           </tbody>
         </table>
       )}
-      {msg && <p className={`notif-msg${msg.ok ? ' is-ok' : ' is-ko'}`} role="status">{msg.texte}</p>}
+      {msg && <p className={`notif-msg${msg.ok ? ' is-ok' : ' is-ko'}${msg.enCours ? ' is-encours' : ''}`} role="status">{msg.texte}</p>}
     </div>
   )
 }

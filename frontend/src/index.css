@@ -1312,12 +1312,12 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .adh-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .adh-body--lateral { display: grid; grid-template-columns: 15.5rem minmax(0, 1fr); align-items: start; transition: grid-template-columns 0.2s ease; }
 .adh-body--lateral.is-reduit { grid-template-columns: 4.6rem minmax(0, 1fr); }
-.adh-burger { display: none; align-items: center; gap: 0.4rem; padding: 0.45rem 0.8rem; border: 1px solid var(--ink); background: none; color: var(--ink); font: 600 0.8rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: var(--radius-btn); }
+.adh-burger { display: none; max-width: 55vw; align-items: center; gap: 0.4rem; padding: 0.45rem 0.8rem; border: 1px solid var(--ink); background: none; color: var(--ink); font: 600 0.8rem var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; border-radius: var(--radius-btn); }
 .adh-side-backdrop { display: none; }
 
 .side {
-  position: sticky; top: 4.6rem; align-self: start; display: flex; flex-direction: column;
-  height: calc(100vh - 5.2rem); margin: 0.6rem 0 0.6rem 0.6rem; padding: 0.9rem 0.6rem 0.7rem;
+  position: sticky; top: calc(var(--adh-entete, 4.6rem) + 0.6rem); align-self: start; display: flex; flex-direction: column;
+  height: calc(100dvh - var(--adh-entete, 4.6rem) - 1.2rem); margin: 0.6rem 0 0.6rem 0.6rem; padding: 0.9rem 0.6rem 0.7rem;
   background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
   box-shadow: 0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px -14px rgba(28, 25, 23, 0.18);
 }
@@ -1355,11 +1355,27 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .side.is-reduit .side-item.is-active::before { left: -0.45rem; }
 .side.is-reduit .side-badge { position: absolute; top: 2px; right: 2px; min-width: 1.05rem; padding: 0 0.25rem; font-size: 0.62rem; }
 
-@media (max-width: 860px) {
+/* Tablette : la colonne d'icônes reste affichée en permanence (pas de tiroir) */
+@media (min-width: 600px) and (max-width: 860px) {
+  .adh-body--lateral, .adh-body--lateral.is-reduit { grid-template-columns: 4.6rem minmax(0, 1fr); }
+  .side, .side.is-reduit { padding-inline: 0.45rem; }
+  .side .side-label, .side .side-titre, .side .side-tete, .side .side-reduire { display: none; }
+  .side .side-section + .side-section { padding-top: 0.5rem; border-top: 1px solid var(--line); }
+  .side .side-item { justify-content: center; padding-inline: 0; }
+  .side .side-item.is-active::before { left: -0.45rem; }
+  .side .side-badge { position: absolute; top: 2px; right: 2px; min-width: 1.05rem; padding: 0 0.25rem; font-size: 0.62rem; }
+  .side .side-pied { flex-direction: column; }
+  .side .side-pied .side-item { width: 100%; }
+}
+
+/* Téléphone : tiroir ouvert par le bouton de l'en-tête (qui affiche la rubrique en cours) */
+@media (max-width: 599px) {
   .adh-body--lateral, .adh-body--lateral.is-reduit { display: block; }
   .adh-burger { display: inline-flex; }
   .side, .side.is-reduit {
-    position: fixed; z-index: 60; top: 0; left: 0; bottom: 0; width: min(19rem, 86vw); height: auto; margin: 0;
+    /* align-self: stretch : sans lui, la règle « start » de l'ordinateur donne au tiroir la hauteur de son contenu
+       au lieu de celle de l'écran (le bas de la liste devenait inaccessible). */
+    position: fixed; z-index: 60; top: 0; left: 0; bottom: 0; width: min(19rem, 86vw); height: auto; margin: 0; align-self: stretch;
     padding: calc(0.8rem + env(safe-area-inset-top)) 0.7rem calc(0.8rem + env(safe-area-inset-bottom));
     border: 0; border-right: 1px solid var(--line); border-radius: 0 16px 16px 0;
     transform: translateX(-104%); transition: transform 0.24s ease; box-shadow: 8px 0 32px rgba(0, 0, 0, 0.28);
@@ -1383,6 +1399,8 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
   .side-item.is-active::before { top: 0.4rem; bottom: 0.4rem; }
 }
 @media (prefers-reduced-motion: reduce) { .adh-body--lateral, .side { transition: none; } }
+
+.adh-burger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Bascule (interrupteur coulissant) : préférences du profil */
 .bascule { position: relative; display: inline-grid; grid-template-columns: repeat(var(--n), minmax(7.5rem, 1fr)); max-width: 100%; padding: 3px; border-radius: 999px; background: linear-gradient(90deg, #8a1c13, var(--vermilion)); }
@@ -1690,3 +1708,7 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
 .notif-msg { margin: 0.8rem 0 0; font-size: 0.85rem; }
 .notif-msg.is-ok { color: #047857; }
 .notif-msg.is-ko { color: var(--vermilion-deep, #a8231a); }
+.notif-msg.is-encours { color: var(--ink-soft); }
+.notif-roue { display: inline-block; width: 0.85em; height: 0.85em; margin-right: 0.45em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; vertical-align: -0.1em; animation: notifRoue 0.7s linear infinite; }
+@keyframes notifRoue { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .notif-roue { animation-duration: 2s; } }

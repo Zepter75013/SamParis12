@@ -453,6 +453,15 @@ export default function Dashboard() {
   // Disposition du menu choisie par l'adhérent : horizontal (onglets en haut) ou latéral (à gauche, tiroir sur mobile).
   const [menuLayout, setMenuLayout] = useState(getMenuLayout)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  // Hauteur réelle de l'en-tête (elle varie : une ou deux lignes selon la largeur) : le menu latéral se cale dessous.
+  const enteteRef = useRef(null)
+  useEffect(() => {
+    const el = enteteRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return undefined
+    const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--adh-entete', `${Math.round(el.getBoundingClientRect().height)}px`))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
   // Menu latéral réduit à une colonne d'icônes (ordinateur) : préférence gardée dans ce navigateur.
   const [menuReduit, setMenuReduit] = useState(() => {
     try { return localStorage.getItem('samparis12_menu_reduit') === '1' } catch { return false }
@@ -651,12 +660,12 @@ export default function Dashboard() {
 
   return (
     <div className="adherent-layout">
-      <header className="adherent-header">
+      <header className="adherent-header" ref={enteteRef}>
         <div className="shell adherent-top-bar">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             {menuLayout === 'lateral' && (
               <button type="button" className="adh-burger" onClick={() => setDrawerOpen((v) => !v)} aria-label="Ouvrir le menu" aria-expanded={drawerOpen}>
-                ☰ <span>Menu</span>
+                ☰ <span>{(activeTab === 'profil' ? 'Tes informations' : TABS.find((t) => t.id === activeTab)?.label) || 'Menu'}</span>
               </button>
             )}
             <button onClick={() => navigate('/')} className="link-button">

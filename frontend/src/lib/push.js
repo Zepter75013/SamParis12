@@ -29,16 +29,36 @@ function nomAppareil() {
   return nav ? `${sys} · ${nav}` : sys
 }
 
-// Demande l'autorisation, abonne l'appareil et le déclare à l'API. Renvoie l'abonnement (format JSON du navigateur).
-export async function activerPush(clePublique) {
+// Service worker du site : celui déjà installé au chargement (production), sinon on l'installe. On attend au plus
+// 10 secondes qu'il soit actif, au lieu de navigator.serviceWorker.ready qui peut attendre indéfiniment.
+async function serviceWorkerActif() {
+  let reg = await navigator.serviceWorker.getRegistration('/')
+  if (!reg) reg = await navigator.serviceWorker.register('/sw.js')
+  if (reg.active) return reg
+  const sw = reg.installing || reg.waiting
+  await new Promise((ok, ko) => {
+    const delai = setTimeout(() => ko(new Error("Le site n'a pas pu s'installer sur cet appareil : recharge la page puis réessaie.")), 10000)
+    sw?.addEventListener('statechange', () => { if (sw.state === 'activated') { clearTimeout(delai); ok() } })
+    if (!sw) { clearTimeout(delai); ok() }
+  })
+  return reg
+}
+
+// Demande l'autorisation, abonne l'appareil et renvoie l'abonnement (format JSON du navigateur) à déclarer à l'API.
+// etape(texte) : progression affichée à l'adhérent (l'abonnement auprès du service push peut prendre quelques secondes).
+export async function activerPush(clePublique, etape = () => {}) {
   if (Notification.permission !== 'granted') {
+    etape("Autorise les notifications dans la fenêtre du navigateur…")
     const choix = await Notification.requestPermission()
     if (choix !== 'granted') throw new Error(choix === 'denied' ? 'Les notifications sont bloquées pour ce site dans le navigateur.' : "Autorisation non accordée.")
   }
-  const reg = await navigator.serviceWorker.register('/sw.js')
-  await navigator.serviceWorker.ready
+  etape('Préparation de l’appareil…')
+  const reg = await serviceWorkerActif()
   let abo = await reg.pushManager.getSubscription()
-  if (!abo) abo = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: cleVersOctets(clePublique) })
+  if (!abo) {
+    etape('Abonnement auprès du service de notifications (quelques secondes)…')
+    abo = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: cleVersOctets(clePublique) })
+  }
   return { ...abo.toJSON(), appareil: nomAppareil() }
 }
 

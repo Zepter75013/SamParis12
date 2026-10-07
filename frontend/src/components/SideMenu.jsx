@@ -46,7 +46,7 @@ export default function SideMenu({ tabs, activeTab, onSelect, unread, reduit, on
       className={`side-item${activeTab === t.id ? ' is-active' : ''}`}
       onClick={() => onSelect(t.id)}
       aria-current={activeTab === t.id ? 'page' : undefined}
-      title={reduit ? t.label : undefined}
+      title={t.label}
     >
       <Icone id={t.id} />
       <span className="side-label">{t.label}</span>
