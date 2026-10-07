@@ -4,6 +4,7 @@ import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
 import { getTheme, setTheme as applyThemeChoice } from '../../lib/theme.js'
 import { getMenuLayout, cacheMenuLayout, valide as menuValide } from '../../lib/menu.js'
+import SideMenu from '../../components/SideMenu.jsx'
 import PasswordField from '../../components/PasswordField.jsx'
 import AboutContent from '../../components/AboutContent.jsx'
 import { ord } from '../../components/Ord.jsx'
@@ -447,6 +448,14 @@ export default function Dashboard() {
   // Disposition du menu choisie par l'adhérent : horizontal (onglets en haut) ou latéral (à gauche, tiroir sur mobile).
   const [menuLayout, setMenuLayout] = useState(getMenuLayout)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  // Menu latéral réduit à une colonne d'icônes (ordinateur) : préférence gardée dans ce navigateur.
+  const [menuReduit, setMenuReduit] = useState(() => {
+    try { return localStorage.getItem('samparis12_menu_reduit') === '1' } catch { return false }
+  })
+  const basculerMenuReduit = () => setMenuReduit((v) => {
+    try { localStorage.setItem('samparis12_menu_reduit', v ? '0' : '1') } catch { /* navigation privée : préférence non gardée */ }
+    return !v
+  })
   useEffect(() => {
     if (me?.menuLayout) {
       setMenuLayout(menuValide(me.menuLayout))
@@ -543,14 +552,17 @@ export default function Dashboard() {
 
   const canStats = can('stats.effectifs') || can('stats.courses') || can('stats.engagement')
 
-  // Boutons du menu, identiques en disposition horizontale et latérale.
-  const renderTabs = () => TABS.filter((tab) => {
+  // Rubriques visibles selon les droits de l'adhérent (communes aux deux dispositions du menu).
+  const visibleTabs = TABS.filter((tab) => {
     if (tab.id === 'admin') return can('membres.admin')
     if (tab.id === 'droitsBureau') return can('roles.admin')
     if (tab.id === 'journal') return can('journal.voir')
     if (tab.id === 'stats') return canStats
     return true
-  }).map((tab) => (
+  })
+
+  // Boutons du menu horizontal (onglets en haut).
+  const renderTabs = () => visibleTabs.map((tab) => (
     <button
       key={tab.id}
       className={`adh-tab-btn${activeTab === tab.id ? ' active' : ''}`}
@@ -692,14 +704,18 @@ export default function Dashboard() {
         <div onClick={() => setProfileMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />
       )}
 
-      <div className={`adh-body${menuLayout === 'lateral' ? ' adh-body--lateral' : ''}`}>
+      <div className={`adh-body${menuLayout === 'lateral' ? ` adh-body--lateral${menuReduit ? ' is-reduit' : ''}` : ''}`}>
       {menuLayout === 'lateral' && (
-        <>
-          {drawerOpen && <div className="adh-side-backdrop" onClick={() => setDrawerOpen(false)} />}
-          <aside className={`adh-side${drawerOpen ? ' is-open' : ''}`} aria-label="Menu de l'espace adhérent">
-            <nav className="adh-side-nav">{renderTabs()}</nav>
-          </aside>
-        </>
+        <SideMenu
+          tabs={visibleTabs}
+          activeTab={activeTab}
+          onSelect={(id) => { switchTab(id); setDrawerOpen(false) }}
+          unread={chat.unreadTotal}
+          reduit={menuReduit}
+          onToggleReduit={basculerMenuReduit}
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        />
       )}
       <main className="shell" style={{ paddingBlock: '2rem', flex: 1 }}>
         {activeTab === 'overview' && !me && (

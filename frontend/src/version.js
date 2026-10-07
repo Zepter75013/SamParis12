@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.43.0',
+    date: '7 octobre 2026',
+    notes: "Menu latéral repensé : rubriques rangées par section (Mon espace, Le club, Compétition, Bureau), une icône par rubrique, rubrique active bien marquée, pastille des messages non lus. Sur ordinateur, il se réduit à une colonne d'icônes (flèche à côté d'Aide) ; sur téléphone, le tiroir a un titre et un bouton de fermeture. Le menu horizontal ne change pas.",
+  },
+  {
     version: '1.42.0',
     date: '7 octobre 2026',
     notes: "Mon activité : temps intermédiaires de chaque sortie, à côté de la carte. Par kilomètre (temps, allure ou vitesse, dénivelé, fréquence cardiaque, kilomètre le plus rapide en gras) et par tour enregistré par la montre ; survoler ou toucher une ligne allume le tronçon sur la carte, qui affiche aussi une borne à chaque kilomètre et le tracé complet (et non plus simplifié). Un appel Strava par activité ouverte ; rien n'est conservé par le club.",

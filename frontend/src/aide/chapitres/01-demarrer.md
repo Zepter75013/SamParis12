@@ -47,6 +47,8 @@ Sur l'écran de connexion, renseigne ton identifiant puis clique sur **Mot de pa
 
 Le menu peut s'afficher **en haut** (onglets horizontaux) ou **à gauche** (menu latéral). Sur téléphone, le menu latéral devient un tiroir que tu ouvres avec le bouton **☰ Menu**. Le choix se fait dans **Tes informations** (bloc **Disposition du menu**) ou d'un clic dans le menu de ton profil. Il est enregistré sur ton profil : tu le retrouves sur tous tes appareils.
 
+Le menu latéral range les rubriques par section (**Mon espace**, **Le club**, **Compétition**, et **Bureau** pour les membres du bureau), chacune avec son icône. Sur ordinateur, la petite flèche en bas, à côté de **Aide**, le **réduit à une colonne d'icônes** pour laisser plus de place à l'écran (le nom de la rubrique s'affiche au survol) ; un nouveau clic le déplie. Ce réglage-là est propre à chaque navigateur.
+
 ### Thème clair ou sombre
 
 Dans **Tes informations**, le bloc **Préférences** propose trois réglages : **Sombre**, **Clair** et **Système** (le site suit alors le réglage de ton appareil). Ce choix est propre à chaque appareil.
