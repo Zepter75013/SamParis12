@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.44.0',
+    date: '7 octobre 2026',
+    notes: "Notifications : sois prévenu d'un message reçu, d'une nouvelle course, du rappel la veille de tes courses et d'un nouveau document, par notification sur ton téléphone ou ton ordinateur (même site fermé) et par e-mail si tu n'as pas vu l'élément dans l'heure. Réglages par type et par canal dans Tes informations (bloc Notifications) ; sur iPhone, installer d'abord le site sur l'écran d'accueil. Nécessite la migration 0029 et les clés VAPID du club.",
+  },
+  {
     version: '1.43.0',
     date: '7 octobre 2026',
     notes: "Menu latéral repensé : rubriques rangées par section (Mon espace, Le club, Compétition, Bureau), une icône par rubrique, rubrique active bien marquée, pastille des messages non lus. Sur ordinateur, il se réduit à une colonne d'icônes (flèche à côté d'Aide) ; sur téléphone, le tiroir a un titre et un bouton de fermeture. Le menu horizontal ne change pas.",

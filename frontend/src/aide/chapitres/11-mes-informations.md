@@ -16,6 +16,7 @@ Clique sur **Changer ta photo** pour choisir une image (JPEG, PNG ou WebP, 5 Mo 
 Deux bascules à glisser :
 
 - **Thème** : Sombre, Clair ou Système (celui de ton appareil). Ce choix est propre à l'appareil que tu utilises.
+- **Notifications** : être prévenu des messages, des courses et des documents, sur ton téléphone ou par e-mail (voir le chapitre **Notifications**).
 - **Disposition du menu** : Horizontal (onglets en haut) ou Latéral (menu à gauche, tiroir sur téléphone). Ce choix est enregistré sur ton profil et te suit sur tous tes appareils.
 
 ## Informations confidentielles

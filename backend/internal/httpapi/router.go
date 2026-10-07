@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 
@@ -15,6 +16,7 @@ import (
 	"samparis12/backend/internal/mailer"
 	"samparis12/backend/internal/member"
 	"samparis12/backend/internal/news"
+	"samparis12/backend/internal/notif"
 	"samparis12/backend/internal/partner"
 	"samparis12/backend/internal/perm"
 	"samparis12/backend/internal/race"
@@ -41,6 +43,13 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	documentHandler := document.NewHandler(document.NewRepository(db), member.NewRepository(db))
 	gameHandler := game.NewHandler(game.NewRepository(db))
 	chatHandler := chat.NewHandler(chat.NewRepository(db, cfg.JWTSecret))
+
+	// Notifications push et e-mail (messages, courses, rappels la veille, documents) ; tâche de fond chaque minute.
+	notifService := notif.New(db, cfg, memberMailer)
+	notifService.Demarrer(context.Background())
+	chatHandler.SetNotifier(notifService)
+	raceHandler.SetNotifier(notifService)
+	documentHandler.SetNotifier(notifService)
 
 	// Accès réservé aux adhérents dont le rôle comprend la fonctionnalité (vérifié en base à chaque appel).
 	requireFeature := func(feature string, next http.HandlerFunc) http.HandlerFunc {
@@ -99,6 +108,14 @@ func NewRouter(db *sql.DB, cfg config.Config) http.Handler {
 	mux.HandleFunc("DELETE /api/strava", authService.RequireAuth(stravaHandler.Disconnect))
 	mux.HandleFunc("GET /api/strava/activities", authService.RequireAuth(stravaHandler.Activities))
 	mux.HandleFunc("GET /api/strava/activities/{id}", authService.RequireAuth(stravaHandler.Detail))
+
+	mux.HandleFunc("GET /api/notifications/config", authService.RequireAuth(notifService.Config))
+	mux.HandleFunc("GET /api/notifications/prefs", authService.RequireAuth(notifService.GetPrefs))
+	mux.HandleFunc("PUT /api/notifications/prefs", authService.RequireAuth(notifService.PutPrefs))
+	mux.HandleFunc("POST /api/notifications/subscriptions", authService.RequireAuth(notifService.Subscribe))
+	mux.HandleFunc("DELETE /api/notifications/subscriptions", authService.RequireAuth(notifService.Unsubscribe))
+	mux.HandleFunc("POST /api/notifications/test", authService.RequireAuth(notifService.Test))
+	mux.HandleFunc("POST /api/notifications/seen", authService.RequireAuth(notifService.Seen))
 	mux.HandleFunc("GET /api/strava/stats", authService.RequireAuth(stravaHandler.Stats))
 
 	// Statistiques, par section (fonctionnalités « Statistiques : effectifs / courses / engagement »)

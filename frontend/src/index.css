@@ -1670,3 +1670,23 @@ button, a, input, select, textarea, label { touch-action: manipulation; }
   .trace-carte__carte { height: 46dvh; }
 }
 
+
+/* ---------- Profil : notifications push et e-mail ---------- */
+.notif-bloc { background: var(--surface); border: 1px solid var(--line); padding: 1.5rem; margin-bottom: 1.5rem; }
+.notif-intro { font-size: 0.82rem; color: var(--ink-soft); margin: 0.3rem 0 1rem; }
+.notif-appareil { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem 1.2rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-left: 4px solid var(--vermilion); border-radius: var(--radius-btn); background: var(--paper); }
+.notif-appareil b { display: block; font: 700 1rem var(--font-display); text-transform: uppercase; letter-spacing: 0.04em; }
+.notif-appareil small { display: block; max-width: 38rem; margin-top: 0.15rem; color: var(--ink-soft); font-size: 0.82rem; line-height: 1.45; }
+.notif-actions { display: flex; gap: 0.5rem; }
+.notif-btn { padding: 0.5rem 1rem; font-size: 0.72rem; }
+.notif-table { width: 100%; margin-top: 1rem; border-collapse: collapse; font-size: 0.9rem; }
+.notif-table th { padding: 0.45rem 0.5rem; text-align: center; font: 600 0.68rem var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); border-bottom: 2px solid var(--ink); }
+.notif-table th:first-child { text-align: left; }
+.notif-table td { padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--line); text-align: center; vertical-align: middle; }
+.notif-table td:first-child { text-align: left; }
+.notif-table td small { display: block; color: var(--stone); font-size: 0.78rem; }
+.notif-table input[type="checkbox"] { width: 1.15rem; height: 1.15rem; accent-color: var(--vermilion); cursor: pointer; }
+.notif-table input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.4; }
+.notif-msg { margin: 0.8rem 0 0; font-size: 0.85rem; }
+.notif-msg.is-ok { color: #047857; }
+.notif-msg.is-ko { color: var(--vermilion-deep, #a8231a); }

@@ -33,6 +33,7 @@ func (h *Handler) publishMessage(rr *roomRow, msg *Message) {
 		shared.Event = &e
 	}
 	h.broadcast(rr, "message", map[string]any{"roomId": rr.id, "message": &shared})
+	h.notifier(rr, msg)
 }
 
 // SendMedia : un message avec une ou plusieurs photos, vidéos ou documents (multipart : champs files, texte, replyTo).

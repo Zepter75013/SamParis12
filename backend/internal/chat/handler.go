@@ -13,6 +13,7 @@ import (
 
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/member"
+	"samparis12/backend/internal/notif"
 )
 
 // Hub diffuse les événements en temps réel aux adhérents connectés (une seule instance de l'API : en mémoire).
@@ -60,8 +61,9 @@ func (h *Hub) publish(ids []int64, event string, payload any) {
 }
 
 type Handler struct {
-	repo *Repository
-	hub  *Hub
+	repo  *Repository
+	hub   *Hub
+	notif *notif.Service // notifications push et e-mail (nil : désactivées)
 }
 
 func NewHandler(repo *Repository) *Handler { return &Handler{repo: repo, hub: NewHub()} }
@@ -235,6 +237,7 @@ func (h *Handler) Send(w http.ResponseWriter, r *http.Request) {
 	if ids, err := h.repo.MemberIDs(rr); err == nil {
 		h.hub.publish(h.repo.Visible(rr.id, ids), "message", map[string]any{"roomId": rr.id, "message": msg})
 	}
+	h.notifier(rr, msg)
 	httpx.JSON(w, http.StatusCreated, msg)
 }
 
@@ -258,6 +261,7 @@ func (h *Handler) Read(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, err)
 		return
 	}
+	h.notif.Vu(p.ID, rr.id, notif.Message) // discussion lue : plus d'e-mail à son sujet
 	if ids, err := h.repo.MemberIDs(rr); err == nil {
 		h.hub.publish(h.repo.Visible(rr.id, ids), "read", map[string]any{"roomId": rr.id, "memberId": p.ID, "upTo": in.UpTo})
 	}

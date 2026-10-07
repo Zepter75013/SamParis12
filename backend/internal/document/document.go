@@ -13,6 +13,7 @@ import (
 
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/member"
+	"samparis12/backend/internal/notif"
 	"samparis12/backend/internal/perm"
 )
 
@@ -118,7 +119,11 @@ func (r *Repository) Replace(id int64, titre, auteur, filePath string, uploadedB
 type Handler struct {
 	repo       *Repository
 	memberRepo *member.Repository
+	notif      *notif.Service // notifications push et e-mail (nil : désactivées)
 }
+
+// SetNotifier : un nouveau document est annoncé aux adhérents.
+func (h *Handler) SetNotifier(n *notif.Service) { h.notif = n }
 
 func NewHandler(repo *Repository, memberRepo *member.Repository) *Handler {
 	return &Handler{repo: repo, memberRepo: memberRepo}
@@ -244,6 +249,10 @@ func (h *Handler) Upload(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
 		return
+	}
+	if h.notif != nil {
+		h.notif.Notify(notif.Event{Kind: notif.Document, RefID: id, Membres: h.notif.MembresActifs(memberID),
+			Titre: "Nouveau document", Corps: titre + " · " + categorie, URL: "/espace-adherent/tableau-de-bord?onglet=documents"})
 	}
 	httpx.JSON(w, http.StatusCreated, d)
 }

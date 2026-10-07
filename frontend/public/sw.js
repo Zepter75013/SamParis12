@@ -1,4 +1,4 @@
-// Service worker minimal : permet l'installation du site comme application (PWA).
+// Service worker : permet l'installation du site comme application (PWA) et affiche les notifications push.
 // Il ne met rien en cache : le site et la messagerie en temps réel se comportent comme d'habitude. Seule une navigation qui
 // échoue (téléphone hors connexion) affiche une courte page d'explication au lieu de l'erreur du navigateur.
 self.addEventListener('install', () => self.skipWaiting())
@@ -13,3 +13,35 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode !== 'navigate') return
   event.respondWith(fetch(event.request).catch(() => new Response(HORS_CONNEXION, { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } })))
 })
+
+// Notifications push (messages, courses, rappels, documents) : contenu envoyé par l'API (internal/notif).
+self.addEventListener('push', (event) => {
+  let d = {}
+  try { d = event.data ? event.data.json() : {} } catch { d = { corps: event.data ? event.data.text() : '' } }
+  event.waitUntil(self.registration.showNotification(d.titre || 'SAM Paris 12', {
+    body: d.corps || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: d.tag || undefined,       // une seule notification par discussion, remplacée à chaque message
+    renotify: Boolean(d.tag),
+    lang: 'fr',
+    data: { url: d.url || '/espace-adherent' },
+  }))
+})
+
+// Clic sur une notification : on réutilise l'onglet du site s'il est ouvert (sans le recharger), sinon on l'ouvre.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = new URL((event.notification.data && event.notification.data.url) || '/espace-adherent', self.location.origin).href
+  event.waitUntil((async () => {
+    const fenetres = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    const site = fenetres.find((c) => new URL(c.url).origin === self.location.origin)
+    if (site) {
+      await site.focus()
+      site.postMessage({ type: 'notification-ouvrir', url })
+      return
+    }
+    await self.clients.openWindow(url)
+  })())
+})
+

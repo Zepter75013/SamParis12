@@ -11,6 +11,7 @@ import (
 
 	"samparis12/backend/internal/httpx"
 	"samparis12/backend/internal/member"
+	"samparis12/backend/internal/notif"
 	"samparis12/backend/internal/perm"
 )
 
@@ -449,7 +450,11 @@ func (r *Repository) UpcomingRacesByMember(memberID int64) ([]Race, error) {
 type Handler struct {
 	repo       *Repository
 	memberRepo *member.Repository
+	notif      *notif.Service // notifications push et e-mail (nil : désactivées)
 }
+
+// SetNotifier : une nouvelle course est annoncée aux adhérents.
+func (h *Handler) SetNotifier(n *notif.Service) { h.notif = n }
 
 func NewHandler(repo *Repository, memberRepo *member.Repository) *Handler {
 	return &Handler{repo: repo, memberRepo: memberRepo}
@@ -501,6 +506,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		httpx.Error(w, http.StatusInternalServerError, "erreur serveur")
 		return
+	}
+	if h.notif != nil {
+		corps := rc.Titre + " · " + notif.DateFr(rc.Date)
+		if rc.Lieu != "" {
+			corps += " · " + rc.Lieu
+		}
+		h.notif.Notify(notif.Event{Kind: notif.Course, RefID: id, Membres: h.notif.MembresActifs(memberID),
+			Titre: "Nouvelle course au calendrier", Corps: corps, URL: "/espace-adherent/tableau-de-bord?onglet=courses"})
 	}
 	httpx.JSON(w, http.StatusCreated, race)
 }

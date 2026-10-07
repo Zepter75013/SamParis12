@@ -21,6 +21,12 @@ type Config struct {
 	StravaClientSecret string
 	StravaBaseURL      string
 
+	// Notifications push (standard Web Push) : clés VAPID du club (go run ./cmd/vapid) et adresse de contact.
+	// Sans clés, le push est désactivé ; les e-mails de notification fonctionnent quand même.
+	VAPIDPublicKey  string
+	VAPIDPrivateKey string
+	VAPIDSubject    string
+
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUsername string
@@ -43,6 +49,10 @@ func Load() Config {
 		StravaClientID:     os.Getenv("STRAVA_CLIENT_ID"),
 		StravaClientSecret: os.Getenv("STRAVA_CLIENT_SECRET"),
 		StravaBaseURL:      getEnv("STRAVA_BASE_URL", "https://www.strava.com"),
+
+		VAPIDPublicKey:  os.Getenv("VAPID_PUBLIC_KEY"),
+		VAPIDPrivateKey: os.Getenv("VAPID_PRIVATE_KEY"),
+		VAPIDSubject:    getEnv("VAPID_SUBJECT", "contact@samparis12.org"),
 
 		SMTPHost:     getEnv("SMTP_HOST", ""),
 		SMTPPort:     getEnv("SMTP_PORT", "587"),

@@ -46,6 +46,7 @@ func checkSchema(conn *sql.DB) {
 		{"audit_log", "action", "0024_audit_log.sql"},
 		{"audit_log", "kind", "0027_audit_kind.sql"},
 		{"strava_links", "access_token", "0028_strava.sql"},
+		{"notifications", "mail_due_at", "0029_notifications.sql"},
 		{"members", "menu_layout", "0025_menu_layout.sql"},
 		{"game_scores", "best_meters", "0017_game_scores.sql"},
 	}

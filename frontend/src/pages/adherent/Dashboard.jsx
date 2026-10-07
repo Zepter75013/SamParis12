@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
 import { getTheme, setTheme as applyThemeChoice } from '../../lib/theme.js'
 import { getMenuLayout, cacheMenuLayout, valide as menuValide } from '../../lib/menu.js'
 import SideMenu from '../../components/SideMenu.jsx'
+import NotificationsPanel from '../../components/NotificationsPanel.jsx'
 import PasswordField from '../../components/PasswordField.jsx'
 import AboutContent from '../../components/AboutContent.jsx'
 import { ord } from '../../components/Ord.jsx'
@@ -397,7 +398,11 @@ function MemberDetailModal({ member, token, onClose }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('overview')
+  // Onglet demandé par un lien de notification (?onglet=…), sinon le tableau de bord.
+  const [activeTab, setActiveTab] = useState(() => {
+    const o = new URLSearchParams(window.location.search).get('onglet')
+    return o && (o === 'profil' || TABS.some((t) => t.id === o)) ? o : 'overview'
+  })
   const [aideCible, setAideCible] = useState(null) // écran dont on demande l'aide : { id, n }
   const [stravaFlash, setStravaFlash] = useState(null) // résultat du retour de Strava : { ok, msg }
   const [search, setSearch] = useState('')
@@ -549,6 +554,44 @@ export default function Dashboard() {
     setOpenVieCard(null)
     setOpenAdminCard(null)
   }
+
+  // Ouverture depuis une notification (lien de l'e-mail ou clic sur une notification push) : ?onglet=…&salon=…
+  const { openRoom } = chat
+  const ouvrirLien = useCallback((href) => {
+    const u = new URL(href, window.location.origin)
+    const onglet = u.searchParams.get('onglet')
+    const salon = Number(u.searchParams.get('salon'))
+    if (onglet && (onglet === 'profil' || TABS.some((t) => t.id === onglet))) {
+      setActiveTab(onglet)
+      setOpenVieCard(null)
+      setOpenAdminCard(null)
+    }
+    if (salon > 0) openRoom(salon)
+  }, [openRoom])
+  // à l'arrivée par un lien : l'onglet est déjà choisi (état initial) ; on ouvre la discussion puis on nettoie l'adresse
+  const lienTraite = useRef(false)
+  useEffect(() => {
+    if (lienTraite.current || !token) return
+    lienTraite.current = true
+    const p = new URLSearchParams(window.location.search)
+    if (!p.get('onglet')) return
+    const salon = Number(p.get('salon'))
+    if (salon > 0) openRoom(salon)
+    window.history.replaceState({}, '', window.location.pathname)
+  }, [token, openRoom])
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return undefined
+    const onMessage = (e) => { if (e.data && e.data.type === 'notification-ouvrir') ouvrirLien(e.data.url) }
+    navigator.serviceWorker.addEventListener('message', onMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage)
+  }, [ouvrirLien])
+
+  // Ouvrir « Nos Courses » ou « Plans & Documents » : leurs notifications sont vues (pas d'e-mail de rappel).
+  useEffect(() => {
+    if (!token) return
+    const kinds = activeTab === 'courses' ? ['course', 'rappel'] : activeTab === 'documents' ? ['document'] : null
+    if (kinds) api.notifVu(token, kinds).catch(() => {})
+  }, [activeTab, token])
 
   const canStats = can('stats.effectifs') || can('stats.courses') || can('stats.engagement')
 
@@ -1438,6 +1481,8 @@ function ProfilPanel({ token, me, onMeUpdate, onPasswordChanged, menuLayout, onM
           {photoMessage && <p style={{ fontSize: '0.8rem', color: 'var(--vermilion)', marginTop: '0.6rem' }}>{photoMessage}</p>}
         </div>
       </div>
+
+      <NotificationsPanel token={token} />
 
       <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', padding: '1.5rem', marginBottom: '1.5rem' }}>
         <span className="eyebrow" style={{ fontWeight: 'bold' }}>Préférences</span>

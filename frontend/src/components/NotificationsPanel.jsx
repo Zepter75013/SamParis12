@@ -1,0 +1,134 @@
+import { useEffect, useState } from 'react'
+import { api } from '../lib/api.js'
+import { activerPush, desactiverPush, etatPush } from '../lib/push.js'
+
+// Bloc « Notifications » du profil : activer le push sur cet appareil, et choisir par type ce qu'on reçoit
+// par notification et par e-mail (l'e-mail n'est envoyé que si l'élément n'a pas été vu dans l'heure).
+
+const TYPES = [
+  { id: 'messages', label: 'Messages reçus', aide: 'Dans les discussions de la messagerie où tu participes.' },
+  { id: 'courses', label: 'Courses', aide: 'Nouvelle course au calendrier, et rappel la veille de tes courses.' },
+  { id: 'documents', label: 'Documents', aide: 'Nouveau plan ou document dans « Plans & Documents ».' },
+]
+
+const MESSAGES_ETAT = {
+  indisponible: "Ce navigateur ne permet pas de recevoir des notifications. Les e-mails restent possibles.",
+  'ios-a-installer': "Sur iPhone et iPad, ajoute d'abord le site à ton écran d'accueil (bouton Partager, puis « Sur l'écran d'accueil »), ouvre-le depuis cette icône, puis reviens ici.",
+  refuse: "Les notifications sont bloquées pour ce site dans ton navigateur. Autorise-les dans les réglages du navigateur (ou du téléphone), puis reviens ici.",
+}
+
+export default function NotificationsPanel({ token }) {
+  const [prefs, setPrefs] = useState(null)
+  const [config, setConfig] = useState(null)
+  const [etat, setEtat] = useState(null)
+  const [occupe, setOccupe] = useState(false)
+  const [msg, setMsg] = useState(null)
+
+  useEffect(() => {
+    api.notifPrefs(token).then(setPrefs).catch(() => setMsg({ ok: false, texte: 'Préférences indisponibles pour le moment.' }))
+    api.notifConfig(token).then(setConfig).catch(() => setConfig({ push: false }))
+    etatPush().then(setEtat).catch(() => setEtat('indisponible'))
+  }, [token])
+
+  async function basculerAppareil() {
+    setOccupe(true)
+    setMsg(null)
+    try {
+      if (etat === 'actif') {
+        const endpoint = await desactiverPush()
+        if (endpoint) await api.notifDesabonner(token, endpoint)
+        setMsg({ ok: true, texte: 'Notifications désactivées sur cet appareil.' })
+      } else {
+        const abo = await activerPush(config.vapidPublicKey)
+        await api.notifAbonner(token, abo)
+        setMsg({ ok: true, texte: 'Notifications activées sur cet appareil.' })
+      }
+      setEtat(await etatPush())
+      setPrefs(await api.notifPrefs(token))
+    } catch (e) {
+      setMsg({ ok: false, texte: e.message || 'Impossible de changer ce réglage.' })
+      setEtat(await etatPush().catch(() => 'indisponible'))
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  async function changer(canal, type, valeur) {
+    const suivant = { ...prefs, [canal]: { ...prefs[canal], [type]: valeur } }
+    setPrefs(suivant)
+    try {
+      setPrefs(await api.notifSavePrefs(token, { push: suivant.push, mail: suivant.mail }))
+    } catch (e) {
+      setMsg({ ok: false, texte: e.message || "Le réglage n'a pas pu être enregistré." })
+    }
+  }
+
+  async function tester() {
+    setOccupe(true)
+    setMsg(null)
+    try {
+      const r = await api.notifTest(token)
+      setMsg(r.appareils > 0
+        ? { ok: true, texte: `Notification d'essai envoyée (${r.appareils} appareil${r.appareils > 1 ? 's' : ''}).` }
+        : { ok: false, texte: "Aucun appareil n'a pu être joint : désactive puis réactive les notifications sur cet appareil." })
+    } catch (e) {
+      setMsg({ ok: false, texte: e.message })
+    } finally {
+      setOccupe(false)
+    }
+  }
+
+  const pushDispo = config?.push
+  const actif = etat === 'actif'
+
+  return (
+    <div className="notif-bloc">
+      <span className="eyebrow" style={{ fontWeight: 'bold' }}>Notifications</span>
+      <p className="notif-intro">
+        Sois prévenu des nouveaux messages, courses et documents. Un e-mail ne part que si tu n'as pas vu l'élément dans l'heure.
+      </p>
+
+      <div className="notif-appareil">
+        <div>
+          <b>Sur cet appareil</b>
+          <small>
+            {!pushDispo ? "Les notifications push ne sont pas encore activées par le club. Les e-mails fonctionnent."
+              : MESSAGES_ETAT[etat] || (actif ? `Activées${prefs?.appareils > 1 ? ` · ${prefs.appareils} appareils au total` : ''}.` : 'Reçois une notification même quand le site est fermé.')}
+          </small>
+        </div>
+        {pushDispo && (etat === 'possible' || etat === 'actif') && (
+          <div className="notif-actions">
+            {actif && <button type="button" className="btn btn--ghost notif-btn" onClick={tester} disabled={occupe}>Tester</button>}
+            <button type="button" className={`btn notif-btn ${actif ? 'btn--ghost' : 'btn--solid'}`} onClick={basculerAppareil} disabled={occupe}>
+              {actif ? 'Désactiver' : 'Activer'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {prefs && (
+        <table className="notif-table">
+          <thead>
+            <tr><th>Je veux être prévenu…</th><th>Notification</th><th>E-mail</th></tr>
+          </thead>
+          <tbody>
+            {TYPES.map((t) => (
+              <tr key={t.id}>
+                <td><b>{t.label}</b><small>{t.aide}</small></td>
+                <td>
+                  <input type="checkbox" checked={!!prefs.push[t.id]} onChange={(e) => changer('push', t.id, e.target.checked)}
+                    aria-label={`${t.label} : notification`} disabled={!pushDispo} />
+                </td>
+                <td>
+                  <input type="checkbox" checked={!!prefs.mail[t.id]} onChange={(e) => changer('mail', t.id, e.target.checked)}
+                    aria-label={`${t.label} : e-mail`} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {msg && <p className={`notif-msg${msg.ok ? ' is-ok' : ' is-ko'}`} role="status">{msg.texte}</p>}
+    </div>
+  )
+}
