@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.44.2',
+    date: '7 octobre 2026',
+    notes: "Le menu de ton profil (Tes informations, disposition du menu, Tes documents) s'affiche désormais au-dessus de tout le reste : sur téléphone, il pouvait passer derrière le contenu de la page. Il se ferme aussi avec Échap.",
+  },
+  {
     version: '1.44.1',
     date: '7 octobre 2026',
     notes: "Menu latéral sur téléphone et tablette : sur téléphone, le bouton affiche la rubrique en cours et le tiroir prend toute la hauteur de l'écran (la fin de la liste et Aide restaient inaccessibles) ; sur tablette, la colonne d'icônes reste affichée en permanence. Activation des notifications plus rapide, avec les étapes affichées pendant l'abonnement de l'appareil.",

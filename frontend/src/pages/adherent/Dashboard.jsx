@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api.js'
 import { getToken, setToken as persistToken, clearToken } from '../../lib/session.js'
@@ -411,6 +412,23 @@ export default function Dashboard() {
   const [letter, setLetter] = useState(null)
   const [nature, setNature] = useState('Toutes')
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  // Le menu du profil est affiché à la racine de la page (portail), sous la photo : enfermé dans l'en-tête (flou,
+  // niveau 40), il pouvait passer derrière le contenu, notamment sur iPhone.
+  const profilBtnRef = useRef(null)
+  const [profilPos, setProfilPos] = useState(null)
+  const basculerProfilMenu = () => {
+    const r = profilBtnRef.current?.getBoundingClientRect()
+    if (r) setProfilPos({ top: Math.round(r.bottom + 6), left: Math.round(Math.max(8, Math.min(r.left, window.innerWidth - 228))) })
+    setProfileMenuOpen((v) => !v)
+  }
+  useEffect(() => {
+    if (!profileMenuOpen) return undefined
+    const fermer = () => setProfileMenuOpen(false)
+    const onKey = (e) => { if (e.key === 'Escape') fermer() }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('resize', fermer)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('resize', fermer) }
+  }, [profileMenuOpen])
   const [openVieCard, setOpenVieCard] = useState(null)
   const [openAdminCard, setOpenAdminCard] = useState(null)
   const [openMember, setOpenMember] = useState(null)
@@ -687,9 +705,12 @@ export default function Dashboard() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: '0.6rem 1.2rem' }}>
             <div style={{ position: 'relative' }}>
               <button
-                onClick={() => setProfileMenuOpen((v) => !v)}
+                ref={profilBtnRef}
+                onClick={basculerProfilMenu}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', padding: '0.3rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', maxWidth: '100%' }}
                 aria-label="Mon profil"
+                aria-haspopup="menu"
+                aria-expanded={profileMenuOpen}
               >
                 {me && <Avatar photoUrl={me.photoUrl} nom={`${me.prenom} ${me.nom}`} size={40} />}
                 <span style={{ minWidth: 0 }}>
@@ -700,8 +721,8 @@ export default function Dashboard() {
                 </span>
                 <span style={{ color: 'var(--stone)' }}>{profileMenuOpen ? '▴' : '▾'}</span>
               </button>
-              {profileMenuOpen && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '0.4rem', background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', minWidth: 200, zIndex: 50, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textAlign: 'left' }}>
+              {profileMenuOpen && profilPos && createPortal(
+                <div role="menu" style={{ position: 'fixed', top: profilPos.top, left: profilPos.left, background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: '0 12px 32px rgba(0,0,0,0.22)', minWidth: 220, zIndex: 251, fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textAlign: 'left' }}>
                   <button
                     onClick={() => { setActiveTab('profil'); setProfileMenuOpen(false) }}
                     style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '0.7rem 0.9rem', cursor: 'pointer', color: 'var(--ink)' }}
@@ -720,7 +741,8 @@ export default function Dashboard() {
                   >
                     Tes documents
                   </button>
-                </div>
+                </div>,
+                document.body,
               )}
             </div>
             {activeTab !== 'aide' && (
@@ -749,11 +771,10 @@ export default function Dashboard() {
         )}
       </header>
 
-      {profileMenuOpen && (
-        // z-index sous le header (40) pour que le menu déroulant, imbriqué
-        // dans le header, reste cliquable ; au-dessus de <main> (statique)
-        // pour que cliquer n'importe où en dehors ferme bien le menu.
-        <div onClick={() => setProfileMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 39 }} />
+      {profileMenuOpen && createPortal(
+        // fond transparent juste sous le menu du profil (251) : un clic n'importe où ailleurs le ferme
+        <div onClick={() => setProfileMenuOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 250 }} />,
+        document.body,
       )}
 
       <div className={`adh-body${menuLayout === 'lateral' ? ` adh-body--lateral${menuReduit ? ' is-reduit' : ''}` : ''}`}>
