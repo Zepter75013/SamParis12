@@ -11,6 +11,7 @@
     "aide:pdf": "node scripts/aide-pdf.mjs"
   },
   "dependencies": {
+    "leaflet": "^1.9.4",
     "marked": "^18.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

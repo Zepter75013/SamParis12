@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.41.0',
+    date: '7 octobre 2026',
+    notes: "Mon activité : le tracé GPS de chaque sortie Strava apparaît en miniature dans la liste ; un clic l'ouvre sur une carte OpenStreetMap avec le départ et l'arrivée. Le tracé arrive avec la liste des activités (aucun appel Strava en plus) et reste visible de toi seul.",
+  },
+  {
     version: '1.40.2',
     date: '7 octobre 2026',
     notes: "Anniversaires : la scène est encore plus petite (environ un quart de moins en hauteur) sur la carte du trombinoscope et sur la fiche.",

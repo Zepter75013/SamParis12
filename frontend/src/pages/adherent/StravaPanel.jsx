@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { api } from '../../lib/api.js'
 import Bascule from '../../components/Bascule.jsx'
 import ChampDate from '../../components/ChampDate.jsx'
+import TraceMini from '../../components/TraceMini.jsx'
+
+const CarteTrace = lazy(() => import('./CarteTrace.jsx'))
 
 // « Mon activité » : l'adhérent relie son compte Strava et consulte ses propres activités. Conformément aux règles de
 // l'API Strava, ces données ne sont visibles que de lui : aucun autre adhérent (ni le bureau) n'y a accès.
@@ -180,6 +183,8 @@ function Totaux({ titre, t }) {
 }
 
 export default function StravaPanel({ token, flash, onFlashClear }) {
+  const [carte, setCarte] = useState(null) // activité dont le tracé est ouvert sur la carte
+  const fermerCarte = useCallback(() => setCarte(null), [])
   const [statut, setStatut] = useState(null)
   const [stats, setStats] = useState(null)
   const [activites, setActivites] = useState([])
@@ -459,7 +464,7 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                 {liste.length === 0 ? <p className="stats-vide">{chargePeriode ? 'Chargement…' : 'Aucune activité sur cette période.'}</p> : (
                   <div className="stats-table-wrap">
                     <table className="stats-table">
-                      <thead><tr><th>Date</th><th>Activité</th><th className="num">Distance</th><th className="num">Durée</th><th className="num">Allure / vitesse</th><th className="num">D+</th><th className="num">FC moy.</th><th /></tr></thead>
+                      <thead><tr><th>Date</th><th className="strava-trace"><span className="sr-only">Tracé</span></th><th>Activité</th><th className="num">Distance</th><th className="num">Durée</th><th className="num">Allure / vitesse</th><th className="num">D+</th><th className="num">FC moy.</th><th /></tr></thead>
                       <tbody>
                         {liste.map((a) => {
                           const [ico, lib, mode] = infoSport(a.sport)
@@ -467,6 +472,13 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
                           return (
                             <tr key={a.id} className="strava-ligne" style={{ '--c': fam.couleur }}>
                               <td>{dateFr(a.debut)}</td>
+                              <td className="strava-trace">
+                                {a.trace && (
+                                  <button type="button" className="strava-trace__btn" onClick={() => setCarte(a)} title="Voir le tracé sur la carte" aria-label={`Voir le tracé de « ${a.nom} » sur la carte`}>
+                                    <TraceMini trace={a.trace} couleur={fam.couleur} />
+                                  </button>
+                                )}
+                              </td>
                               <td><span aria-hidden="true">{ico}</span> {a.nom}<small className="strava-sport-nom"> · {lib}{a.prive ? ' · privée' : ''}</small></td>
                               <td className="num">{a.distanceM ? km(a.distanceM) : '—'}</td>
                               <td className="num">{duree(a.dureeS)}</td>
@@ -486,6 +498,18 @@ export default function StravaPanel({ token, flash, onFlashClear }) {
             </>
           )}
         </>
+      )}
+
+      {carte && (
+        <Suspense fallback={null}>
+          <CarteTrace
+            activite={carte}
+            couleur={famille(carte.sport).couleur}
+            titre={`${infoSport(carte.sport)[0]} ${carte.nom}`}
+            details={[dateFr(carte.debut), carte.distanceM ? km(carte.distanceM) : '', duree(carte.dureeS), carte.denivelePos ? `D+ ${nf0.format(carte.denivelePos)} m` : ''].filter(Boolean).join(' · ')}
+            onClose={fermerCarte}
+          />
+        </Suspense>
       )}
 
       <p className="strava-credit">Données fournies par <b>Strava</b>. Ce service n'est ni développé ni approuvé par Strava.</p>

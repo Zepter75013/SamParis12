@@ -437,6 +437,9 @@ type Activite struct {
 	VitesseMoy  float64 `json:"vitesseMoy"` // m/s
 	FCMoyenne   float64 `json:"fcMoyenne"`
 	Prive       bool    `json:"prive"`
+	// Tracé GPS simplifié fourni par Strava avec la liste (polyline encodée, format Google) : vide pour les
+	// séances sans GPS (tapis, home-trainer, renforcement…). Aucun appel supplémentaire à l'API Strava.
+	Trace string `json:"trace,omitempty"`
 }
 
 type brutActivite struct {
@@ -452,6 +455,9 @@ type brutActivite struct {
 	AvgSpeed   float64 `json:"average_speed"`
 	AvgHR      float64 `json:"average_heartrate"`
 	Private    bool    `json:"private"`
+	Map        struct {
+		SummaryPolyline string `json:"summary_polyline"`
+	} `json:"map"`
 }
 
 func (a brutActivite) convertir() Activite {
@@ -460,7 +466,7 @@ func (a brutActivite) convertir() Activite {
 		sport = a.Type
 	}
 	return Activite{ID: a.ID, Nom: a.Name, Sport: sport, Debut: strings.TrimSuffix(a.StartLocal, "Z"), DistanceM: a.Distance, DureeS: a.Moving,
-		TempsTotalS: a.Elapsed, DenivelePos: a.Elevation, VitesseMoy: a.AvgSpeed, FCMoyenne: a.AvgHR, Prive: a.Private}
+		TempsTotalS: a.Elapsed, DenivelePos: a.Elevation, VitesseMoy: a.AvgSpeed, FCMoyenne: a.AvgHR, Prive: a.Private, Trace: a.Map.SummaryPolyline}
 }
 
 const (
