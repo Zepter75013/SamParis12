@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { importModule } from '../lib/importModule.js'
 
-const Game = lazy(() => import('./Game.jsx'))
+const Game = lazy(() => importModule(() => import('./Game.jsx')))
 
 const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a']
 

@@ -16,9 +16,10 @@ import JournalPanel from './JournalPanel.jsx'
 import StatsPanel from './StatsPanel.jsx'
 import StravaPanel from './StravaPanel.jsx'
 import CalculateurPanel from './CalculateurPanel.jsx'
+import { importModule } from '../../lib/importModule.js'
 
 // L'aide (chapitres + moteur Markdown) est chargée à la demande : elle n'alourdit pas le reste de l'espace adhérent.
-const AidePanel = lazy(() => import('./AidePanel.jsx'))
+const AidePanel = lazy(() => importModule(() => import('./AidePanel.jsx')))
 import Bascule from '../../components/Bascule.jsx'
 import { ScenneAnniversaire } from '../../components/Anniversaire.jsx'
 import { dateComplete, estAnniversaireAujourdhui, formaterNaissance, jourAnniversaire, libelleJour } from '../../lib/anniversaire.js'

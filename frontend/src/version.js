@@ -4,6 +4,11 @@
 
 export const CHANGELOG = [
   {
+    version: '1.44.3',
+    date: '7 octobre 2026',
+    notes: "Après une mise à jour du site, une page restée ouverte sur l'ancienne version se recharge d'elle-même quand elle a besoin d'un élément disparu (carte Strava, aide, mini-jeu), au lieu d'afficher une erreur.",
+  },
+  {
     version: '1.44.2',
     date: '7 octobre 2026',
     notes: "Le menu de ton profil (Tes informations, disposition du menu, Tes documents) s'affiche désormais au-dessus de tout le reste : sur téléphone, il pouvait passer derrière le contenu de la page. Il se ferme aussi avec Échap.",

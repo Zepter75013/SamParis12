@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 import { initTheme } from './lib/theme.js'
+import { rechargerNouvelleVersion } from './lib/importModule.js'
 
 initTheme()
 
@@ -21,6 +22,11 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {})
   })
 }
+
+// Morceau de code introuvable après une mise en ligne (page restée ouverte sur l'ancienne version) : on recharge.
+window.addEventListener('vite:preloadError', (event) => {
+  if (rechargerNouvelleVersion()) event.preventDefault()
+})
 
 // Au retour dans l'application (téléphone, PWA), on vérifie qu'une version plus récente n'est pas disponible
 // et on recharge le cas échéant : plus de vieille version bloquée dans l'application installée.

@@ -3,8 +3,9 @@ import { api } from '../../lib/api.js'
 import Bascule from '../../components/Bascule.jsx'
 import ChampDate from '../../components/ChampDate.jsx'
 import TraceMini from '../../components/TraceMini.jsx'
+import { importModule } from '../../lib/importModule.js'
 
-const CarteTrace = lazy(() => import('./CarteTrace.jsx'))
+const CarteTrace = lazy(() => importModule(() => import('./CarteTrace.jsx')))
 
 // « Mon activité » : l'adhérent relie son compte Strava et consulte ses propres activités. Conformément aux règles de
 // l'API Strava, ces données ne sont visibles que de lui : aucun autre adhérent (ni le bureau) n'y a accès.
